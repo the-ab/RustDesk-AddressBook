@@ -39,7 +39,7 @@
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <div class="mb-3">
                     <label class="form-label">{{ t('import.csv.file', 'CSV-Datei') }}</label>
-                    <input class="form-control" type="file" name="csv_file" accept=".csv,text/csv" required>
+                    <input class="visually-hidden rab-file-input" id="csvFileInput" type="file" name="csv_file" accept=".csv,text/csv" required data-no-file-text="{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}" data-files-text="{{ t('common.files_selected', 'Dateien ausgewählt') }}"><div class="input-group"><label class="btn btn-outline-secondary" for="csvFileInput"><i class="bi bi-folder2-open me-1"></i>{{ t('common.choose_file', 'Datei auswählen') }}</label><span class="form-control rab-file-label" data-file-label-for="csvFileInput">{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}</span></div>
                   </div>
                   <button class="btn btn-primary" type="submit"><i class="bi bi-upload me-1"></i>{{ t('import.csv.button', 'CSV importieren') }}</button>
                 </form>
@@ -74,7 +74,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="mb-3">
                 <label class="form-label">{{ t('import.server.files', 'RustDesk Server-Dateien') }}</label>
-                <input class="form-control" type="file" name="server_files" accept=".sqlite,.sqlite3,.db,.sqlite-wal,.sqlite3-wal,.db-wal,.sqlite-shm,.sqlite3-shm,.db-shm,.zip" multiple required>
+                <input class="visually-hidden rab-file-input" id="serverFilesInput" type="file" name="server_files" accept=".sqlite,.sqlite3,.db,.sqlite-wal,.sqlite3-wal,.db-wal,.sqlite-shm,.sqlite3-shm,.db-shm,.zip" multiple required data-no-file-text="{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}" data-files-text="{{ t('common.files_selected', 'Dateien ausgewählt') }}"><div class="input-group"><label class="btn btn-outline-secondary" for="serverFilesInput"><i class="bi bi-folder2-open me-1"></i>{{ t('common.choose_file', 'Datei auswählen') }}</label><span class="form-control rab-file-label" data-file-label-for="serverFilesInput">{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}</span></div>
                 <div class="form-text">{{ t('import.server.files_help', 'Am besten als ZIP oder als Mehrfachauswahl hochladen: db_v2.sqlite3, db_v2.sqlite3-wal und optional db_v2.sqlite3-shm.') }}</div>
               </div>
               <div class="row g-3">
@@ -96,7 +96,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
             {% set ssh = get_ssh_import_settings() %}
             <form method="post" class="row g-3">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <div class="col-12 col-md-7"><label class="form-label">{{ t('import.ssh.host', 'SSH Host') }}</label><input class="form-control" name="ssh_host" value="{{ ssh.host }}" placeholder="rustdesk.example.local oder IP"></div>
+              <div class="col-12 col-md-7"><label class="form-label">{{ t('import.ssh.host', 'SSH Host') }}</label><input class="form-control" name="ssh_host" value="{{ ssh.host }}" placeholder="{{ t('settings.status.host_placeholder', 'rustdesk.example.local oder IP') }}"></div>
               <div class="col-12 col-md-5"><label class="form-label">{{ t('import.ssh.port', 'SSH Port') }}</label><input class="form-control" name="ssh_port" value="{{ ssh.port }}" inputmode="numeric"></div>
               <div class="col-12 col-md-6"><label class="form-label">{{ t('import.ssh.user', 'SSH Benutzer') }}</label><input class="form-control" name="ssh_user" value="{{ ssh.user }}" placeholder="rab-import"></div>
               <div class="col-12 col-md-6"><label class="form-label">{{ t('import.ssh.timeout', 'Timeout Sekunden') }}</label><input class="form-control" name="ssh_timeout" value="{{ ssh.timeout }}" inputmode="numeric"></div>
@@ -119,8 +119,8 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
                 {% if ssh_result.bytes is defined %}<dt class="col-sm-4">{{ t('common.bytes', 'Übertragen') }}</dt><dd class="col-sm-8">{{ ssh_result.bytes }} Bytes</dd>{% endif %}
                 {% if ssh_result.elapsed_ms is defined %}<dt class="col-sm-4">{{ t('common.duration', 'Dauer') }}</dt><dd class="col-sm-8">{{ ssh_result.elapsed_ms }} ms</dd>{% endif %}
                 {% if ssh_result.peer_count is defined %}<dt class="col-sm-4">{{ t('import.ssh.peers', 'Peers') }}</dt><dd class="col-sm-8">{{ ssh_result.peer_count }}</dd>{% endif %}
-                {% if ssh_result.integrity is defined %}<dt class="col-sm-4">Integrity</dt><dd class="col-sm-8"><code>{{ ssh_result.integrity }}</code></dd>{% endif %}
-                {% if ssh_result.created is defined %}<dt class="col-sm-4">Import</dt><dd class="col-sm-8">{{ ssh_result.created }} {{ t('common.created', 'neu') }}, {{ ssh_result.updated }} {{ t('common.updated', 'aktualisiert') }}, {{ ssh_result.skipped }} {{ t('common.skipped', 'übersprungen') }}</dd>{% endif %}
+                {% if ssh_result.integrity is defined %}<dt class="col-sm-4">{{ t('common.integrity', 'Integrität') }}</dt><dd class="col-sm-8"><code>{{ ssh_result.integrity }}</code></dd>{% endif %}
+                {% if ssh_result.created is defined %}<dt class="col-sm-4">{{ t('common.import', 'Import') }}</dt><dd class="col-sm-8">{{ ssh_result.created }} {{ t('common.created', 'neu') }}, {{ ssh_result.updated }} {{ t('common.updated', 'aktualisiert') }}, {{ ssh_result.skipped }} {{ t('common.skipped', 'übersprungen') }}</dd>{% endif %}
                 {% if ssh_result.stderr %}<dt class="col-sm-4">{{ t('import.ssh.stderr', 'SSH stderr') }}</dt><dd class="col-sm-8"><code>{{ ssh_result.stderr }}</code></dd>{% endif %}
               </dl>
             {% endif %}
@@ -136,7 +136,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
             <form method="post" action="{{ url_for('sync_rustdesk_mounted_import') }}" class="row g-3 align-items-end">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="col-12 col-md-6"><label class="form-label">{{ t('common.group', 'Zielgruppe') }}</label><select class="form-select" name="group_id" {% if not db_mount.exists %}disabled{% endif %}><option value="">RustDesk Server</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
-              <div class="col-12 col-md-6"><label class="form-label">{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}</label><input class="form-control" name="group_name_new" placeholder="Kunden-PCs" {% if not db_mount.exists %}disabled{% endif %}></div>
+              <div class="col-12 col-md-6"><label class="form-label">{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}</label><input class="form-control" name="group_name_new" placeholder="{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}" {% if not db_mount.exists %}disabled{% endif %}></div>
               <div class="col-12 d-flex flex-wrap gap-2"><button class="btn btn-outline-secondary" type="submit" {% if not db_mount.exists %}disabled title="{{ t('import.direct.disabled_title', 'RUSTDESK_SERVER_DB ist nicht gesetzt oder Datei nicht vorhanden') }}"{% endif %}><i class="bi bi-database-down me-1"></i>{{ t('import.direct.button', 'Echtzeit-Import aus eingebundener DB') }}</button>{% if db_mount.configured %}<a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>{{ t('import.direct.diagnose', 'DB Diagnose') }}</a>{% endif %}</div>
             </form>
           </div>

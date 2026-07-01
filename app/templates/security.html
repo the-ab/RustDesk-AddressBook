@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Sicherheit · RustDesk AddressBook{% endblock %}
+{% block title %}{{ t('security.title', 'Sicherheit') }} · RustDesk AddressBook{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
   <div>
-    <h1 class="h3 mb-1"><i class="bi bi-shield-lock me-2"></i>Sicherheit</h1>
-    <div class="text-secondary">Login-Auditlog, Brute-Force-Schutz und Sicherheitsprüfung.</div>
+    <h1 class="h3 mb-1"><i class="bi bi-shield-lock me-2"></i>{{ t('security.title', 'Sicherheit') }}</h1>
+    <div class="text-secondary">{{ t('security.subtitle', 'Login-Auditlog, Brute-Force-Schutz und Sicherheitsprüfung.') }}</div>
   </div>
-  <a class="btn btn-outline-secondary" href="{{ url_for('security_auth_log_download') }}"><i class="bi bi-download me-1"></i>auth.log herunterladen</a>
+  <a class="btn btn-outline-secondary" href="{{ url_for('security_auth_log_download') }}"><i class="bi bi-download me-1"></i>{{ t('security.download_auth_log', 'auth.log herunterladen') }}</a>
 </div>
 
 <div class="row g-4">
   <div class="col-12 col-xl-5">
     <div class="card shadow-sm h-100">
-      <div class="card-header bg-transparent fw-semibold">Sicherheitsstatus</div>
+      <div class="card-header bg-transparent fw-semibold">{{ t('security.status_title', 'Sicherheitsstatus') }}</div>
       <div class="card-body p-0">
         <div class="list-group list-group-flush">
           {% for item in report %}
@@ -34,30 +34,30 @@
 
   <div class="col-12 col-xl-7">
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-transparent fw-semibold">Fail2ban / CrowdSec</div>
+      <div class="card-header bg-transparent fw-semibold">{{ t('security.fail2ban_title', 'Fail2ban / CrowdSec') }}</div>
       <div class="card-body">
-        <p class="mb-2">Die App schreibt fehlgeschlagene Logins zusätzlich in eine Datei:</p>
+        <p class="mb-2">{{ t('security.log_intro', 'Die App schreibt fehlgeschlagene Logins zusätzlich in eine Datei:') }}</p>
         <pre class="small bg-body-tertiary border rounded p-3 mb-3"><code>{{ auth_log_file }}</code></pre>
-        <p class="mb-2">Fehlschläge enthalten die Markierung <code>RAB_AUTH_FAIL</code>. Beispiel für einen fail2ban-Filter:</p>
+        <p class="mb-2">{{ t('security.fail_marker', 'Fehlschläge enthalten die Markierung') }} <code>RAB_AUTH_FAIL</code>. {{ t('security.fail_filter', 'Beispiel für einen fail2ban-Filter:') }}</p>
 <pre class="small bg-body-tertiary border rounded p-3"><code>[Definition]
 failregex = ^.*RAB_AUTH_FAIL .*ip=&lt;HOST&gt; .*$
 ignoreregex =</code></pre>
-        <div class="small text-secondary">Interne Sperre: {{ fail_limit }} Fehlversuche je IP oder Benutzer innerhalb {{ fail_window }} Sekunden.</div>
+        <div class="small text-secondary">{{ t('security.internal_lockout', 'Interne Sperre: {limit} Fehlversuche je IP oder Benutzer innerhalb {window} Sekunden.').format(limit=fail_limit, window=fail_window) }}</div>
       </div>
     </div>
 
     <div class="card shadow-sm">
-      <div class="card-header bg-transparent fw-semibold">Letzte Login-/2FA-Ereignisse</div>
+      <div class="card-header bg-transparent fw-semibold">{{ t('security.auth_events', 'Letzte Login-/2FA-Ereignisse') }}</div>
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead>
             <tr>
-              <th>Zeit</th>
-              <th>Status</th>
-              <th>Ereignis</th>
-              <th>Benutzer</th>
-              <th>IP</th>
-              <th>Details</th>
+              <th>{{ t('security.table.time', 'Zeit') }}</th>
+              <th>{{ t('security.table.status', 'Status') }}</th>
+              <th>{{ t('security.table.event', 'Ereignis') }}</th>
+              <th>{{ t('security.table.user', 'Benutzer') }}</th>
+              <th>{{ t('security.table.ip', 'IP') }}</th>
+              <th>{{ t('security.table.details', 'Details') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -71,7 +71,7 @@ ignoreregex =</code></pre>
               <td class="small text-secondary">{{ ev.message or '' }}</td>
             </tr>
           {% else %}
-            <tr><td colspan="6" class="text-secondary text-center py-4">Noch keine Ereignisse vorhanden.</td></tr>
+            <tr><td colspan="6" class="text-secondary text-center py-4">{{ t('security.no_events', 'Noch keine Ereignisse vorhanden.') }}</td></tr>
           {% endfor %}
           </tbody>
         </table>
@@ -81,8 +81,8 @@ ignoreregex =</code></pre>
 </div>
 
 <div class="alert alert-info mt-4">
-  <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>Hinweis zur SQLite-Verschlüsselung</div>
-  <div>Die laufende SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter sind feldweise verschlüsselt. Zusätzlich werden Benutzer-Sicherheitsfelder wie Passwort-Hash und 2FA-Zustand mit einem HMAC-Schlüssel aus <code>data/config.json</code> signiert. Dadurch kann ein Angreifer mit nur SQLite-Schreibzugriff 2FA nicht unbemerkt abschalten. Hat ein Angreifer jedoch Datenbank <em>und</em> Runtime-Secrets, gilt die Installation als kompromittiert.</div>
-  <div class="small text-secondary mt-2">Signatur-Policy: Standard ist <code>repair_on_verified_login</code> für update-freundliche Migrationen. Für maximale Härtung kann in <code>docker-compose.yml</code> <code>USER_SIGNATURE_POLICY=strict</code> gesetzt werden.</div>
+  <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>{{ t('security.sqlite_title', 'Hinweis zur SQLite-Verschlüsselung') }}</div>
+  <div>{{ t('security.sqlite_text', 'Die laufende SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter sind feldweise verschlüsselt. Zusätzlich werden Benutzer-Sicherheitsfelder wie Passwort-Hash und 2FA-Zustand mit einem HMAC-Schlüssel aus data/config.json signiert. Dadurch kann ein Angreifer mit nur SQLite-Schreibzugriff 2FA nicht unbemerkt abschalten. Hat ein Angreifer jedoch Datenbank und Runtime-Secrets, gilt die Installation als kompromittiert.') }}</div>
+  <div class="small text-secondary mt-2">{{ t('security.signature_policy', 'Signatur-Policy: Standard ist repair_on_verified_login für update-freundliche Migrationen. Für maximale Härtung kann in docker-compose.yml USER_SIGNATURE_POLICY=strict gesetzt werden.') }}</div>
 </div>
 {% endblock %}

@@ -14,7 +14,7 @@
     </div>
     <form method="post" action="{{ url_for('sync_rustdesk_live_status') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button class="btn btn-outline-success" type="submit" {% if not status_settings.hbbs_host %}title="hbbs Host unter Einstellungen eintragen"{% endif %}>
+      <button class="btn btn-outline-success" type="submit" {% if not status_settings.hbbs_host %}title="{{ t('devices.hbbs_missing_title', 'hbbs Host unter Einstellungen eintragen') }}"{% endif %}>
         <i class="bi bi-broadcast-pin me-1"></i>{{ t('devices.live_status', 'Live-Status hbbs') }}
       </button>
     </form>
@@ -40,7 +40,7 @@
   <div class="card-body">
     <form class="row g-2 align-items-end" method="get">
       <input type="hidden" name="view" value="{{ device_view }}">
-      <div class="col-12 col-lg-3"><label class="form-label">{{ t('devices.search', 'Suche') }}</label><input class="form-control" name="q" value="{{ q }}" placeholder="Name, RustDesk-ID, Kunde, Standort, Tags..."></div>
+      <div class="col-12 col-lg-3"><label class="form-label">{{ t('devices.search', 'Suche') }}</label><input class="form-control" name="q" value="{{ q }}" placeholder="{{ t('devices.search_placeholder', 'Name, RustDesk-ID, Kunde, Standort, Tags...') }}"></div>
       <div class="col-12 col-lg-2"><label class="form-label">{{ t('devices.group', 'Gruppe') }}</label><select class="form-select" name="group"><option value="">{{ t('devices.all_groups', 'Alle Gruppen') }}</option>{% for group in groups %}<option value="{{ group.id }}" {% if selected_group|string == group.id|string %}selected{% endif %}>{{ group.name }}</option>{% endfor %}</select></div>
       <div class="col-12 col-lg-2"><label class="form-label">{{ t('devices.device_type', 'Gerätetyp') }}</label><select class="form-select" name="os"><option value="">{{ t('common.all', 'Alle') }}</option>{% for item in available_os %}<option value="{{ item }}" {% if selected_os == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
       <div class="col-12 col-lg-2"><label class="form-label">{{ t('devices.favorites', 'Favoriten') }}</label><select class="form-select" name="fav"><option value="">{{ t('common.all', 'Alle') }}</option><option value="1" {% if fav == '1' %}selected{% endif %}>{{ t('devices.only_favorites', 'Nur Favoriten') }}</option></select></div>

@@ -2,20 +2,19 @@
 
 Selfhosted RustDesk-Adressbuch als Docker-Projekt mit Flask, SQLite, Login, 2FA, Gruppen, Geräteverwaltung, Import/Export, Backups, HTTPS direkt im Container, hbbs-Live-Status und SSH-Import der RustDesk-Serverdatenbank.
 
-## Neu in 0.5.18
+## Neu in 0.5.19
 
-- Englische Übersetzungen für zentrale Bereiche erweitert.
-- Import / Export ist jetzt wie die Einstellungen in Kategorien mit linker Navigation aufgeteilt.
-- Dashboard und Geräte-Seite können zwischen Kartenansicht, Listenansicht und kleinen Symbolen umgeschaltet werden.
-- Die gewählte Geräteansicht wird in der Session gespeichert.
-- Der Menüpunkt „Display & language“ wird in der Einstellungsnavigation zweizeilig dargestellt.
+- Englische Übersetzungen nochmals erweitert: Geräte, Gruppen, Import/Export, Sicherheit, Anleitung und Release-Ansicht.
+- „Display & language“ steht links wieder einzeilig; im rechten Detailbereich werden Darstellung und Sprache untereinander angezeigt.
+- Dateiauswahl im Import-/Export- und Backup-Bereich nutzt eigene, übersetzbare Beschriftungen statt Browser-Standardtext.
+- Update-/Release-Notizen unterstützen Sprachbereiche in `latest.txt` oder sprachspezifische Release-Notizdateien.
 
 ## Download / Neuinstallation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0518.zip
-unzip rustdesk-addressbook-v0518.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0520.zip
+unzip rustdesk-addressbook-v0520.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -45,7 +44,7 @@ https://SERVER-IP:5443
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0518.zip -O updates/rustdesk-addressbook-update-flat-v0518.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0520.zip -O updates/rustdesk-addressbook-update-flat-v0520.zip
 ./scripts/update.sh
 ```
 
@@ -63,13 +62,13 @@ Das Script prüft zuerst den vorhandenen Ordner `updates/`. Wenn dort keine neue
 Du nutzt `latest.txt`. Die minimale Variante ist:
 
 ```text
-rustdesk-addressbook-update-flat-v0518.zip
+rustdesk-addressbook-update-flat-v0520.zip
 ```
 
 Damit WebUI und Update-Script zusätzlich die Änderungen anzeigen können, kannst du die Änderungen direkt darunter schreiben:
 
 ```text
-rustdesk-addressbook-update-flat-v0518.zip
+rustdesk-addressbook-update-flat-v0520.zip
 - Update-Check nutzt latest.txt ohne latest.json-Prüfung.
 - Update-Script zeigt Änderungen vor Download und Installation.
 - Ja/Nein-Abfragen nutzen [J/n] und [j/N].
@@ -78,13 +77,13 @@ rustdesk-addressbook-update-flat-v0518.zip
 Alternativ kannst du neben der ZIP eine Datei mit gleichem Namen und `.txt` oder `.md` ablegen, zum Beispiel:
 
 ```text
-https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0518.txt
+https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0520.txt
 ```
 
 oder:
 
 ```text
-https://dl.ab-xnet.de/release-notes-v0518.txt
+https://dl.ab-xnet.de/release-notes-v0520.txt
 ```
 
 
@@ -158,13 +157,13 @@ Ohne `data/config.json` können gespeicherte Gerätepasswörter nicht entschlüs
 Im Footer der WebUI steht:
 
 ```text
-RustDesk AddressBook 0.5.18
+RustDesk AddressBook 0.5.19
 ```
 
 Zusätzlich:
 
 ```bash
-docker exec -it rustdesk-addressbook grep -n "0.5.18-i18n-import-device-views" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.20-help-restore-full-docs" /app/app/config.py
 ```
 
 ## Sicherheitshinweis
@@ -173,11 +172,35 @@ Die App verschlüsselt Gerätepasswörter feldweise und bietet verschlüsselte B
 
 ## Sprache und Einstellungen
 
-Ab Version 0.5.18 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
+Ab Version 0.5.19 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
 Die Auswahl befindet sich unter **Einstellungen → Darstellung & Sprache**.
 
 Der Einstellungsbereich ist in eine linke Navigation und einen rechten Detailbereich aufgeteilt.
 Dadurch sind Admin-Konto, 2FA, Online-Status, Update-Check und weitere Optionen schneller erreichbar.
 
-Hinweis: Die Kernoberfläche ist übersetzt. Technische Logs, Import-Inhalte und einige Diagnosemeldungen bleiben bewusst unverändert oder deutschsprachig, damit bestehende Hinweise und Logs kompatibel bleiben.
+Hinweis: Die Kernoberfläche, Anleitung und Release-Ansicht sind zweisprachig. Technische Logs, importierte Inhalte und gespeicherte historische Meldungen bleiben unverändert.
 
+
+
+## Zweisprachige Release-Notizen für latest.txt
+
+Wenn die WebUI auf Englisch steht, können Update-Änderungen ebenfalls englisch angezeigt werden. Dafür kann `latest.txt` so aufgebaut werden:
+
+```text
+rustdesk-addressbook-update-flat-v0520.zip
+[de]
+- Deutsche Änderung 1
+- Deutsche Änderung 2
+[en]
+- English change 1
+- English change 2
+```
+
+Alternativ können separate Dateien neben der ZIP liegen, zum Beispiel:
+
+```text
+rustdesk-addressbook-update-flat-v0520.en.txt
+rustdesk-addressbook-update-flat-v0520.de.txt
+release-notes-v0520.en.txt
+release-notes-v0520.de.txt
+```

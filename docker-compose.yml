@@ -1,7 +1,7 @@
 services:
   rustdesk-addressbook:
     build: .
-    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0518}
+    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0519}
     container_name: ${RAB_CONTAINER_NAME:-rustdesk-addressbook}
     restart: unless-stopped
     ports:

@@ -80,6 +80,26 @@
 
   const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch] || ch));
 
+
+
+  document.querySelectorAll('.rab-file-input').forEach((input) => {
+    const label = document.querySelector(`[data-file-label-for="${input.id}"]`);
+    const noFileText = input.dataset.noFileText || (i18n.noFileSelected || 'No file selected');
+    const filesText = input.dataset.filesText || (i18n.filesSelected || 'files selected');
+    const updateFileLabel = () => {
+      if (!label) return;
+      if (!input.files || input.files.length === 0) {
+        label.textContent = noFileText;
+      } else if (input.files.length === 1) {
+        label.textContent = input.files[0].name;
+      } else {
+        label.textContent = `${input.files.length} ${filesText}`;
+      }
+    };
+    updateFileLabel();
+    input.addEventListener('change', updateFileLabel);
+  });
+
   const updateButton = document.getElementById('updateCheckButton');
   const updateResult = document.getElementById('updateCheckResult');
   const updateBadge = document.getElementById('updateAvailableBadge');

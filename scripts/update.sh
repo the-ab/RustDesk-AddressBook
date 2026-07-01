@@ -163,15 +163,28 @@ fetch_url_optional() {
 }
 
 print_notes_file() {
-  local file="$1" line printed=0
+  local file="$1" line printed=0 lang="${RAB_UPDATE_LANG:-de}" section="" use_line=1
   [ -s "$file" ] || return 1
   while IFS= read -r line || [ -n "$line" ]; do
-    line="$(printf '%s' "$line" | tr -d '\r' | sed -E 's/^[-*•][[:space:]]+//; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+    line="$(printf '%s' "$line" | tr -d '\r' | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
     [ -z "$line" ] && continue
     [ "${line#\#}" != "$line" ] && continue
+    case "$(printf '%s' "$line" | tr '[:upper:]' '[:lower:]')" in
+      '[de]'|'de:'|'de') section='de'; continue;;
+      '[en]'|'en:'|'en') section='en'; continue;;
+    esac
+    if printf '%s' "$line" | grep -Eiq '^(de|en)[[:space:]]*[:|-][[:space:]]+'; then
+      prefix="$(printf '%s' "$line" | sed -E 's/^([Dd][Ee]|[Ee][Nn])[[:space:]]*[:|-].*/\1/' | tr '[:upper:]' '[:lower:]')"
+      [ "$prefix" = "$lang" ] || continue
+      line="$(printf '%s' "$line" | sed -E 's/^([Dd][Ee]|[Ee][Nn])[[:space:]]*[:|-][[:space:]]+//')"
+    elif [ -n "$section" ] && [ "$section" != "$lang" ]; then
+      continue
+    fi
+    line="$(printf '%s' "$line" | sed -E 's/^[-*•][[:space:]]+//; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+    [ -z "$line" ] && continue
     if [ "$printed" -eq 0 ]; then
       echo
-      echo "Änderungen der verfügbaren Version:"
+      if [ "$lang" = "en" ]; then echo "Changes in the available version:"; else echo "Änderungen der verfügbaren Version:"; fi
       printed=1
     fi
     echo "  - $line"
@@ -207,10 +220,16 @@ print_online_release_notes() {
   version_tag=""
   if [[ "$file" =~ v([0-9]+) ]]; then version_tag="v${BASH_REMATCH[1]}"; fi
   for candidate in \
+    "${base%/}/${stem}.${RAB_UPDATE_LANG:-de}.txt" \
+    "${base%/}/${stem}.${RAB_UPDATE_LANG:-de}.md" \
     "${base%/}/${stem}.txt" \
     "${base%/}/${stem}.md" \
+    "${base%/}/release-notes-${version_tag}.${RAB_UPDATE_LANG:-de}.txt" \
+    "${base%/}/release-notes-${version_tag}.${RAB_UPDATE_LANG:-de}.md" \
     "${base%/}/release-notes-${version_tag}.txt" \
     "${base%/}/release-notes-${version_tag}.md" \
+    "${base%/}/releases/${version_tag}.${RAB_UPDATE_LANG:-de}.txt" \
+    "${base%/}/releases/${version_tag}.${RAB_UPDATE_LANG:-de}.md" \
     "${base%/}/releases/${version_tag}.txt" \
     "${base%/}/releases/${version_tag}.md"; do
     [ -n "$version_tag" ] || case "$candidate" in *release-notes-*|*/releases/*) continue;; esac

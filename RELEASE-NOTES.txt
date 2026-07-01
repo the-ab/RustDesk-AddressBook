@@ -1,6 +1,11 @@
-0.5.18-i18n-import-device-views
-- Englische Übersetzungen für zentrale Bereiche erweitert: Dashboard, Geräte, Gruppen, Import / Export, Einstellungen und Geräteformular.
-- Einstellungen: Display & language wird in der linken Navigation zweizeilig dargestellt.
-- Import / Export erhält eine linke Kategorienavigation mit rechter Detailansicht.
-- Dashboard und Geräte-Seite können zwischen Kartenansicht, Listenansicht und kleinen Symbolen umgeschaltet werden.
-- Die gewählte Geräteansicht wird in der Session gespeichert und weiterverwendet.
+0.5.20-help-restore-full-docs
+[de]
+- Anleitung/Hilfe-Seite wieder deutlich erweitert und mit linker Sprungnavigation aufgebaut.
+- Inhalte aus der detaillierten 0.5.18-Anleitung wiederhergestellt und um neue Funktionen ergänzt.
+- Anleitung beschreibt jetzt Installation, Updates, Dashboard, Geräteansichten, Gruppen, hbbs Live-Status, Import/Export, SSH-Import, gemountete DB, Backups, Einstellungen, Update-Check, Sicherheit, fail2ban/CrowdSec und Fehlerdiagnose.
+- Englische Anleitung ebenfalls als strukturierte Langfassung ergänzt.
+[en]
+- Restored the detailed Help/Admin Guide page with left-side section navigation.
+- Re-added detailed content from the 0.5.18 guide and extended it with newer features.
+- The guide now covers installation, updates, dashboard, device views, groups, hbbs live status, import/export, SSH import, mounted DB import, backups, settings, update checks, security, fail2ban/CrowdSec and troubleshooting.
+- Added a structured long-form English guide as well.

@@ -172,6 +172,7 @@ TRANSLATIONS = {
         "devices.no_results": "No devices found.",
         "devices.first_device": "Create first device",
         "devices.hbbs_missing": "For automatic online status, enter your hbbs host under Settings → Online status and then use Live status hbbs. Server DB import and diagnostics are available under Import / Export.",
+        "devices.hbbs_missing_title": "Enter hbbs host under Settings",
         "settings.title": "Settings",
         "settings.subtitle": "Manage appearance, language, admin security, imports, online status and update checks.",
         "settings.menu.display": "Display & language",
@@ -251,6 +252,11 @@ TRANSLATIONS = {
         "settings.update.now": "Check now",
         "settings.update.checking": "Checking...",
         "settings.update.failed": "Update check failed",
+        "update.error.invalid_manifest": "latest.txt does not contain a valid update ZIP.",
+        "update.error.read_failed": "latest.txt could not be read: {error}",
+        "update.message.no_manifest": "No valid online manifest found.",
+        "update.message.available": "Update available: {file}",
+        "update.message.current": "No update available. The installed version is current or newer.",
         "settings.update.none": "No online update check has been performed yet.",
         "settings.update.available": "Update available",
         "settings.update.current": "Current",
@@ -438,6 +444,113 @@ TRANSLATIONS = {
         "sort.updated": "Recently changed",
     }
 }
+
+TRANSLATIONS["en"].update({
+    "common.choose_file": "Choose file",
+    "common.no_file_selected": "No file selected",
+    "common.files_selected": "files selected",
+    "common.import": "Import",
+    "common.integrity": "Integrity",
+    "common.time": "Time",
+    "common.details": "Details",
+    "devices.search_placeholder": "Name, RustDesk ID, customer, location, tags...",
+    "dashboard.search_placeholder": "Name, ID, customer, location...",
+    "status.last_summary": "{online} online, {offline} offline, {updated} changed",
+    "status.trigger.manual": "Manual",
+    "status.trigger.auto": "Automatic",
+    "status.flash_success": "hbbs live status updated: {updated} changed, {online} online, {offline} offline. Last response states={states}.",
+    "status.flash_error": "hbbs live query failed: {error}",
+    "status.flash_removed": "Server DB status was removed. Online status is queried through hbbs live; the server DB remains available for import and diagnostics.",
+    "import.csv.created": "Import completed: {count} devices created.",
+    "import.server.no_file": "Select db_v2.sqlite3 or a ZIP containing db_v2.sqlite3, db_v2.sqlite3-wal and optionally db_v2.sqlite3-shm.",
+    "import.server.read_error": "The file could not be read as a RustDesk SQLite database: {error}",
+    "import.server.wal_seen": " WAL was considered.",
+    "import.server.no_wal": " No WAL file was found in the upload.",
+    "import.server.status_note": " Online status is not imported from the server DB; use Live status hbbs for that.",
+    "import.server.done": "RustDesk server import completed: {created} created, {updated} updated, {skipped} skipped.",
+    "import.ssh.result_import": "Import",
+    "settings.status.host_placeholder": "rustdesk.example.com or IP",
+    "settings.status.port_help": "Usually 21115 when your hbbs main port is 21116.",
+    "settings.status.requester_help": "Only an identifier for the protocol request. It is not a device ID and not a password.",
+    "settings.status.saved": "Online status settings saved.",
+    "settings.update.saved": "Update check settings saved.",
+    "security.title": "Security",
+    "security.subtitle": "Login audit log, brute-force protection and security checks.",
+    "security.download_auth_log": "Download auth.log",
+    "security.status_title": "Security status",
+    "security.fail2ban_title": "Fail2ban / CrowdSec",
+    "security.log_intro": "The app writes failed logins to this file:",
+    "security.fail_marker": "Failures contain the marker",
+    "security.fail_filter": "Example fail2ban filter:",
+    "security.internal_lockout": "Internal lockout: {limit} failed attempts per IP or username within {window} seconds.",
+    "security.auth_events": "Latest login / 2FA events",
+    "security.table.time": "Time",
+    "security.table.status": "Status",
+    "security.table.event": "Event",
+    "security.table.user": "User",
+    "security.table.ip": "IP",
+    "security.table.details": "Details",
+    "security.no_events": "No events yet.",
+    "security.sqlite_title": "Note about SQLite encryption",
+    "security.sqlite_text": "The running SQLite database is not fully SQLCipher-encrypted. Device passwords are encrypted per field. User security fields such as password hash and 2FA state are additionally signed with an HMAC key from data/config.json. This prevents an attacker with only SQLite write access from silently disabling 2FA. If an attacker obtains both database and runtime secrets, the installation is compromised.",
+    "security.signature_policy": "Signature policy: default is repair_on_verified_login for update-friendly migrations. For maximum hardening, set USER_SIGNATURE_POLICY=strict in docker-compose.yml.",
+    "setup.title": "Initial setup",
+    "setup.subtitle": "Create the first admin user.",
+    "setup.username": "Username",
+    "setup.password": "Password",
+    "setup.repeat_password": "Repeat password",
+    "setup.create": "Create admin",
+    "release.title": "Release notes",
+    "release.subtitle": "Change history of the stable 0.5.x line and earlier build versions.",
+    "release.installed": "Installed version",
+    "release.internal": "Internal identifier",
+    "release.help": "Help",
+    "release.update_note": "Update note",
+    "release.option_a": "Option A: copy the new flat update ZIP into updates/ and start the script without parameters.",
+    "release.option_b": "Option B: start only the script. It checks local updates first, then online, shows changes and asks for download/installation.",
+    "help.title": "Guide",
+    "help.subtitle": "Installation, update, import, backup and security commands.",
+    "help.installation": "Installation",
+    "help.update": "Update",
+    "help.update_text": "Either copy the update ZIP into updates/ manually or simply run the update script and let it check the configured download server.",
+    "help.ssh_import": "SSH import",
+    "help.backup": "Backup / restore",
+    "help.security": "Security",
+    "group.color.primary": "Blue",
+    "group.color.secondary": "Gray",
+    "group.color.success": "Green",
+    "group.color.danger": "Red",
+    "group.color.warning": "Yellow",
+    "group.color.info": "Cyan",
+    "group.color.dark": "Dark",
+    "group.icon.collection": "Collection",
+    "group.icon.hdd-network": "Server / network",
+    "group.icon.server": "Server",
+    "group.icon.pc-display": "Client / PC",
+    "group.icon.pc-display-horizontal": "Desktop",
+    "group.icon.laptop": "Notebook",
+    "group.icon.windows": "Windows",
+    "group.icon.ubuntu": "Linux",
+    "group.icon.apple": "Apple / macOS",
+    "group.icon.android2": "Android",
+    "group.icon.phone": "Mobile device",
+    "group.icon.router": "Router",
+    "group.icon.ethernet": "Network",
+    "group.icon.globe2": "Internet / remote",
+    "group.icon.house": "Private / home",
+    "group.icon.building": "Company / building",
+    "group.icon.person-workspace": "Workstation",
+    "group.icon.people": "Customers / users",
+    "group.icon.shield-lock": "Security",
+    "group.icon.cloud": "Cloud",
+    "group.icon.database": "Database",
+    "group.icon.device-hdd": "Storage",
+    "group.icon.tools": "Maintenance",
+    "group.icon.wrench-adjustable": "Service",
+    "group.icon.tag": "Tag / category",
+    "group.icon.star": "Favorites",
+    "group.icon.folder": "Folder",
+})
 
 
 def _resolve_device_view(value: str | None = None) -> str:
@@ -658,8 +771,8 @@ def register_template_helpers(app: Flask) -> None:
     app.jinja_env.filters["decrypt"] = decrypt_value
     app.jinja_env.globals["os_icon_class"] = _os_icon_class
     app.jinja_env.globals["get_os_choices"] = _get_os_choices
-    app.jinja_env.globals["group_icon_choices"] = GROUP_ICON_CHOICES
-    app.jinja_env.globals["group_color_choices"] = GROUP_COLOR_CHOICES
+    app.jinja_env.globals["group_icon_choices"] = _translated_group_icon_choices
+    app.jinja_env.globals["group_color_choices"] = _translated_group_color_choices
     app.jinja_env.globals["theme_choices"] = THEME_CHOICES
     app.jinja_env.globals["language_choices"] = LANGUAGE_CHOICES
     app.jinja_env.globals["get_language"] = _get_language
@@ -691,6 +804,8 @@ def register_template_helpers(app: Flask) -> None:
             "bruteforce_settings": _get_bruteforce_settings(),
             "update_check_info": _get_update_check_info(),
             "update_auto_check_settings": _get_update_auto_check_settings(),
+            "group_icon_choices": _translated_group_icon_choices(),
+            "group_color_choices": _translated_group_color_choices(),
         }
 
 
@@ -1116,7 +1231,7 @@ def register_routes(app: Flask) -> None:
                 db.session.add(device)
                 count += 1
             db.session.commit()
-            flash(f"Import abgeschlossen: {count} Geräte angelegt.", "success")
+            flash(_t("import.csv.created", "Import abgeschlossen: {count} Geräte angelegt.").format(count=count), "success")
             return redirect(url_for("devices"))
         return render_template("import.html", groups=Group.query.order_by(Group.name.asc()).all())
 
@@ -1139,25 +1254,25 @@ def register_routes(app: Flask) -> None:
             default_group_name = _resolve_group_name_from_form(default="RustDesk Server")
 
             if not uploads:
-                flash("Bitte db_v2.sqlite3 oder ein ZIP mit db_v2.sqlite3, db_v2.sqlite3-wal und optional db_v2.sqlite3-shm auswählen.", "danger")
+                flash(_t("import.server.no_file", "Bitte db_v2.sqlite3 oder ein ZIP mit db_v2.sqlite3, db_v2.sqlite3-wal und optional db_v2.sqlite3-shm auswählen."), "danger")
                 return redirect(url_for("import_rustdesk_server"))
 
             try:
                 with _stage_rustdesk_sqlite_uploads(uploads) as staged_db:
                     result = _import_from_rustdesk_sqlite(staged_db, default_group_name, update_existing)
             except sqlite3.DatabaseError as exc:
-                flash(f"Die Datei konnte nicht als RustDesk-SQLite-Datenbank gelesen werden: {exc}", "danger")
+                flash(_t("import.server.read_error", "Die Datei konnte nicht als RustDesk-SQLite-Datenbank gelesen werden: {error}").format(error=exc), "danger")
                 return redirect(url_for("import_rustdesk_server"))
             except ValueError as exc:
                 flash(str(exc), "danger")
                 return redirect(url_for("import_rustdesk_server"))
 
-            wal_note = " WAL wurde berücksichtigt." if result.get("wal_seen") else " Keine WAL-Datei im Upload gefunden."
-            status_note = " Online-Status wird nicht aus der Server-DB übernommen; nutze dafür Live-Status hbbs."
+            wal_note = _t("import.server.wal_seen", " WAL wurde berücksichtigt.") if result.get("wal_seen") else _t("import.server.no_wal", " Keine WAL-Datei im Upload gefunden.")
+            status_note = _t("import.server.status_note", " Online-Status wird nicht aus der Server-DB übernommen; nutze dafür Live-Status hbbs.")
             flash(
-                f"RustDesk-Server-Import abgeschlossen: {result['created']} neu, "
-                f"{result['updated']} aktualisiert, {result['skipped']} übersprungen."
-                f"{wal_note}{status_note}",
+                _t("import.server.done", "RustDesk-Server-Import abgeschlossen: {created} neu, {updated} aktualisiert, {skipped} übersprungen.").format(
+                    created=result["created"], updated=result["updated"], skipped=result["skipped"]
+                ) + wal_note + status_note,
                 "success",
             )
             return redirect(url_for("devices"))
@@ -1167,27 +1282,31 @@ def register_routes(app: Flask) -> None:
     @app.route("/sync/rustdesk-status", methods=["POST"])
     @login_required
     def sync_rustdesk_status():
-        flash("Status aus Server-DB wurde entfernt. Der Online-Status wird jetzt über hbbs Live abgefragt; die Server-DB bleibt für Import und Diagnose erhalten.", "info")
+        flash(_t("status.flash_removed", "Status aus Server-DB wurde entfernt. Der Online-Status wird jetzt über hbbs Live abgefragt; die Server-DB bleibt für Import und Diagnose erhalten."), "info")
         return redirect(request.referrer or url_for("devices"))
 
     @app.route("/sync/rustdesk-live-status", methods=["POST"])
     @login_required
     def sync_rustdesk_live_status():
         try:
-            result = _sync_hbbs_live_status(trigger="Manuell")
+            result = _sync_hbbs_live_status(trigger="manual")
         except RustDeskLiveStatusError as exc:
             db.session.rollback()
-            _record_status_check(False, str(exc), trigger="Manuell")
-            flash(f"hbbs Live-Abfrage fehlgeschlagen: {exc}", "danger")
+            _record_status_check(False, str(exc), trigger="manual")
+            flash(_t("status.flash_error", "hbbs Live-Abfrage fehlgeschlagen: {error}").format(error=exc), "danger")
             return redirect(request.referrer or url_for("devices"))
 
         flash(
-            f"hbbs Live-Status aktualisiert: {result['updated']} geändert, "
-            f"{result['online']} online, {result['offline']} offline. "
-            f"Letzte Response states={result.get('states') or '-'}.",
+            _t("status.flash_success", "hbbs Live-Status aktualisiert: {updated} geändert, {online} online, {offline} offline. Letzte Response states={states}.").format(
+                updated=result["updated"],
+                online=result["online"],
+                offline=result["offline"],
+                states=result.get("states") or "-",
+            ),
             "success",
         )
         return redirect(request.referrer or url_for("devices"))
+
 
     @app.route("/api/status/auto-check", methods=["POST"])
     @login_required
@@ -1616,7 +1735,7 @@ def register_routes(app: Flask) -> None:
                 _set_setting("auto_status_enabled", "1" if auto_enabled else "0")
                 _set_setting("auto_status_value", str(auto_value))
                 _set_setting("auto_status_unit", auto_unit)
-                flash("Online-Status-Einstellungen wurden gespeichert.", "success")
+                flash(_t("settings.status.saved", "Online-Status-Einstellungen wurden gespeichert."), "success")
                 return redirect(url_for("settings"))
 
             if action == "update_check_settings":
@@ -1628,7 +1747,7 @@ def register_routes(app: Flask) -> None:
                 interval_hours = min(max(interval_hours, 1), 168)
                 _set_setting("update_auto_check_enabled", "1" if auto_enabled else "0")
                 _set_setting("update_auto_check_interval_seconds", str(interval_hours * 3600))
-                flash("Update-Check-Einstellungen wurden gespeichert.", "success")
+                flash(_t("settings.update.saved", "Update-Check-Einstellungen wurden gespeichert."), "success")
                 return redirect(url_for("settings") + "#update-check-card")
 
             if action == "bruteforce":
@@ -2447,7 +2566,7 @@ def _sync_hbbs_live_status(*, trigger: str) -> dict:
                 offline_count += 1
 
     db.session.commit()
-    message = f"{online_count} online, {offline_count} offline, {updated} geändert"
+    message = _t("status.last_summary", "{online} online, {offline} offline, {updated} geändert").format(online=online_count, offline=offline_count, updated=updated)
     _record_status_check(True, message, trigger=trigger, online=online_count, offline=offline_count, updated=updated, states=last_states)
     return {"updated": updated, "online": online_count, "offline": offline_count, "states": last_states}
 
@@ -2474,14 +2593,22 @@ def _get_status_last_checked_epoch() -> int:
 
 def _get_status_check_info() -> dict:
     ok_raw = _get_setting("status_last_ok", "")
+    online = _get_setting("status_last_online", "")
+    offline = _get_setting("status_last_offline", "")
+    updated = _get_setting("status_last_updated", "")
+    message = _get_setting("status_last_message", "")
+    if ok_raw == "1" and online != "" and offline != "" and updated != "":
+        message = _t("status.last_summary", "{online} online, {offline} offline, {updated} geändert").format(online=online, offline=offline, updated=updated)
+    trigger_raw = _get_setting("status_last_trigger", "")
+    trigger = _t("status.trigger.manual", "Manuell") if trigger_raw == "manual" else (_t("status.trigger.auto", "Automatisch") if trigger_raw == "auto" else trigger_raw)
     return {
         "checked_at": _get_setting("status_last_checked_at", ""),
         "ok": True if ok_raw == "1" else False if ok_raw == "0" else None,
-        "trigger": _get_setting("status_last_trigger", ""),
-        "message": _get_setting("status_last_message", ""),
-        "online": _get_setting("status_last_online", ""),
-        "offline": _get_setting("status_last_offline", ""),
-        "updated": _get_setting("status_last_updated", ""),
+        "trigger": trigger,
+        "message": message,
+        "online": online,
+        "offline": offline,
+        "updated": updated,
         "states": _get_setting("status_last_states", ""),
     }
 
@@ -2616,46 +2743,47 @@ def _security_audit_report() -> list[dict]:
     users = User.query.order_by(User.id.asc()).all()
     if users:
         protected = sum(1 for u in users if getattr(u, "totp_enabled", False))
-        add("2FA", "ok" if protected == len(users) else "warn", f"{protected} von {len(users)} Benutzer(n) haben 2FA aktiviert.")
+        add("2FA", "ok" if protected == len(users) else "warn", _t("security.report.2fa", "{protected} von {total} Benutzer(n) haben 2FA aktiviert.").format(protected=protected, total=len(users)))
         recovery = sum(_recovery_code_count(u) for u in users)
-        add("2FA-Recovery-Codes", "ok" if recovery else "warn", f"Verfügbare Recovery-Codes gesamt: {recovery}.")
+        add(_t("security.report.recovery_name", "2FA-Recovery-Codes"), "ok" if recovery else "warn", _t("security.report.recovery", "Verfügbare Recovery-Codes gesamt: {count}.").format(count=recovery))
         signed = sum(1 for u in users if _verify_user_security_state(u))
-        add("DB-Manipulationsschutz Benutzer", "ok" if signed == len(users) else "danger", f"{signed} von {len(users)} Benutzer-Sicherheitszuständen haben eine gültige HMAC-Signatur. Policy: {_user_signature_policy()}.")
+        add(_t("security.report.sign_name", "DB-Manipulationsschutz Benutzer"), "ok" if signed == len(users) else "danger", _t("security.report.sign", "{signed} von {total} Benutzer-Sicherheitszuständen haben eine gültige HMAC-Signatur. Policy: {policy}.").format(signed=signed, total=len(users), policy=_user_signature_policy()))
     else:
-        add("Benutzer", "danger", "Kein Benutzer gefunden.")
+        add(_t("security.report.users_name", "Benutzer"), "danger", _t("security.report.no_users", "Kein Benutzer gefunden."))
 
     add("Session-Cookie HttpOnly", "ok" if current_app.config.get("SESSION_COOKIE_HTTPONLY") else "danger", f"SESSION_COOKIE_HTTPONLY={current_app.config.get('SESSION_COOKIE_HTTPONLY')}")
-    add("Session-Cookie Secure", "ok" if current_app.config.get("SESSION_COOKIE_SECURE") else "warn", "Für reinen HTTPS-Betrieb sollte SESSION_COOKIE_SECURE=true gesetzt werden.")
-    add("HSTS", "ok" if current_app.config.get("APP_HSTS") else "warn", "Für produktiven HTTPS-Betrieb sollte APP_HSTS=true gesetzt werden.")
-    add("Proxy-Header", "ok" if current_app.config.get("TRUST_PROXY_HEADERS") else "info", "TRUST_PROXY_HEADERS nur hinter vertrauenswürdigem Reverse Proxy aktivieren; sonst false lassen.")
+    add("Session-Cookie Secure", "ok" if current_app.config.get("SESSION_COOKIE_SECURE") else "warn", _t("security.report.cookie_secure", "Für reinen HTTPS-Betrieb sollte SESSION_COOKIE_SECURE=true gesetzt werden."))
+    add("HSTS", "ok" if current_app.config.get("APP_HSTS") else "warn", _t("security.report.hsts", "Für produktiven HTTPS-Betrieb sollte APP_HSTS=true gesetzt werden."))
+    add(_t("security.report.proxy_name", "Proxy-Header"), "ok" if current_app.config.get("TRUST_PROXY_HEADERS") else "info", _t("security.report.proxy", "TRUST_PROXY_HEADERS nur hinter vertrauenswürdigem Reverse Proxy aktivieren; sonst false lassen."))
 
     auth_log = Path(current_app.config.get("AUTH_LOG_FILE"))
-    add("Auth-Logdatei", "ok" if auth_log.parent.exists() else "danger", str(auth_log))
+    add(_t("security.report.auth_log", "Auth-Logdatei"), "ok" if auth_log.parent.exists() else "danger", str(auth_log))
     if auth_log.exists():
         mode = oct(auth_log.stat().st_mode & 0o777)
-        add("Auth-Log Berechtigungen", "ok" if mode in {"0o600", "0o640"} else "warn", f"Dateimodus: {mode}")
+        add(_t("security.report.auth_log_perms", "Auth-Log Berechtigungen"), "ok" if mode in {"0o600", "0o640"} else "warn", _t("security.report.file_mode", "Dateimodus: {mode}").format(mode=mode))
 
     data_dir = Path(current_app.config["DATA_DIR"])
     cfg = data_dir / "config.json"
     db_file = data_dir / "addressbook.db"
     for label, path, expected_modes in [
-        ("Runtime-Secrets", cfg, {"0o600", "0o640"}),
-        ("SQLite-Datenbank", db_file, {"0o600", "0o640", "0o644"}),
+        (_t("security.report.runtime_secrets", "Runtime-Secrets"), cfg, {"0o600", "0o640"}),
+        (_t("security.report.sqlite_db", "SQLite-Datenbank"), db_file, {"0o600", "0o640", "0o644"}),
     ]:
         if path.exists():
             mode = oct(path.stat().st_mode & 0o777)
-            add(label, "ok" if mode in expected_modes else "warn", f"{path} Modus {mode}")
+            add(label, "ok" if mode in expected_modes else "warn", _t("security.report.path_mode", "{path} Modus {mode}").format(path=path, mode=mode))
         else:
-            add(label, "warn", f"{path} existiert aktuell nicht.")
+            add(label, "warn", _t("security.report.path_missing", "{path} existiert aktuell nicht.").format(path=path))
 
     backup_dir = Path(current_app.config["BACKUP_DIR"])
     plain = len([p for p in backup_dir.glob("*.db") if p.is_file()]) if backup_dir.exists() else 0
     encrypted = len([p for p in backup_dir.glob("*.rabenc") if p.is_file()]) if backup_dir.exists() else 0
     full = len([p for p in backup_dir.glob("*.rabfull") if p.is_file()]) if backup_dir.exists() else 0
-    add("Backups", "ok" if full or encrypted or plain == 0 else "warn", f"{full} verschlüsselte Vollbackups .rabfull, {encrypted} verschlüsselte .rabenc, {plain} unverschlüsselte .db Backups.")
+    add(_t("security.report.backups", "Backups"), "ok" if full or encrypted or plain == 0 else "warn", _t("security.report.backups_detail", "{full} verschlüsselte Vollbackups .rabfull, {encrypted} verschlüsselte .rabenc, {plain} unverschlüsselte .db Backups.").format(full=full, encrypted=encrypted, plain=plain))
 
-    add("SQLite-Dateiverschlüsselung", "info", "Die produktive SQLite-Datei ist nicht vollständig SQLCipher-verschlüsselt. Sensible Gerätepasswörter sind feldweise verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert.")
-    add("Brute-Force-Sperre", "ok", f"Limit {_get_bruteforce_settings()['limit']} Fehlversuche je IP/Benutzer innerhalb {_get_bruteforce_settings()['window_seconds']} Sekunden.")
+    add(_t("security.report.sqlite_enc", "SQLite-Dateiverschlüsselung"), "info", _t("security.report.sqlite_enc_detail", "Die produktive SQLite-Datei ist nicht vollständig SQLCipher-verschlüsselt. Sensible Gerätepasswörter sind feldweise verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert."))
+    settings = _get_bruteforce_settings()
+    add(_t("security.report.bruteforce", "Brute-Force-Sperre"), "ok", _t("security.report.bruteforce_detail", "Limit {limit} Fehlversuche je IP/Benutzer innerhalb {window} Sekunden.").format(limit=settings["limit"], window=settings["window_seconds"]))
     return items
 
 
@@ -2978,13 +3106,45 @@ def _fetch_text_url(url: str, timeout: float = 5.0) -> str:
     return data.decode("utf-8", errors="replace")
 
 
-def _normalize_release_notes(value) -> list[str]:
+def _normalize_release_notes(value, lang: str | None = None) -> list[str]:
     if value is None:
         return []
+    selected_lang = (lang or _get_language()).strip().lower()
     if isinstance(value, list):
-        items = [str(item).strip() for item in value]
+        raw_lines = [str(item).strip() for item in value]
     else:
-        items = [line.strip() for line in str(value).replace("\r\n", "\n").split("\n")]
+        raw_lines = [line.strip() for line in str(value).replace("\r\n", "\n").split("\n")]
+
+    # Supports bilingual latest.txt/release files:
+    #   rustdesk-addressbook-update-flat-v0519.zip
+    #   [de]
+    #   - Änderung ...
+    #   [en]
+    #   - Change ...
+    # Also supports one-line prefixes: de: ... / en: ...
+    sectioned: dict[str, list[str]] = {"de": [], "en": []}
+    active_section: str | None = None
+    generic: list[str] = []
+    for line in raw_lines:
+        if not line or line.startswith("#"):
+            continue
+        marker = line.strip().lower()
+        if marker in {"[de]", "de:", "de"}:
+            active_section = "de"
+            continue
+        if marker in {"[en]", "en:", "en"}:
+            active_section = "en"
+            continue
+        pref = re.match(r"^(de|en)\s*[:|-]\s*(.+)$", line, flags=re.I)
+        if pref:
+            sectioned[pref.group(1).lower()].append(pref.group(2).strip())
+            continue
+        if active_section in sectioned:
+            sectioned[active_section].append(line)
+        else:
+            generic.append(line)
+
+    items = sectioned.get(selected_lang) or generic or sectioned.get("de") or sectioned.get("en") or []
     cleaned: list[str] = []
     for item in items:
         if not item or item.startswith("#"):
@@ -2995,26 +3155,33 @@ def _normalize_release_notes(value) -> list[str]:
     return cleaned[:30]
 
 
-def _fetch_remote_release_notes(base: str, file_name: str) -> list[str]:
+def _fetch_remote_release_notes(base: str, file_name: str, lang: str | None = None) -> list[str]:
     if not file_name:
         return []
     stem = Path(file_name).stem
+    selected_lang = (lang or _get_language()).strip().lower()
     version_match = re.search(r"v(\d+)", file_name)
     version_tag = f"v{version_match.group(1)}" if version_match else ""
     candidates = [
+        f"{base}/{stem}.{selected_lang}.txt",
+        f"{base}/{stem}.{selected_lang}.md",
         f"{base}/{stem}.txt",
         f"{base}/{stem}.md",
     ]
     if version_tag:
         candidates.extend([
+            f"{base}/release-notes-{version_tag}.{selected_lang}.txt",
+            f"{base}/release-notes-{version_tag}.{selected_lang}.md",
             f"{base}/release-notes-{version_tag}.txt",
             f"{base}/release-notes-{version_tag}.md",
+            f"{base}/releases/{version_tag}.{selected_lang}.txt",
+            f"{base}/releases/{version_tag}.{selected_lang}.md",
             f"{base}/releases/{version_tag}.txt",
             f"{base}/releases/{version_tag}.md",
         ])
     for url in candidates:
         try:
-            notes = _normalize_release_notes(_fetch_text_url(url))
+            notes = _normalize_release_notes(_fetch_text_url(url), lang=selected_lang)
             if notes:
                 return notes
         except Exception:
@@ -3036,13 +3203,13 @@ def _online_update_manifest() -> dict:
             if re.match(r"^v\d+$", candidate):
                 candidate = f"rustdesk-addressbook-update-flat-{candidate}.zip"
             if re.match(r"^rustdesk-addressbook-update-flat-v\d+\.zip$", candidate):
-                inline_notes = _normalize_release_notes(lines[idx + 1:])
+                inline_notes = _normalize_release_notes(lines[idx + 1:], lang=_get_language())
                 file_name = Path(candidate).name
-                notes = inline_notes or _fetch_remote_release_notes(base, file_name)
+                notes = inline_notes or _fetch_remote_release_notes(base, file_name, lang=_get_language())
                 return {"ok": True, "base_url": base, "file": file_name, "version": "", "source": "latest.txt", "release_notes": notes, "errors": []}
-        errors.append("latest.txt enthält keine gültige Update-ZIP.")
+        errors.append(_t("update.error.invalid_manifest", "latest.txt enthält keine gültige Update-ZIP."))
     except Exception as exc:
-        errors.append(f"latest.txt konnte nicht gelesen werden: {exc}")
+        errors.append(_t("update.error.read_failed", "latest.txt konnte nicht gelesen werden: {error}").format(error=exc))
 
     return {"ok": False, "base_url": base, "file": "", "version": "", "source": "latest.txt", "release_notes": [], "errors": errors}
 
@@ -3070,7 +3237,7 @@ def _check_online_update_available() -> dict:
         "errors": manifest.get("errors", []),
     }
     if not manifest.get("ok"):
-        result["message"] = "Kein gültiges Online-Manifest gefunden."
+        result["message"] = _t("update.message.no_manifest", "Kein gültiges Online-Manifest gefunden.")
         return result
 
     latest_file = str(manifest.get("file") or "")
@@ -3079,9 +3246,9 @@ def _check_online_update_available() -> dict:
     result["download_url"] = f"{str(manifest.get('base_url')).rstrip('/')}/{latest_file}"
     if latest_num > current_num:
         result["update_available"] = True
-        result["message"] = f"Update verfügbar: {latest_file}"
+        result["message"] = _t("update.message.available", "Update verfügbar: {file}").format(file=latest_file)
     else:
-        result["message"] = "Kein Update verfügbar. Die installierte Version ist aktuell oder neuer."
+        result["message"] = _t("update.message.current", "Kein Update verfügbar. Die installierte Version ist aktuell oder neuer.")
     return result
 
 
@@ -3112,7 +3279,7 @@ def _get_update_check_info() -> dict:
         "file": _get_setting("update_last_file", ""),
         "url": _get_setting("update_last_url", ""),
         "available": normalize_bool(_get_setting("update_last_available", "0")),
-        "release_notes": _normalize_release_notes(_get_setting("update_last_release_notes", "")),
+        "release_notes": _normalize_release_notes(_get_setting("update_last_release_notes", ""), lang=_get_language()),
         "stale": auto_settings["stale"],
         "age_seconds": auto_settings["age_seconds"],
     }
@@ -3154,6 +3321,14 @@ def _t(key: str, default: str | None = None) -> str:
     if lang == "de":
         return default if default is not None else key
     return TRANSLATIONS.get(lang, {}).get(key, default if default is not None else key)
+
+
+def _translated_group_color_choices() -> list[tuple[str, str]]:
+    return [(value, _t(f"group.color.{value}", label)) for value, label in GROUP_COLOR_CHOICES]
+
+
+def _translated_group_icon_choices() -> list[tuple[str, str]]:
+    return [(value, _t(f"group.icon.{value}", label)) for value, label in GROUP_ICON_CHOICES]
 
 
 def _translated_theme_choices() -> list[tuple[str, str]]:

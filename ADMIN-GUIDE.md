@@ -8,8 +8,8 @@ Empfohlen ist das interaktive Installationsscript. Die Komplettversion entpackt 
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0518.zip
-unzip rustdesk-addressbook-v0518.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0520.zip
+unzip rustdesk-addressbook-v0520.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -44,8 +44,8 @@ HTTP ist standardmäßig deaktiviert. Wenn HTTP im Installationsscript aktiviert
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0518.zip
-unzip rustdesk-addressbook-v0518.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0520.zip
+unzip rustdesk-addressbook-v0520.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -60,7 +60,7 @@ Es gibt zwei empfohlene Wege. In beiden Fällen wird am Ende nur das Update-Scri
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0518.zip -O updates/rustdesk-addressbook-update-flat-v0518.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0520.zip -O updates/rustdesk-addressbook-update-flat-v0520.zip
 ./scripts/update.sh
 ```
 
@@ -85,13 +85,13 @@ Die früheren Optionen `--check-online` und `--online` sind für den normalen Be
 Minimale Variante:
 
 ```text
-rustdesk-addressbook-update-flat-v0518.zip
+rustdesk-addressbook-update-flat-v0520.zip
 ```
 
 Empfohlene Variante mit Änderungen für WebUI und Update-Script:
 
 ```text
-rustdesk-addressbook-update-flat-v0518.zip
+rustdesk-addressbook-update-flat-v0520.zip
 - Update-Check nutzt latest.txt ohne latest.json-Prüfung.
 - Update-Script zeigt Änderungen vor Download und Installation.
 - Ja/Nein-Abfragen nutzen [J/n] und [j/N].
@@ -100,9 +100,9 @@ rustdesk-addressbook-update-flat-v0518.zip
 Alternativ kann neben der ZIP eine separate Notizdatei liegen:
 
 ```text
-rustdesk-addressbook-update-flat-v0518.txt
-release-notes-v0518.txt
-releases/v0518.txt
+rustdesk-addressbook-update-flat-v0520.txt
+release-notes-v0520.txt
+releases/v0520.txt
 ```
 
 
@@ -136,7 +136,7 @@ cd /opt/rustdesk-addressbook
 docker compose down
 cp -a data ../rustdesk-addressbook-data-backup
 cp -a backups ../rustdesk-addressbook-backups-backup 2>/dev/null || true
-unzip -o updates/rustdesk-addressbook-update-flat-v0518.zip
+unzip -o updates/rustdesk-addressbook-update-flat-v0520.zip
 docker compose build --no-cache
 docker compose up -d --force-recreate --remove-orphans
 ```
@@ -492,11 +492,44 @@ PY
 
 ## Sprache und Einstellungen
 
-Ab Version 0.5.18 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
+Ab Version 0.5.19 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
 Die Auswahl befindet sich unter **Einstellungen → Darstellung & Sprache**.
 
 Der Einstellungsbereich ist in eine linke Navigation und einen rechten Detailbereich aufgeteilt.
 Dadurch sind Admin-Konto, 2FA, Online-Status, Update-Check und weitere Optionen schneller erreichbar.
 
-Hinweis: Die Kernoberfläche ist übersetzt. Technische Logs, Import-Inhalte und einige Diagnosemeldungen bleiben bewusst unverändert oder deutschsprachig, damit bestehende Hinweise und Logs kompatibel bleiben.
+Hinweis: Die Kernoberfläche, Anleitung und Release-Ansicht sind zweisprachig. Technische Logs, importierte Inhalte und gespeicherte historische Meldungen bleiben unverändert.
 
+
+
+## Zweisprachige Release-Notizen
+
+Für die WebUI und das Update-Script kann `latest.txt` Sprachbereiche enthalten:
+
+```text
+rustdesk-addressbook-update-flat-v0520.zip
+[de]
+- Deutsche Änderung
+[en]
+- English change
+```
+
+Alternativ unterstützt die App sprachspezifische Dateien neben der ZIP:
+
+```text
+rustdesk-addressbook-update-flat-v0520.en.txt
+rustdesk-addressbook-update-flat-v0520.de.txt
+release-notes-v0520.en.txt
+release-notes-v0520.de.txt
+```
+
+Das Shell-Script nutzt standardmäßig Deutsch. Für englische Ausgabe kann es so gestartet werden:
+
+```bash
+RAB_UPDATE_LANG=en ./scripts/update.sh
+```
+
+
+## WebUI-Anleitung
+
+Die WebUI-Seite **Anleitung** enthält eine ausführliche, strukturierte Anleitung mit linker Sprungnavigation. Sie beschreibt alle zentralen Bereiche: Installation, Update, Ersteinrichtung, Geräte, Gruppen, Online-Status, Import/Export, SSH-Import, Backup/Restore, Einstellungen, Update-Check, Sicherheit, fail2ban/CrowdSec und Fehlerdiagnose.
