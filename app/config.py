@@ -41,7 +41,7 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
 
 
 class Config:
-    APP_VERSION = "0.5.20-help-restore-full-docs"
+    APP_VERSION = "0.5.21-security-log-groups-cleanup"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -60,6 +60,9 @@ class Config:
     LOG_DIR = Path(os.environ.get("LOG_DIR", str(DATA_DIR / "logs")))
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     AUTH_LOG_FILE = Path(os.environ.get("AUTH_LOG_FILE", str(LOG_DIR / "auth.log")))
+
+    AUTH_LOG_ROTATE_DAYS = int(os.environ.get("AUTH_LOG_ROTATE_DAYS", "7"))
+    AUTH_LOG_ROTATE_KEEP = int(os.environ.get("AUTH_LOG_ROTATE_KEEP", "8"))
     TRUST_PROXY_HEADERS = os.environ.get("TRUST_PROXY_HEADERS", "false").lower() in {"1", "true", "yes", "on"}
     LOGIN_FAIL_LIMIT = int(os.environ.get("LOGIN_FAIL_LIMIT", "5"))
     LOGIN_FAIL_WINDOW_SECONDS = int(os.environ.get("LOGIN_FAIL_WINDOW_SECONDS", "900"))

@@ -2,19 +2,19 @@
 
 Selfhosted RustDesk-Adressbuch als Docker-Projekt mit Flask, SQLite, Login, 2FA, Gruppen, Geräteverwaltung, Import/Export, Backups, HTTPS direkt im Container, hbbs-Live-Status und SSH-Import der RustDesk-Serverdatenbank.
 
-## Neu in 0.5.19
+## Neu in 0.5.21
 
-- Englische Übersetzungen nochmals erweitert: Geräte, Gruppen, Import/Export, Sicherheit, Anleitung und Release-Ansicht.
-- „Display & language“ steht links wieder einzeilig; im rechten Detailbereich werden Darstellung und Sprache untereinander angezeigt.
-- Dateiauswahl im Import-/Export- und Backup-Bereich nutzt eigene, übersetzbare Beschriftungen statt Browser-Standardtext.
-- Update-/Release-Notizen unterstützen Sprachbereiche in `latest.txt` oder sprachspezifische Release-Notizdateien.
+- Versionsangaben und Docker-Image-Defaults auf 0.5.21 vereinheitlicht.
+- Sicherheitslog-Anzeige auf einen Scrollbereich mit ungefähr 10 sichtbaren Zeilen begrenzt.
+- Wöchentliche `auth.log`-Rotation mit konfigurierbarer Aufbewahrung ergänzt.
+- Gruppenübersicht kompakter gestaltet.
 
 ## Download / Neuinstallation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0520.zip
-unzip rustdesk-addressbook-v0520.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0521.zip
+unzip rustdesk-addressbook-v0521.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -44,7 +44,7 @@ https://SERVER-IP:5443
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0520.zip -O updates/rustdesk-addressbook-update-flat-v0520.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0521.zip -O updates/rustdesk-addressbook-update-flat-v0521.zip
 ./scripts/update.sh
 ```
 
@@ -62,13 +62,13 @@ Das Script prüft zuerst den vorhandenen Ordner `updates/`. Wenn dort keine neue
 Du nutzt `latest.txt`. Die minimale Variante ist:
 
 ```text
-rustdesk-addressbook-update-flat-v0520.zip
+rustdesk-addressbook-update-flat-v0521.zip
 ```
 
 Damit WebUI und Update-Script zusätzlich die Änderungen anzeigen können, kannst du die Änderungen direkt darunter schreiben:
 
 ```text
-rustdesk-addressbook-update-flat-v0520.zip
+rustdesk-addressbook-update-flat-v0521.zip
 - Update-Check nutzt latest.txt ohne latest.json-Prüfung.
 - Update-Script zeigt Änderungen vor Download und Installation.
 - Ja/Nein-Abfragen nutzen [J/n] und [j/N].
@@ -77,13 +77,13 @@ rustdesk-addressbook-update-flat-v0520.zip
 Alternativ kannst du neben der ZIP eine Datei mit gleichem Namen und `.txt` oder `.md` ablegen, zum Beispiel:
 
 ```text
-https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0520.txt
+https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0521.txt
 ```
 
 oder:
 
 ```text
-https://dl.ab-xnet.de/release-notes-v0520.txt
+https://dl.ab-xnet.de/release-notes-v0521.txt
 ```
 
 
@@ -157,13 +157,13 @@ Ohne `data/config.json` können gespeicherte Gerätepasswörter nicht entschlüs
 Im Footer der WebUI steht:
 
 ```text
-RustDesk AddressBook 0.5.19
+RustDesk AddressBook 0.5.21
 ```
 
 Zusätzlich:
 
 ```bash
-docker exec -it rustdesk-addressbook grep -n "0.5.20-help-restore-full-docs" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.21-security-log-groups-cleanup" /app/app/config.py
 ```
 
 ## Sicherheitshinweis
@@ -187,7 +187,7 @@ Hinweis: Die Kernoberfläche, Anleitung und Release-Ansicht sind zweisprachig. T
 Wenn die WebUI auf Englisch steht, können Update-Änderungen ebenfalls englisch angezeigt werden. Dafür kann `latest.txt` so aufgebaut werden:
 
 ```text
-rustdesk-addressbook-update-flat-v0520.zip
+rustdesk-addressbook-update-flat-v0521.zip
 [de]
 - Deutsche Änderung 1
 - Deutsche Änderung 2
@@ -199,8 +199,8 @@ rustdesk-addressbook-update-flat-v0520.zip
 Alternativ können separate Dateien neben der ZIP liegen, zum Beispiel:
 
 ```text
-rustdesk-addressbook-update-flat-v0520.en.txt
-rustdesk-addressbook-update-flat-v0520.de.txt
-release-notes-v0520.en.txt
-release-notes-v0520.de.txt
+rustdesk-addressbook-update-flat-v0521.en.txt
+rustdesk-addressbook-update-flat-v0521.de.txt
+release-notes-v0521.en.txt
+release-notes-v0521.de.txt
 ```

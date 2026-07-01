@@ -19,6 +19,7 @@
 
 {% if app_language == 'en' %}
 {% set releases = [
+  ('0.5.21', ['Unified version strings and Docker image defaults.', 'Limited the security audit event display to a scrollable area with about 10 visible rows.', 'Added weekly auth.log rotation with configurable retention.', 'Made the groups overview more compact.']),
   ('0.5.20', ['Restored the detailed Help/Admin Guide page with left-side navigation.', 'Re-added detailed content from the 0.5.18 guide and extended it with newer features.', 'Guide now covers all major functions: installation, updates, devices, groups, online status, imports, backups, settings, security and troubleshooting.']),
   ('0.5.19', ['Polished English UI translations across devices, groups, import/export, security, setup, help and release notes.', 'Display & language is shown on one line in the settings navigation again; the detail fields are stacked vertically.', 'File picker labels in Import / Export are controlled by the app language.', 'Update/release notes support language sections in latest.txt or language-specific release note files.']),
   ('0.5.18', ['Extended English translations for central areas.', 'Import / Export received a left category navigation with detail area.', 'Dashboard and Devices can switch between card view, list view and small icons.', 'The selected device view is stored in the session.']),
@@ -47,6 +48,7 @@
 ] %}
 {% else %}
 {% set releases = [
+  ('0.5.21', ['Unified version strings and Docker image defaults.', 'Limited the security audit event display to a scrollable area with about 10 visible rows.', 'Added weekly auth.log rotation with configurable retention.', 'Made the groups overview more compact.']),
   ('0.5.20', ['Anleitung/Hilfe-Seite wieder als ausführliche Langfassung mit linker Sprungnavigation aufgebaut.', 'Fehlende Inhalte aus der detaillierten 0.5.18-Anleitung wiederhergestellt und um neue Funktionen ergänzt.', 'Anleitung beschreibt wieder alle wichtigen Funktionen: Installation, Updates, Geräte, Gruppen, Online-Status, Import, Backup, Einstellungen, Sicherheit und Fehlerdiagnose.']),
   ('0.5.19', ['Englische UI-Übersetzungen für Geräte, Gruppen, Import/Export, Sicherheit, Setup, Anleitung und Release-Ansicht erweitert.', 'Display & language steht links wieder einzeilig; im Detailbereich sind Darstellung und Sprache untereinander angeordnet.', 'Dateiauswahl-Beschriftungen im Import/Export-Bereich werden jetzt über die App-Sprache gesteuert.', 'Update-/Release-Notizen unterstützen Sprachbereiche in latest.txt oder sprachspezifische Release-Notizdateien.']),
   ('0.5.18', ['Englische Übersetzungen für zentrale Bereiche erweitert.', 'Import / Export erhält eine linke Kategorienavigation mit rechter Detailansicht.', 'Dashboard und Geräte-Seite können zwischen Kartenansicht, Listenansicht und kleinen Symbolen umgeschaltet werden.', 'Die gewählte Geräteansicht wird in der Session gespeichert.']),

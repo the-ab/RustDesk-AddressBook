@@ -483,6 +483,7 @@ TRANSLATIONS["en"].update({
     "security.fail_marker": "Failures contain the marker",
     "security.fail_filter": "Example fail2ban filter:",
     "security.internal_lockout": "Internal lockout: {limit} failed attempts per IP or username within {window} seconds.",
+    "security.log_rotation": "Auth log rotation: every {days} day(s), keeping {keep} rotated file(s).",
     "security.auth_events": "Latest login / 2FA events",
     "security.table.time": "Time",
     "security.table.status": "Status",
@@ -704,6 +705,68 @@ def _record_auth_event(event_type: str, *, username: str = "", success: bool = F
     _write_auth_log_line(event_type, username=username, ip=ip, success=success, message=message, user_agent=user_agent)
 
 
+def _rotate_auth_log_if_needed(auth_log: Path) -> None:
+    """Rotate auth.log at most once per ISO week.
+
+    This is intentionally app-level and simple so it works inside the container
+    without a host logrotate dependency. Rotated files are kept in the same
+    directory as auth.log and fail2ban/CrowdSec can continue watching auth.log.
+    """
+    try:
+        rotate_days = int(current_app.config.get("AUTH_LOG_ROTATE_DAYS", 7) or 7)
+        keep = int(current_app.config.get("AUTH_LOG_ROTATE_KEEP", 8) or 8)
+    except Exception:
+        rotate_days, keep = 7, 8
+    if rotate_days <= 0:
+        return
+
+    try:
+        auth_log.parent.mkdir(parents=True, exist_ok=True)
+        state_file = auth_log.with_name(auth_log.name + ".rotation")
+        today = utcnow().date()
+        # Weekly default: using ISO weeks avoids mtime problems when the log is
+        # written every day. For custom values, use a date bucket.
+        if rotate_days == 7:
+            iso = today.isocalendar()
+            bucket = f"{iso.year}-W{iso.week:02d}"
+        else:
+            ordinal_bucket = today.toordinal() // max(rotate_days, 1)
+            bucket = f"d{rotate_days}-{ordinal_bucket}"
+
+        previous = state_file.read_text(encoding="utf-8").strip() if state_file.exists() else ""
+        if not previous:
+            state_file.write_text(bucket, encoding="utf-8")
+            return
+        if previous == bucket:
+            return
+        if auth_log.exists() and auth_log.stat().st_size > 0:
+            suffix = previous.replace("/", "-").replace(" ", "_")
+            rotated = auth_log.with_name(f"{auth_log.name}.{suffix}")
+            counter = 1
+            while rotated.exists():
+                rotated = auth_log.with_name(f"{auth_log.name}.{suffix}.{counter}")
+                counter += 1
+            auth_log.replace(rotated)
+            try:
+                rotated.chmod(0o600)
+            except PermissionError:
+                pass
+        state_file.write_text(bucket, encoding="utf-8")
+
+        rotated_files = sorted(
+            [p for p in auth_log.parent.glob(auth_log.name + ".*") if p.name != state_file.name and not p.name.endswith(".rotation")],
+            key=lambda x: x.stat().st_mtime,
+            reverse=True,
+        )
+        for old in rotated_files[max(keep, 0):]:
+            try:
+                old.unlink()
+            except OSError:
+                pass
+    except OSError:
+        pass
+
+
 def _write_auth_log_line(event_type: str, *, username: str, ip: str, success: bool, message: str, user_agent: str) -> None:
     auth_log = Path(current_app.config.get("AUTH_LOG_FILE"))
     auth_log.parent.mkdir(parents=True, exist_ok=True)
@@ -718,6 +781,7 @@ def _write_auth_log_line(event_type: str, *, username: str, ip: str, success: bo
         f"message=\"{clean(message)}\" user_agent=\"{clean(user_agent)}\"\n"
     )
     try:
+        _rotate_auth_log_if_needed(auth_log)
         with auth_log.open("a", encoding="utf-8") as fh:
             fh.write(line)
         try:
@@ -1598,6 +1662,8 @@ def register_routes(app: Flask) -> None:
             auth_log_file=str(current_app.config.get("AUTH_LOG_FILE")),
             fail_limit=_get_bruteforce_settings()["limit"],
             fail_window=_get_bruteforce_settings()["window_seconds"],
+            auth_log_rotate_days=current_app.config.get("AUTH_LOG_ROTATE_DAYS", 7),
+            auth_log_rotate_keep=current_app.config.get("AUTH_LOG_ROTATE_KEEP", 8),
         )
 
     @app.route("/security/auth-log/download")

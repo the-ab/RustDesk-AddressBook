@@ -339,3 +339,34 @@ body {
   color: var(--bs-secondary-color);
 }
 .device-icon-edit:hover { color: var(--bs-primary); }
+
+/* Security log: keep the page compact while still allowing access to older rows. */
+.security-log-scroll {
+  max-height: 31rem;
+  overflow: auto;
+}
+.security-log-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--app-card-bg);
+}
+
+/* Compact group cards */
+.group-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: .85rem;
+}
+.group-card-compact .card-body {
+  padding: .85rem;
+}
+.group-card-compact .form-label {
+  margin-bottom: .2rem;
+}
+.group-card-compact .badge {
+  max-width: 100%;
+}
+.group-card-compact .group-actions {
+  white-space: nowrap;
+}

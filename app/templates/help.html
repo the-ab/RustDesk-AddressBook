@@ -53,8 +53,8 @@
       <h2 class="h4">Installation and update</h2>
       <h3 class="h6 mt-3">Fresh installation</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0520.zip
-unzip rustdesk-addressbook-v0520.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0521.zip
+unzip rustdesk-addressbook-v0521.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -62,7 +62,7 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>The values are written to <code>.env</code>. When you run <code>./scripts/install.sh</code> again, the existing <code>.env</code> values are used as defaults.</p>
       <h3 class="h6 mt-3">Manual update with ZIP in <code>updates/</code></h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0520.zip -O updates/rustdesk-addressbook-update-flat-v0520.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0521.zip -O updates/rustdesk-addressbook-update-flat-v0521.zip
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatic online update check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -225,7 +225,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update check and release notes</h2>
       <p>The Web UI checks <code>latest.txt</code> below <code>RAB_UPDATE_BASE_URL</code>. If an update is available, a badge appears next to Admin/Logout and links to Settings → Update check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0520.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0521.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -321,8 +321,8 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
       <h2 class="h4">Installation und Update</h2>
       <h3 class="h6 mt-3">Neuinstallation mit Installationsscript</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0520.zip
-unzip rustdesk-addressbook-v0520.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0521.zip
+unzip rustdesk-addressbook-v0521.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -330,7 +330,7 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>Die gesetzten Werte werden in <code>.env</code> gespeichert. Beim erneuten Aufruf werden diese Werte als Default vorgeschlagen.</p>
       <h3 class="h6 mt-3">Update-ZIP manuell ablegen</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0520.zip -O updates/rustdesk-addressbook-update-flat-v0520.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0521.zip -O updates/rustdesk-addressbook-update-flat-v0521.zip
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatischer Online-Check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -494,7 +494,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update-Check und Release-Notizen</h2>
       <p>Die WebUI prüft <code>latest.txt</code> unterhalb von <code>RAB_UPDATE_BASE_URL</code>. Wenn ein Update verfügbar ist, erscheint oben rechts ein Badge neben Admin/Logout und verlinkt zum Update-Check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0520.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0521.zip
 [de]
 - Deutsche Änderung 1
 [en]

@@ -92,7 +92,7 @@ BANNER
 
 TZ_DEFAULT="$(saved_default TZ 'Europe/Berlin')"
 CONTAINER_DEFAULT="$(saved_default RAB_CONTAINER_NAME 'rustdesk-addressbook')"
-IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0519')"
+IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0521')"
 DATA_DEFAULT="$(saved_default RAB_DATA_DIR './data')"
 BACKUP_DEFAULT="$(saved_default RAB_BACKUP_DIR './backups')"
 HTTPS_BIND_DEFAULT="$(saved_default RAB_HTTPS_BIND '0.0.0.0')"
@@ -111,6 +111,8 @@ RUSTDESK_DIR_DEFAULT="$(saved_default RAB_RUSTDESK_DIR '/docker_data/rustdesk')"
 LOGIN_FAIL_LIMIT_DEFAULT="$(saved_default LOGIN_FAIL_LIMIT '5')"
 LOGIN_FAIL_WINDOW_SECONDS_DEFAULT="$(saved_default LOGIN_FAIL_WINDOW_SECONDS '900')"
 LOGIN_FAIL_WINDOW_MINUTES_DEFAULT="$((LOGIN_FAIL_WINDOW_SECONDS_DEFAULT / 60))"
+AUTH_LOG_ROTATE_DAYS_DEFAULT="$(saved_default AUTH_LOG_ROTATE_DAYS '7')"
+AUTH_LOG_ROTATE_KEEP_DEFAULT="$(saved_default AUTH_LOG_ROTATE_KEEP '8')"
 UPDATE_BASE_URL_DEFAULT="$(saved_default RAB_UPDATE_BASE_URL 'https://dl.ab-xnet.de')"
 
 TZ_VALUE="$(prompt 'Zeitzone' "$TZ_DEFAULT")"
@@ -148,6 +150,8 @@ fi
 LOGIN_FAIL_LIMIT="$(prompt 'Brute-Force Fehlversuche bis Sperre' "$LOGIN_FAIL_LIMIT_DEFAULT")"
 LOGIN_FAIL_WINDOW_MINUTES="$(prompt 'Brute-Force Zeitfenster in Minuten' "$LOGIN_FAIL_WINDOW_MINUTES_DEFAULT")"
 LOGIN_FAIL_WINDOW_SECONDS=$((LOGIN_FAIL_WINDOW_MINUTES * 60))
+AUTH_LOG_ROTATE_DAYS="$(prompt 'Auth-Logrotation in Tagen' "$AUTH_LOG_ROTATE_DAYS_DEFAULT")"
+AUTH_LOG_ROTATE_KEEP="$(prompt 'Anzahl rotierter Auth-Logs aufbewahren' "$AUTH_LOG_ROTATE_KEEP_DEFAULT")"
 
 mkdir -p "$DATA_DIR" "$BACKUP_DIR" "$(dirname "$DATA_DIR")"
 mkdir -p "$DATA_DIR/certs" "$DATA_DIR/logs" "$DATA_DIR/ssh"
@@ -179,6 +183,8 @@ APP_HSTS=${HSTS}
 TRUST_PROXY_HEADERS=${TRUST_PROXY}
 LOGIN_FAIL_LIMIT=${LOGIN_FAIL_LIMIT}
 LOGIN_FAIL_WINDOW_SECONDS=${LOGIN_FAIL_WINDOW_SECONDS}
+AUTH_LOG_ROTATE_DAYS=${AUTH_LOG_ROTATE_DAYS}
+AUTH_LOG_ROTATE_KEEP=${AUTH_LOG_ROTATE_KEEP}
 USER_SIGNATURE_POLICY=repair_on_verified_login
 RUSTDESK_SERVER_DB=${RUSTDESK_SERVER_DB}
 ENVEOF

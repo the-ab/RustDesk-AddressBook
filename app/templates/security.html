@@ -43,12 +43,13 @@
 failregex = ^.*RAB_AUTH_FAIL .*ip=&lt;HOST&gt; .*$
 ignoreregex =</code></pre>
         <div class="small text-secondary">{{ t('security.internal_lockout', 'Interne Sperre: {limit} Fehlversuche je IP oder Benutzer innerhalb {window} Sekunden.').format(limit=fail_limit, window=fail_window) }}</div>
+        <div class="small text-secondary mt-1">{{ t('security.log_rotation', 'Auth-Logrotation: alle {days} Tag(e), Aufbewahrung {keep} rotierte Datei(en).').format(days=auth_log_rotate_days, keep=auth_log_rotate_keep) }}</div>
       </div>
     </div>
 
     <div class="card shadow-sm">
       <div class="card-header bg-transparent fw-semibold">{{ t('security.auth_events', 'Letzte Login-/2FA-Ereignisse') }}</div>
-      <div class="table-responsive">
+      <div class="table-responsive security-log-scroll">
         <table class="table table-hover align-middle mb-0">
           <thead>
             <tr>

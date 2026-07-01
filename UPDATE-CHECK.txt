@@ -1,9 +1,11 @@
-rustdesk-addressbook-update-flat-v0520.zip
+rustdesk-addressbook-update-flat-v0521.zip
 [de]
-- Anleitung/Hilfe-Seite wieder detailliert mit linker Sprungnavigation aufgebaut.
-- Fehlende Inhalte aus der 0.5.18-Anleitung wiederhergestellt und um neue Funktionen ergänzt.
-- Anleitung beschreibt wieder alle wichtigen Funktionen inklusive Installation, Update, Import/Export, SSH-Import, Backups, Sicherheit und Fehlerdiagnose.
+- Versionsangaben und Docker-Image-Defaults auf 0.5.21 vereinheitlicht.
+- Sicherheitslog-Anzeige auf 10 sichtbare Zeilen mit Scrollbereich begrenzt.
+- Wöchentliche Auth-Logrotation mit Aufbewahrung der letzten Rotationen ergänzt.
+- Gruppenansicht kompakter gestaltet.
 [en]
-- Restored the detailed Help/Admin Guide page with left-side navigation.
-- Re-added missing content from the 0.5.18 guide and included newer features.
-- The guide now covers all major functions including installation, update, import/export, SSH import, backups, security and troubleshooting.
+- Unified version strings and Docker image defaults to 0.5.21.
+- Limited the security log display to 10 visible rows with a scrollable area.
+- Added weekly auth log rotation with retention for recent rotations.
+- Made the groups view more compact.
