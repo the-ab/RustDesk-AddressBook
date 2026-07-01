@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}RustDesk Server Import - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1">RustDesk Server Import</h1>
+    <div class="text-secondary">Geräte aus <code>db_v2.sqlite3</code> inklusive WAL/SHM importieren. Online-Status läuft über hbbs Live.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('import_devices') }}"><i class="bi bi-arrow-down-up me-1"></i>Import / Export</a>
+    {% set db_mount = rustdesk_server_db_status() %}
+    {% if db_mount.configured %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>Server-DB Diagnose</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <div class="card app-card">
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">RustDesk Server-Dateien</label>
+            <input class="form-control" type="file" name="server_files" multiple accept=".sqlite,.sqlite3,.db,.sqlite-wal,.sqlite3-wal,.db-wal,.sqlite-shm,.sqlite3-shm,.db-shm,.zip">
+            <div class="form-text">Empfohlen: ZIP mit <code>db_v2.sqlite3</code>, <code>db_v2.sqlite3-wal</code> und optional <code>db_v2.sqlite3-shm</code>.</div>
+          </div>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Zielgruppe</label>
+              <select class="form-select" name="group_id">
+                <option value="">RustDesk Server</option>
+                {% for group in groups %}
+                  <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Neue Zielgruppe optional</label>
+              <input class="form-control" name="group_name_new" placeholder="z.B. Import">
+            </div>
+          </div>
+          <div class="form-check my-3">
+            <input class="form-check-input" type="checkbox" name="update_existing" id="update_existing" checked>
+            <label class="form-check-label" for="update_existing">Vorhandene Geräte mit gleicher RustDesk-ID aktualisieren</label>
+          </div>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-database-up me-1"></i>Importieren</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        {% set db_mount = rustdesk_server_db_status() %}
+        <h2 class="h5">Direkter DB-Import</h2>
+        <p class="text-secondary">Für einen gemounteten RustDesk-Datenordner kannst du direkt aus <code>RUSTDESK_SERVER_DB</code> importieren.</p>
+        <div class="alert {% if db_mount.exists %}alert-success{% elif db_mount.configured %}alert-warning{% else %}alert-secondary{% endif %} small">
+          <span class="badge {{ db_mount.badge }} me-2">{% if db_mount.exists %}aktiv{% elif db_mount.configured %}nicht gefunden{% else %}nicht aktiviert{% endif %}</span>{{ db_mount.message }}
+        </div>
+        <form method="post" action="{{ url_for('sync_rustdesk_mounted_import') }}" class="row g-3 align-items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-12">
+            <label class="form-label">Zielgruppe</label>
+            <select class="form-select" name="group_id" {% if not db_mount.exists %}disabled{% endif %}>
+              <option value="">RustDesk Server</option>
+              {% for group in groups %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Neue Zielgruppe optional</label>
+            <input class="form-control" name="group_name_new" placeholder="z.B. Kunden-PCs" {% if not db_mount.exists %}disabled{% endif %}>
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-secondary" type="submit" {% if not db_mount.exists %}disabled{% endif %}>
+              <i class="bi bi-database-down me-1"></i>Echtzeit-Import aus eingebundener DB
+            </button>
+            {% if db_mount.configured %}
+              <a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>DB Diagnose</a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="card app-card">
+      <div class="card-body">
+        <h2 class="h6">Hinweise</h2>
+        <ul class="small text-secondary mb-0">
+          <li>WAL/SHM werden beim Import berücksichtigt, wenn sie hochgeladen oder im Mount sichtbar sind.</li>
+          <li>Der Import schreibt nie in deine RustDesk-Serverdatenbank zurück.</li>
+          <li>Der Online-Status wird über hbbs Live gesetzt, nicht über <code>peer.status</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% block title %}Einstellungen - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Einstellungen</h1>
+    <div class="text-secondary">Admin-Sicherheit, Darstellung, Betriebssystem-Vorauswahl und hbbs-Online-Status anpassen.</div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-5">
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Darstellung</h2>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="theme">
+          <div class="mb-3">
+            <label class="form-label">Farbschema</label>
+            <select class="form-select" name="theme_mode">
+              {% for value, label in theme_choices %}
+                <option value="{{ value }}" {% if current_theme_mode == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-palette me-1"></i>Darstellung speichern</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Admin-Benutzername ändern</h2>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="username">
+          <div class="mb-3">
+            <label class="form-label">Aktueller Benutzername</label>
+            <input class="form-control" value="{{ current_user.username }}" disabled>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Neuer Benutzername</label>
+            <input class="form-control" name="new_username" value="{{ current_user.username }}" minlength="3" maxlength="80" autocomplete="username" required>
+            <div class="form-text">Erlaubt: Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich und @.</div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Aktuelles Passwort zur Bestätigung</label>
+            <input class="form-control" type="password" name="current_password" autocomplete="current-password" required>
+          </div>
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-person-gear me-1"></i>Benutzernamen speichern</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Passwort ändern</h2>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="password">
+          <div class="mb-3">
+            <label class="form-label">Aktuelles Passwort</label>
+            <input class="form-control" type="password" name="current_password" autocomplete="current-password" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Neues Passwort</label>
+            <input class="form-control" type="password" name="new_password" minlength="8" autocomplete="new-password" required>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Neues Passwort wiederholen</label>
+            <input class="form-control" type="password" name="new_password2" minlength="8" autocomplete="new-password" required>
+          </div>
+          <button class="btn btn-primary" type="submit">Speichern</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card app-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <h2 class="h5 mb-1">2FA / Authenticator-App</h2>
+            <div class="text-secondary small">Zusätzlicher Einmalcode beim Admin-Login.</div>
+          </div>
+          {% if current_user.totp_enabled %}
+            <span class="badge text-bg-success">Aktiv</span>
+          {% elif totp_secret %}
+            <span class="badge text-bg-warning">Einrichtung offen</span>
+          {% else %}
+            <span class="badge text-bg-secondary">Inaktiv</span>
+          {% endif %}
+        </div>
+
+        {% if new_recovery_codes %}
+          <div class="alert alert-warning">
+            <div class="fw-semibold mb-2">Wiederherstellungscodes</div>
+            <p class="mb-2">Speichere diese Codes jetzt sicher ab. Sie werden nur einmal angezeigt. Jeder Code kann genau einmal als Ersatz für den Authenticator-Code verwendet werden.</p>
+            <div class="row g-2">
+              {% for code in new_recovery_codes %}
+                <div class="col-12 col-md-6"><code class="d-block codebox user-select-all">{{ code }}</code></div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if current_user.totp_enabled %}
+          <div class="alert alert-success">2FA ist aktiviert. Beim nächsten Login wird zusätzlich ein Authenticator-Code oder ein einmaliger Wiederherstellungscode abgefragt.</div>
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="badge text-bg-secondary">Wiederherstellungscodes verfügbar: {{ recovery_code_count }}</span>
+            <span class="text-secondary small">Codes werden nur als Hash gespeichert und sind nachträglich nicht auslesbar.</span>
+          </div>
+          <form method="post" class="mb-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="totp_disable">
+            <div class="mb-3">
+              <label class="form-label">Aktuelles Passwort</label>
+              <input class="form-control" type="password" name="current_password" autocomplete="current-password" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">2FA-Code oder Wiederherstellungscode</label>
+              <input class="form-control" name="totp_code" autocomplete="one-time-code" placeholder="123456 oder ABCD-EFGH-IJKL" required>
+            </div>
+            <button class="btn btn-outline-danger" type="submit" onclick="return confirm('2FA wirklich deaktivieren?')"><i class="bi bi-shield-x me-1"></i>2FA deaktivieren</button>
+          </form>
+
+          <hr>
+          <h3 class="h6 mb-2">Wiederherstellungscodes erneuern</h3>
+          <p class="text-secondary small mb-3">Erzeugt neue Codes und macht alle alten Wiederherstellungscodes ungültig.</p>
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="totp_recovery_regenerate">
+            <div class="mb-3">
+              <label class="form-label">Aktuelles Passwort</label>
+              <input class="form-control" type="password" name="current_password" autocomplete="current-password" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">2FA-Code oder Wiederherstellungscode</label>
+              <input class="form-control" name="totp_code" autocomplete="one-time-code" placeholder="123456 oder ABCD-EFGH-IJKL" required>
+            </div>
+            <button class="btn btn-outline-primary" type="submit" onclick="return confirm('Neue Wiederherstellungscodes erstellen und alle alten ungültig machen?')"><i class="bi bi-arrow-clockwise me-1"></i>Neue Wiederherstellungscodes erstellen</button>
+          </form>
+        {% elif totp_secret %}
+          <div class="alert alert-info">Scanne den QR-Code mit deiner Authenticator-App und bestätige danach einen aktuellen Code. Beim Aktivieren werden zusätzlich einmalige Wiederherstellungscodes erzeugt.</div>
+          <div class="row g-3 align-items-center mb-3">
+            <div class="col-auto">
+              <img class="totp-qr" src="{{ totp_qr_data_uri }}" alt="2FA QR-Code">
+            </div>
+            <div class="col">
+              <label class="form-label">Secret für manuelle Eingabe</label>
+              <code class="d-block codebox user-select-all">{{ totp_secret }}</code>
+            </div>
+          </div>
+          <form method="post" class="mb-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="totp_enable">
+            <div class="mb-3">
+              <label class="form-label">Aktuelles Passwort</label>
+              <input class="form-control" type="password" name="current_password" autocomplete="current-password" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">2FA-Code aus der App</label>
+              <input class="form-control" name="totp_code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" required>
+            </div>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-shield-check me-1"></i>2FA aktivieren</button>
+          </form>
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="totp_cancel">
+            <button class="btn btn-outline-secondary btn-sm" type="submit">Einrichtung verwerfen</button>
+          </form>
+        {% else %}
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="totp_prepare">
+            <div class="mb-3">
+              <label class="form-label">Aktuelles Passwort</label>
+              <input class="form-control" type="password" name="current_password" autocomplete="current-password" required>
+            </div>
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-shield-lock me-1"></i>2FA einrichten</button>
+            <div class="form-text mt-2">Nach dem Aktivieren werden Wiederherstellungscodes angezeigt, die du offline sichern solltest.</div>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-7">
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Gerätetyp / Betriebssystem-Auswahl</h2>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="os_choices">
+          <div class="mb-3">
+            <label class="form-label">Auswahlwerte</label>
+            <textarea class="form-control" name="os_choices" rows="8" spellcheck="false">{{ current_os_choices|join('\n') }}</textarea>
+            <div class="form-text">Ein Eintrag pro Zeile. Diese Liste erscheint im Geräteformular als Vorauswahl. Bereits gespeicherte Geräte behalten ihren bisherigen Wert.</div>
+          </div>
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-save me-1"></i>Auswahl speichern</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Online-Status</h2>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="status_settings">
+          <div class="mb-3">
+            <label class="form-label">Statusquelle</label>
+            <select class="form-select" name="status_source">
+              {% for value, label in status_source_choices %}
+                <option value="{{ value }}" {% if status_settings.source == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Der automatische Online-Status wird über hbbs Live abgefragt. Wenn die Abfrage fehlschlägt, bleiben die vorhandenen Stati unverändert.</div>
+          </div>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">hbbs Host</label>
+              <input class="form-control" name="hbbs_host" value="{{ status_settings.hbbs_host }}" placeholder="rustdesk.example.com oder IP">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label">hbbs Online/NAT TCP-Port</label>
+              <input class="form-control" type="number" min="1" max="65535" name="hbbs_port" value="{{ status_settings.hbbs_port }}">
+              <div class="form-text">Normalerweise 21115, wenn dein hbbs-Hauptport 21116 ist.</div>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label">Timeout Sekunden</label>
+              <input class="form-control" type="number" min="1" max="30" step="0.5" name="hbbs_timeout" value="{{ status_settings.hbbs_timeout }}">
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Requester-ID</label>
+              <input class="form-control" name="hbbs_requester_id" value="{{ status_settings.hbbs_requester_id }}">
+              <div class="form-text">Nur Kennung für die Protokollanfrage. Das ist keine Geräte-ID und kein Passwort.</div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Batchgröße</label>
+              <input class="form-control" type="number" min="1" max="500" name="hbbs_batch_size" value="{{ status_settings.hbbs_batch_size }}">
+            </div>
+          </div>
+
+          <hr>
+          <h3 class="h6 mb-3">Automatische Abfrage</h3>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" name="auto_status_enabled" value="1" id="autoStatusEnabled" {% if auto_status_settings.enabled %}checked{% endif %}>
+            <label class="form-check-label" for="autoStatusEnabled">Online-Status automatisch abfragen, solange die WebUI geöffnet ist</label>
+          </div>
+          <div class="row g-3">
+            <div class="col-6 col-md-4">
+              <label class="form-label">Intervall</label>
+              <input class="form-control" type="number" name="auto_status_value" min="1" max="24" value="{{ auto_status_settings.value }}">
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label">Einheit</label>
+              <select class="form-select" name="auto_status_unit">
+                <option value="minutes" {% if auto_status_settings.unit == 'minutes' %}selected{% endif %}>Minuten (1–10)</option>
+                <option value="hours" {% if auto_status_settings.unit == 'hours' %}selected{% endif %}>Stunden (1–24)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="alert alert-warning mt-3 mb-3">
+            Diese Funktion nutzt RustDesk <code>OnlineRequest</code>/<code>OnlineResponse</code> gegen <code>hbbs</code>. Das ist praktisch nutzbar, aber keine offiziell dokumentierte Web-API und kann sich mit RustDesk-Versionen ändern.
+          </div>
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-activity me-1"></i>Statusquelle speichern</button>
+        </form>
+
+        <div class="mt-4 p-3 rounded border bg-body-tertiary">
+          <div class="fw-semibold mb-2">Letzter Statuscheck</div>
+          {% if status_check_info.checked_at %}
+            <div class="small">
+              <span class="badge {% if status_check_info.ok %}text-bg-success{% else %}text-bg-danger{% endif %}">{% if status_check_info.ok %}OK{% else %}Fehler{% endif %}</span>
+              <span class="ms-2">{{ status_check_info.checked_at }}</span>
+              {% if status_check_info.trigger %}<span class="ms-2 text-secondary">{{ status_check_info.trigger }}</span>{% endif %}
+            </div>
+            <div class="text-secondary small mt-2">{{ status_check_info.message }}</div>
+          {% else %}
+            <div class="text-secondary small">Noch keine hbbs Live-Abfrage durchgeführt.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Brute-Force-Sperre</h2>
+        <p class="text-secondary small">Gilt für fehlgeschlagene Passwort- und 2FA-Versuche je IP-Adresse oder Benutzername. Die Logdatei für fail2ban/CrowdSec bleibt zusätzlich aktiv.</p>
+        <form method="post" class="row g-3 align-items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="bruteforce">
+          <div class="col-12 col-md-4">
+            <label class="form-label">Fehlversuche</label>
+            <input class="form-control" type="number" name="login_fail_limit" min="2" max="50" value="{{ bruteforce_settings.limit }}" required>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">Zeitraum Minuten</label>
+            <input class="form-control" type="number" name="login_fail_window_minutes" min="1" max="1440" value="{{ bruteforce_settings.window_minutes }}" required>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">Aktuelles Passwort</label>
+            <input class="form-control" type="password" name="current_password" autocomplete="current-password" required>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-shield-exclamation me-1"></i>Sperre speichern</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <div class="card app-card mb-4" id="update-check-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <h2 class="h5 mb-1">Update-Check</h2>
+            <div class="text-secondary small">Prüft den konfigurierten Download-Server über <code>latest.txt</code> und zeigt verfügbare Änderungen an.</div>
+          </div>
+          <button class="btn btn-outline-primary btn-sm" type="button" id="updateCheckButton" data-update-check-url="{{ url_for('api_update_check') }}">
+            <i class="bi bi-arrow-repeat me-1"></i>Jetzt prüfen
+          </button>
+        </div>
+        <div id="updateCheckResult" class="p-3 rounded border bg-body-tertiary small">
+          {% if update_check_info.checked_at %}
+            <div class="mb-1">
+              <span class="badge {% if update_check_info.available %}text-bg-warning{% elif update_check_info.ok %}text-bg-success{% else %}text-bg-danger{% endif %}">
+                {% if update_check_info.available %}Update verfügbar{% elif update_check_info.ok %}Aktuell{% else %}Fehler{% endif %}
+              </span>
+              <span class="ms-2 text-secondary">{{ update_check_info.checked_at }}</span>
+            </div>
+            <div>{{ update_check_info.message }}</div>
+            {% if update_check_info.url %}<div class="mt-1 text-secondary">Download: <code>{{ update_check_info.url }}</code></div>{% endif %}
+            {% if update_check_info.release_notes %}
+              <div class="mt-3 fw-semibold">Änderungen dieser Version</div>
+              <ul class="mb-0 mt-1">
+                {% for item in update_check_info.release_notes %}
+                  <li>{{ item }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% else %}
+            <div class="text-secondary">Noch kein Online-Update-Check durchgeführt.</div>
+          {% endif %}
+        </div>
+        <form method="post" class="row g-3 align-items-end mt-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="update_check_settings">
+          <div class="col-12 col-md-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="update_auto_check_enabled" name="update_auto_check_enabled" value="1" {% if update_auto_check_settings.enabled %}checked{% endif %}>
+              <label class="form-check-label" for="update_auto_check_enabled">Automatisch prüfen</label>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">Intervall</label>
+            <select class="form-select" name="update_auto_check_hours">
+              {% for hours,label in [(1,'1 Stunde'),(3,'3 Stunden'),(6,'6 Stunden'),(12,'12 Stunden'),(24,'24 Stunden'),(48,'2 Tage'),(168,'7 Tage')] %}
+                <option value="{{ hours }}" {% if update_auto_check_settings.interval_hours == hours %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-4">
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-save me-1"></i>Update-Check speichern</button>
+          </div>
+        </form>
+        <div class="form-text mt-2">Updates werden über <code>./scripts/update.sh</code> installiert. Das Script prüft lokale ZIPs in <code>updates/</code> und danach automatisch den Download-Server.</div>
+      </div>
+    </div>
+
+    <div class="card app-card">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Sicherheitshinweise</h2>
+        <ul class="text-secondary mb-0">
+          <li>Die App sollte per HTTPS betrieben werden, wenn sie außerhalb deines LAN erreichbar ist.</li>
+          <li>Gerätepasswörter in der Datenbank werden weiterhin mit Fernet verschlüsselt. Der Schlüssel liegt in <code>./data/config.json</code>.</li>
+          <li>Für transportable Sicherungen kann zusätzlich ein verschlüsseltes Backup mit AES-256-GCM und PBKDF2-HMAC-SHA256 erstellt werden.</li>
+          <li>Sichere <code>./data</code> und <code>./backups</code> regelmäßig. Ohne <code>./data/config.json</code> können gespeicherte Gerätepasswörter nicht entschlüsselt werden.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

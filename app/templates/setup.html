@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Installation - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="card app-card auth-card shadow-sm">
+    <div class="card-body p-4">
+      <div class="mb-4">
+        <div class="app-logo mb-3"><i class="bi bi-display"></i></div>
+        <h1 class="h4 mb-1">Installation</h1>
+        <p class="text-secondary mb-0">Lege den ersten Admin-Benutzer an.</p>
+      </div>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label">Benutzername</label>
+          <input class="form-control" name="username" autocomplete="username" required autofocus>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Passwort</label>
+          <input class="form-control" type="password" name="password" minlength="8" autocomplete="new-password" required>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Passwort wiederholen</label>
+          <input class="form-control" type="password" name="password2" minlength="8" autocomplete="new-password" required>
+        </div>
+        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-check2-circle me-1"></i>Installieren</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

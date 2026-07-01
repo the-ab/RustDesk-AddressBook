@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}2FA - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="card app-card auth-card">
+    <div class="card-body p-4">
+      <div class="text-center mb-4">
+        <div class="app-logo mx-auto mb-3"><i class="bi bi-shield-lock"></i></div>
+        <h1 class="h4 mb-1">2FA-Code</h1>
+        <div class="text-secondary">Gib den 6-stelligen Code aus deiner Authenticator-App oder einen Wiederherstellungscode ein.</div>
+      </div>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label">Authenticator- oder Wiederherstellungscode</label>
+          <input class="form-control form-control-lg text-center" name="totp_code" autocomplete="one-time-code" placeholder="123456 oder ABCD-EFGH-IJKL" autofocus required>
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Anmelden</button>
+      </form>
+      <div class="text-center mt-3">
+        <a class="small text-decoration-none" href="{{ url_for('login') }}">Zurück zum Login</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

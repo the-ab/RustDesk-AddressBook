@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Release-Änderungen - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1">Release-Änderungen</h1>
+    <div class="text-secondary">Änderungshistorie der stabilen 0.5.x-Linie und der vorherigen Aufbau-Versionen.</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('help_page') }}"><i class="bi bi-question-circle me-1"></i>Anleitung</a>
+</div>
+
+<div class="card app-card mb-4">
+  <div class="card-body">
+    <div class="text-secondary small">Installierte Version</div>
+    <div class="h4 mb-0">RustDesk AddressBook {{ app_version_short }}</div>
+    <div class="text-secondary small mt-1">Interne Kennung: <code>{{ app_version }}</code></div>
+  </div>
+</div>
+
+{% set releases = [
+  ('0.5.16', [
+    'Dashboard und Geräte-Seite zeigen den hbbs Live-Status kompakter direkt neben dem Live-Status-Button.',
+    'Der separate Online-Statuscheck-Block wurde vom Dashboard entfernt.',
+    'Import / Export zeigt keinen hbbs Live-Status-Button mehr.',
+    'DB Diagnose wird nur noch angezeigt, wenn RUSTDESK_SERVER_DB konfiguriert ist.',
+    'Direkter DB-Import zeigt klar an, ob der read-only Mount aktiv, nicht gefunden oder deaktiviert ist.'
+  ]),
+  ('0.5.15', [
+    'Update-verfügbar-Badge oben rechts neben Admin/Logout ergänzt.',
+    'Badge verlinkt direkt zum Update-Check in den Einstellungen.',
+    'Automatischer WebUI-Update-Check mit einstellbarem Intervall ergänzt.',
+    'Update-Check bleibt bewusst ein Check; Installation erfolgt weiterhin kontrolliert über scripts/update.sh.'
+  ]),
+  ('0.5.14', [
+    'Update-Check nutzt jetzt konsequent latest.txt; latest.json wird nicht mehr geprüft.',
+    'Technische Manifest-Details werden in der WebUI nicht mehr angezeigt.',
+    'Ja/Nein-Abfragen im Update-Script verwenden jetzt [J/n] bzw. [j/N].',
+    'Anleitung und Admin-Guide auf den latest.txt-Workflow bereinigt.'
+  ]),
+  ('0.5.13', [
+    'WebUI-Update-Check zeigt bei verfügbarer Online-Version die Änderungen der Zielversion an.',
+    'Update-Script zeigt Release-Notizen vor Download und Installation an.',
+    'latest.txt kann neben der ZIP jetzt direkt Änderungszeilen enthalten.',
+    'Separate Release-Notizdateien neben der Update-ZIP werden unterstützt.',
+    'Anleitung und Admin-Guide auf den neuen Standard-Update-Aufruf ./scripts/update.sh korrigiert.'
+  ]),
+  ('0.5.12', [
+    'Installationsscript nutzt jetzt .env als Preset-Datei; eine separate install-config.env ist nicht mehr nötig.',
+    'Update-Script prüft ohne Parameter zuerst lokale Zips und anschließend online, wenn lokal nichts Neueres vorhanden ist.',
+    'Online-Update-Meldungen klarer formuliert: kein Update ist kein Fehler mehr.',
+    'Update-Script fragt interaktiv nach Download und Installation, wenn online eine neue Version verfügbar ist.',
+    'Update-Check direkt in der WebUI unter Einstellungen ergänzt.'
+  ]),
+  ('0.5.11', [
+    'Komplett-ZIP enthält updates/ direkt; die Anleitung benötigt kein mkdir -p updates mehr.',
+    'Download-Pfad https://dl.ab-xnet.de in Anleitung und Admin-Guide ergänzt.',
+    'Update-Script kann mit --check-online Online-Updates prüfen und mit --online herunterladen und installieren.',
+    'Online-Update unterstützt latest.txt im Download-Verzeichnis.'
+  ]),
+  ('0.5.10', [
+    'Anleitung und WebUI-Hilfe zeigen den Update-Weg über updates/ und ./scripts/update.sh ohne Parameter.',
+    'Update-Script entfernt vorhandene Container mit gleichem Namen vor docker compose up, um Namenskonflikte zu vermeiden.',
+    'Automatische Standard-Image-Namen werden beim Update auf die Zielversion angehoben; benutzerdefinierte Namen bleiben erhalten.',
+    'Release-Ansicht enthält jetzt die Änderungshistorie bis zum Projektanfang.'
+  ]),
+  ('0.5.9', [
+    'Footer zeigt nur noch die reine Versionsnummer.',
+    'Klick auf die Version öffnet diese Release-Ansicht.',
+    'Komplett-ZIP entpackt in den Ordner rustdesk-addressbook ohne Versionsnummer.',
+    'CSV-Export wurde vom Dashboard entfernt und bleibt unter Import / Export.'
+  ]),
+  ('0.5.8', [
+    'Verschlüsseltes Vollbackup .rabfull mit Datenbank, config.json, data/ssh, data/certs und Logs.',
+    'Restore von Vollbackups über die WebUI.',
+    'Konsistentere SQLite-Backups über die SQLite-Backup-API.'
+  ]),
+  ('0.5.7', [
+    'Docker-Image-Name explizit gesetzt, damit Compose keine langen Projektnamen erzeugt.',
+    'Ordner updates/ eingeführt.',
+    'Update-Script erkennt neue Flat-Update-ZIPs automatisch anhand der Version.'
+  ]),
+  ('0.5.6', [
+    'Interaktives Installationsscript hinzugefügt.',
+    'Update-Script mit Pre-Update-Sicherung hinzugefügt.',
+    'Ports, Datenverzeichnis, Backup-Verzeichnis, HTTPS/HTTP und optionaler RustDesk-DB-Mount abfragbar.'
+  ]),
+  ('0.5.5', [
+    'Anleitung/Hilfe-Seite in der WebUI hinzugefügt.',
+    'ADMIN-GUIDE.md mit Installations-, Update-, SSH-Import-, Backup- und Sicherheitskommandos ergänzt.'
+  ]),
+  ('0.5.4', [
+    'Geräte-Seite aufgeräumt: DB Diagnose und DB Echtzeit-Import entfernt.',
+    'SSH-Test/Import zeigt Datum und Uhrzeit.',
+    'Admin-Benutzername änderbar.',
+    'Brute-Force-Sperre über Einstellungen konfigurierbar.'
+  ]),
+  ('0.5.3', [
+    'RustDesk-Serverdatenbank per SSH-Snapshot importierbar.',
+    'SSH-Test prüft Übertragung, SQLite-Integrität, peer-Tabelle, Geräteanzahl, Bytes und Dauer.',
+    'SSH-Import in Import / Export integriert.'
+  ]),
+  ('0.5.2', [
+    'Login-/Signaturfehler nach 0.5.1 korrigiert.',
+    'GET-Aufrufe zählen nicht mehr als Fehlversuche.',
+    'Notfallscript zum Zurücksetzen von Sicherheits-Sperren ergänzt.'
+  ]),
+  ('0.5.1', [
+    'Login-/2FA-/Logout-Auditlog hinzugefügt.',
+    'fail2ban-/CrowdSec-kompatible Auth-Logdatei ergänzt.',
+    'Interne Brute-Force-Sperre ergänzt.',
+    'Security-Seite mit Prüfungen und Sicherheitsstatus hinzugefügt.'
+  ]),
+  ('0.5.0', [
+    '2FA-Recovery-Codes ergänzt.',
+    'Recovery-Codes werden nur gehasht gespeichert und sind einmalig nutzbar.',
+    'Neue Recovery-Codes können über Einstellungen erzeugt werden.'
+  ]),
+  ('0.4.9', [
+    '2FA/TOTP für Admin-Login ergänzt.',
+    'Letzter Online-Status-Check mit OK/Fehler und Zeitstempel ergänzt.',
+    'Automatische hbbs-Online-Statusabfrage ergänzt.',
+    'Verschlüsselte .rabenc-Backups ergänzt.'
+  ]),
+  ('0.4.8', [
+    'Online-Status konsequent auf hbbs Live-Abfrage umgestellt.',
+    'Server-DB-Status-Sync entfernt.',
+    'CSV-Import/Export und RustDesk-Server-Import unter Import / Export zusammengeführt.',
+    'Geräte-Sortierung Online zuerst ergänzt.'
+  ]),
+  ('0.4.7', [
+    'hbbs OnlineRequest-Port auf TCP 21115 korrigiert.',
+    'Live-Statusabfrage funktional gemacht.'
+  ]),
+  ('0.4.6', [
+    'Experimentelle hbbs Live-Statusabfrage eingeführt.',
+    'Statusquellen Manuell, Server-DB und hbbs Live getrennt.'
+  ]),
+  ('0.4.5', [
+    'HTTPS direkt im Container ergänzt.',
+    'Favicon ergänzt.',
+    'Server-DB-Diagnose für peer-Tabelle, WAL/SHM und Statuswerte ergänzt.'
+  ]),
+  ('0.4.4', [
+    'Light-/Darkmode über Einstellungen ergänzt.',
+    'Darkmode-Kontrast verbessert.',
+    'Gruppen-Icons per Auswahlliste mit Vorschau auswählbar.'
+  ]),
+  ('0.4.3', [
+    'RustDesk-DB-Import mit WAL/SHM-Unterstützung erweitert.',
+    'Gruppen bearbeitbar gemacht.',
+    'Backup-Dateien löschbar gemacht.',
+    'Gerätetyp-/Betriebssystem-Auswahl konfigurierbar gemacht.'
+  ]),
+  ('0.4.2', [
+    'Passwortanzeige standardmäßig verdeckt und per Auge-Symbol abrufbar.',
+    'Gerätetyp/Betriebssystem ergänzt.',
+    'Backup-Restore ergänzt.',
+    'Statusdiagnose robuster gemacht.'
+  ]),
+  ('0.4.0 / 0.4.1', [
+    'RustDesk-Server-DB-Import aus db_v2.sqlite3 ergänzt.',
+    'CSV-Import/Export und Backup-Funktionen erweitert.'
+  ]),
+  ('0.3.x', [
+    'RustDesk-Direktlinks, Passwortverschlüsselung und Import/Export-Grundlagen ergänzt.'
+  ]),
+  ('0.2.x', [
+    'Geräteverwaltung, Gruppen, Suche und Favoriten ergänzt.'
+  ]),
+  ('0.1.x', [
+    'Erstes Docker-/Flask-/SQLite-Grundsystem mit Login, Setup-Assistent und Dashboard.'
+  ])
+] %}
+
+{% for version, changes in releases %}
+<div class="card app-card mb-3">
+  <div class="card-body">
+    <h2 class="h5">{{ version }}</h2>
+    <ul class="mb-0">
+      {% for change in changes %}
+      <li>{{ change }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endfor %}
+
+<div class="card app-card">
+  <div class="card-body">
+    <h2 class="h5">Update-Hinweis</h2>
+    <p class="text-secondary mb-2">Variante A: Kopiere die neue Flat-Update-ZIP in <code>updates/</code> und starte das Script ohne Parameter.</p>
+    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0516.zip -O updates/rustdesk-addressbook-update-flat-v0516.zip
+./scripts/update.sh</pre>
+    <p class="text-secondary mb-2 mt-3">Variante B: Starte nur das Script. Es prüft lokale Updates, danach online, zeigt Änderungen an und fragt nach Download/Installation.</p>
+    <pre class="codebox">./scripts/update.sh</pre>
+  </div>
+</div>
+{% endblock %}

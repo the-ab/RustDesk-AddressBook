@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Import / Export - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 mb-1">Import / Export</h1>
+    <div class="text-secondary">CSV-Import, CSV-Export, RustDesk-Server-Import, SSH-Snapshot-Import und optionaler direkter DB-Import an einer Stelle.</div>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    {% set db_mount = rustdesk_server_db_status() %}
+    {% if db_mount.configured %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>DB Diagnose</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3"><i class="bi bi-filetype-csv me-1"></i>CSV Import</h2>
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('import_devices') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">CSV-Datei</label>
+            <input class="form-control" type="file" name="csv_file" accept=".csv,text/csv" required>
+          </div>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-upload me-1"></i>CSV importieren</button>
+        </form>
+        <hr>
+        <h3 class="h6">Erwartete Spalten</h3>
+        <p class="text-secondary mb-2">Pflichtfelder sind <code>name</code> und <code>rustdesk_id</code>. Gruppen werden automatisch angelegt, wenn sie noch nicht existieren.</p>
+        <pre class="codebox">name,rustdesk_id,password,customer,location,os,tags,notes,favorite,online,group
+Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,Server</pre>
+      </div>
+    </div>
+
+    <div class="card app-card">
+      <div class="card-body">
+        <h2 class="h5 mb-3"><i class="bi bi-download me-1"></i>CSV Export</h2>
+        <p class="text-secondary">Exportiere dein Adressbuch als CSV. Aus Sicherheitsgründen ist der Export ohne Gerätepasswörter vorausgewählt.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-primary" href="{{ url_for('export_devices') }}"><i class="bi bi-download me-1"></i>Export ohne Passwörter</a>
+          <a class="btn btn-outline-warning" href="{{ url_for('export_devices', include_passwords='1') }}" onclick="return confirm('Dieser Export enthält entschlüsselte Gerätepasswörter im Klartext. Fortfahren?')"><i class="bi bi-exclamation-triangle me-1"></i>Export mit Passwörtern</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3"><i class="bi bi-database-up me-1"></i>RustDesk Server Import</h2>
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('import_rustdesk_server') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label">RustDesk Server-Dateien</label>
+            <input class="form-control" type="file" name="server_files" accept=".sqlite,.sqlite3,.db,.sqlite-wal,.sqlite3-wal,.db-wal,.sqlite-shm,.sqlite3-shm,.db-shm,.zip" multiple required>
+            <div class="form-text">Am besten als ZIP oder als Mehrfachauswahl hochladen: <code>db_v2.sqlite3</code>, <code>db_v2.sqlite3-wal</code> und optional <code>db_v2.sqlite3-shm</code>.</div>
+          </div>
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Zielgruppe</label>
+              <select class="form-select" name="group_id">
+                <option value="">RustDesk Server</option>
+                {% for group in groups %}
+                  <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Neue Zielgruppe optional</label>
+              <input class="form-control" name="group_name_new" placeholder="Nur ausfüllen, wenn neue Gruppe gewünscht">
+            </div>
+          </div>
+          <div class="form-check my-3">
+            <input class="form-check-input" type="checkbox" name="update_existing" id="update_existing" checked>
+            <label class="form-check-label" for="update_existing">Vorhandene Geräte mit gleicher RustDesk-ID aktualisieren</label>
+          </div>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-database-up me-1"></i>Server-DB importieren</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3"><i class="bi bi-terminal me-1"></i>RustDesk SSH-Import</h2>
+        <p class="text-secondary">Holt per SSH eine konsistente Snapshot-Kopie der RustDesk-Serverdatenbank. Empfohlen ist ein dedizierter SSH-Key mit Forced Command auf dem RustDesk-Server.</p>
+        {% set ssh = get_ssh_import_settings() %}
+        <form method="post" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-12 col-md-7">
+            <label class="form-label">SSH Host</label>
+            <input class="form-control" name="ssh_host" value="{{ ssh.host }}" placeholder="rustdesk.example.local oder IP">
+          </div>
+          <div class="col-12 col-md-5">
+            <label class="form-label">SSH Port</label>
+            <input class="form-control" name="ssh_port" value="{{ ssh.port }}" inputmode="numeric">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">SSH Benutzer</label>
+            <input class="form-control" name="ssh_user" value="{{ ssh.user }}" placeholder="rab-import">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Timeout Sekunden</label>
+            <input class="form-control" name="ssh_timeout" value="{{ ssh.timeout }}" inputmode="numeric">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Private-Key-Pfad im Container</label>
+            <input class="form-control" name="ssh_key_path" value="{{ ssh.key_path }}" placeholder="/data/ssh/rustdesk_import_ed25519">
+            <div class="form-text">Der Key muss aus Sicherheitsgründen unter <code>/data</code> liegen, empfohlen: <code>/data/ssh/rustdesk_import_ed25519</code>.</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Known-Hosts-Datei</label>
+            <input class="form-control" name="ssh_known_hosts_path" value="{{ ssh.known_hosts_path }}" placeholder="/data/ssh/known_hosts">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Remote-Kommando optional</label>
+            <input class="form-control" name="ssh_remote_command" value="{{ ssh.remote_command }}" placeholder="leer lassen, wenn authorized_keys ein forced command nutzt">
+            <div class="form-text">Bei einem eingeschränkten Key mit <code>command=&quot;/usr/local/sbin/rab-rustdesk-db-export&quot;</code> leer lassen.</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Zielgruppe</label>
+            <select class="form-select" name="group_id">
+              <option value="">RustDesk Server</option>
+              {% for group in groups %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Neue Zielgruppe optional</label>
+            <input class="form-control" name="group_name_new" placeholder="z.B. SSH Import">
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="update_existing" id="ssh_update_existing" checked>
+              <label class="form-check-label" for="ssh_update_existing">Vorhandene Geräte mit gleicher RustDesk-ID aktualisieren</label>
+            </div>
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-info" type="submit" formaction="{{ url_for('rustdesk_ssh_test') }}">
+              <i class="bi bi-check2-circle me-1"></i>SSH-Übertragung testen
+            </button>
+            <button class="btn btn-primary" type="submit" formaction="{{ url_for('rustdesk_ssh_import') }}">
+              <i class="bi bi-cloud-download me-1"></i>Per SSH importieren
+            </button>
+          </div>
+        </form>
+
+        {% set ssh_result = session.get('ssh_import_result') %}
+        {% if ssh_result %}
+          <hr>
+          <h3 class="h6">Letzter SSH-Test / Import</h3>
+          <div class="alert {{ 'alert-success' if ssh_result.ok else 'alert-danger' }} mb-2">
+            <strong>{{ 'OK' if ssh_result.ok else 'Fehler' }}:</strong> {{ ssh_result.message }}
+          </div>
+          <dl class="row small mb-0">
+            {% if ssh_result.finished_at is defined %}<dt class="col-sm-4">Zeitpunkt</dt><dd class="col-sm-8">{{ ssh_result.finished_at }}</dd>{% endif %}
+            {% if ssh_result.bytes is defined %}<dt class="col-sm-4">Übertragen</dt><dd class="col-sm-8">{{ ssh_result.bytes }} Bytes</dd>{% endif %}
+            {% if ssh_result.elapsed_ms is defined %}<dt class="col-sm-4">Dauer</dt><dd class="col-sm-8">{{ ssh_result.elapsed_ms }} ms</dd>{% endif %}
+            {% if ssh_result.peer_count is defined %}<dt class="col-sm-4">Peers</dt><dd class="col-sm-8">{{ ssh_result.peer_count }}</dd>{% endif %}
+            {% if ssh_result.integrity is defined %}<dt class="col-sm-4">Integrity</dt><dd class="col-sm-8"><code>{{ ssh_result.integrity }}</code></dd>{% endif %}
+            {% if ssh_result.created is defined %}<dt class="col-sm-4">Import</dt><dd class="col-sm-8">{{ ssh_result.created }} neu, {{ ssh_result.updated }} aktualisiert, {{ ssh_result.skipped }} übersprungen</dd>{% endif %}
+            {% if ssh_result.stderr %}<dt class="col-sm-4">SSH stderr</dt><dd class="col-sm-8"><code>{{ ssh_result.stderr }}</code></dd>{% endif %}
+          </dl>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card app-card mb-4">
+      <div class="card-body">
+        {% set db_mount = rustdesk_server_db_status() %}
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+          <div>
+            <h2 class="h5 mb-1"><i class="bi bi-database-down me-1"></i>Direkter DB-Import</h2>
+            <p class="text-secondary mb-0">Nutzt eine per read-only Mount eingebundene RustDesk-Serverdatenbank. WAL/SHM werden beim SQLite-Snapshot berücksichtigt.</p>
+          </div>
+          <span class="badge {{ db_mount.badge }}">{% if db_mount.exists %}aktiv{% elif db_mount.configured %}nicht gefunden{% else %}nicht aktiviert{% endif %}</span>
+        </div>
+        <div class="alert {% if db_mount.exists %}alert-success{% elif db_mount.configured %}alert-warning{% else %}alert-secondary{% endif %} small">
+          {{ db_mount.message }}
+        </div>
+        <form method="post" action="{{ url_for('sync_rustdesk_mounted_import') }}" class="row g-3 align-items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Zielgruppe</label>
+            <select class="form-select" name="group_id" {% if not db_mount.exists %}disabled{% endif %}>
+              <option value="">RustDesk Server</option>
+              {% for group in groups %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Neue Zielgruppe optional</label>
+            <input class="form-control" name="group_name_new" placeholder="z.B. Kunden-PCs" {% if not db_mount.exists %}disabled{% endif %}>
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-secondary" type="submit" {% if not db_mount.exists %}disabled title="RUSTDESK_SERVER_DB ist nicht gesetzt oder Datei nicht vorhanden"{% endif %}>
+              <i class="bi bi-database-down me-1"></i>Echtzeit-Import aus eingebundener DB
+            </button>
+            {% if db_mount.configured %}
+              <a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>DB Diagnose</a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card app-card">
+      <div class="card-body">
+        <h2 class="h5">Hinweise</h2>
+        <ul class="text-secondary mb-0">
+          <li>Der Online-Status wird nicht mehr aus <code>peer.status</code> übernommen. Nutze dafür <strong>Live-Status hbbs</strong>.</li>
+          <li>Die Server-DB bleibt für Geräteimport, WAL/SHM-Snapshot und Diagnose erhalten.</li>
+          <li>Unbeaufsichtigte Gerätepasswörter liegen normalerweise nicht in der freien Serverdatenbank und bleiben deshalb leer.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

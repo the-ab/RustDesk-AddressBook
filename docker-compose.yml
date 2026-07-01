@@ -1,0 +1,35 @@
+services:
+  rustdesk-addressbook:
+    build: .
+    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0516}
+    container_name: ${RAB_CONTAINER_NAME:-rustdesk-addressbook}
+    restart: unless-stopped
+    ports:
+      - "${RAB_HTTPS_BIND:-0.0.0.0}:${RAB_HTTPS_PUBLISH_PORT:-5443}:5443"
+    environment:
+      TZ: ${TZ:-Europe/Berlin}
+      APP_DATA_DIR: /data
+      BACKUP_DIR: /backups
+      # Optionaler read-only Zugriff auf hbbs/db_v2.sqlite3 für Import/Diagnose.
+      # Wird vom Installationsscript nur gesetzt, wenn der Mount aktiviert wird.
+      RUSTDESK_SERVER_DB: ${RUSTDESK_SERVER_DB:-}
+      # HTTPS ist standardmäßig aktiv. HTTP ist standardmäßig deaktiviert und kann über install.sh aktiviert werden.
+      APP_ENABLE_HTTP: ${APP_ENABLE_HTTP:-false}
+      APP_ENABLE_HTTPS: ${APP_ENABLE_HTTPS:-true}
+      APP_HTTP_PORT: "5000"
+      APP_HTTPS_PORT: "5443"
+      HTTPS_CERT_FILE: ${HTTPS_CERT_FILE:-/data/certs/addressbook.crt}
+      HTTPS_KEY_FILE: ${HTTPS_KEY_FILE:-/data/certs/addressbook.key}
+      HTTPS_COMMON_NAME: ${HTTPS_COMMON_NAME:-rustdesk-addressbook.local}
+      HTTPS_ALT_NAMES: ${HTTPS_ALT_NAMES:-localhost,127.0.0.1,rustdesk-addressbook.local}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      APP_HSTS: ${APP_HSTS:-false}
+      TRUST_PROXY_HEADERS: ${TRUST_PROXY_HEADERS:-false}
+      LOG_DIR: /data/logs
+      AUTH_LOG_FILE: /data/logs/auth.log
+      LOGIN_FAIL_LIMIT: ${LOGIN_FAIL_LIMIT:-5}
+      LOGIN_FAIL_WINDOW_SECONDS: ${LOGIN_FAIL_WINDOW_SECONDS:-900}
+      USER_SIGNATURE_POLICY: ${USER_SIGNATURE_POLICY:-repair_on_verified_login}
+    volumes:
+      - ${RAB_DATA_DIR:-./data}:/data
+      - ${RAB_BACKUP_DIR:-./backups}:/backups

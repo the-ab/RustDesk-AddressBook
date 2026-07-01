@@ -1,0 +1,4 @@
+name,rustdesk_id,password,customer,location,os,tags,notes,favorite,online,group
+Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,Server
+Nextcloud,987654321,,Zuhause,VM,Ubuntu,"nextcloud,linux",Nextcloud VM,1,0,Server
+Office-PC,555666777,,Privat,Büro,Windows,"client,windows",Arbeitsplatz,0,0,Clients

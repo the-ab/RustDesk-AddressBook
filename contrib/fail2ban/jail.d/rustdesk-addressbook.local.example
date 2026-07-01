@@ -1,0 +1,7 @@
+[rustdesk-addressbook]
+enabled = true
+filter = rustdesk-addressbook
+logpath = /pfad/zu/rustdesk-addressbook/data/logs/auth.log
+maxretry = 5
+findtime = 900
+bantime = 3600

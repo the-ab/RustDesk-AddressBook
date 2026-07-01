@@ -1,0 +1,55 @@
+<div class="card app-card device-card h-100">
+  <div class="card-body d-flex flex-column">
+    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+      <div class="min-w-0">
+        <div class="d-flex align-items-center gap-2">
+          {% if device.online %}
+            <span class="status-dot bg-success" title="Online / letzter Serverstatus online"></span>
+          {% else %}
+            <span class="status-dot bg-secondary" title="Offline / letzter Serverstatus offline"></span>
+          {% endif %}
+          <h2 class="h6 mb-0 text-truncate">{{ device.name }}</h2>
+        </div>
+        <div class="text-secondary small mt-1"><code>{{ device.rustdesk_id }}</code></div>
+      </div>
+      <form method="post" action="{{ url_for('device_toggle_favorite', device_id=device.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-link star-btn" title="Favorit umschalten">
+          {% if device.favorite %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
+        </button>
+      </form>
+    </div>
+
+    <div class="small text-secondary mb-3">
+      {% if device.customer %}<div><i class="bi bi-building me-1"></i>{{ device.customer }}</div>{% endif %}
+      {% if device.location %}<div><i class="bi bi-geo-alt me-1"></i>{{ device.location }}</div>{% endif %}
+      {% if device.os %}<div><i class="bi {{ os_icon_class(device.os) }} me-1"></i>{{ device.os }}</div>{% endif %}
+      {% if device.group %}<div><i class="bi bi-collection me-1"></i><span class="badge text-bg-{{ device.group.color }}">{{ device.group.name }}</span></div>{% endif %}
+    </div>
+
+    {% if device.tags %}
+      <div class="mb-3">
+        {% for tag in device.tags|taglist %}<span class="badge rounded-pill text-bg-light border me-1">{{ tag }}</span>{% endfor %}
+      </div>
+    {% endif %}
+
+    {% if device.notes %}
+      <p class="small text-secondary clamp-2 mb-3">{{ device.notes }}</p>
+    {% endif %}
+
+    <div class="mt-auto d-flex flex-wrap gap-2">
+      <a class="btn btn-primary btn-sm" href="{{ url_for('device_connect', device_id=device.id) }}">
+        <i class="bi bi-plug me-1"></i>Verbinden
+      </a>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('device_edit', device_id=device.id) }}">
+        <i class="bi bi-pencil me-1"></i>Bearbeiten
+      </a>
+      <form method="post" action="{{ url_for('device_toggle_online', device_id=device.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-outline-secondary btn-sm" type="submit" title="Manuellen Status umschalten">
+          {% if device.online %}<i class="bi bi-toggle-on me-1"></i>Online{% else %}<i class="bi bi-toggle-off me-1"></i>Offline{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

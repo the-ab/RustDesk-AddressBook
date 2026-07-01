@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{% if device %}Gerät bearbeiten{% else %}Gerät anlegen{% endif %} - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">{% if device %}Gerät bearbeiten{% else %}Gerät anlegen{% endif %}</h1>
+    <div class="text-secondary">RustDesk-ID und optional Passwort hinterlegen.</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('devices') }}">Zurück</a>
+</div>
+
+<form method="post" class="card app-card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-12 col-lg-6">
+        <label class="form-label">Name *</label>
+        <input class="form-control" name="name" value="{{ device.name if device else '' }}" required autofocus>
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">RustDesk-ID *</label>
+        <input class="form-control" name="rustdesk_id" value="{{ device.rustdesk_id if device else '' }}" required>
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">RustDesk-Passwort</label>
+        <div class="input-group">
+          <input
+            class="form-control password-field"
+            type="password"
+            name="password"
+            value=""
+            autocomplete="off"
+            placeholder="{% if device and device.encrypted_password %}Gespeichertes Passwort bleibt erhalten{% else %}Optional{% endif %}"
+            {% if device %}data-password-url="{{ url_for('device_password', device_id=device.id) }}"{% endif %}
+          >
+          <button class="btn btn-outline-secondary password-toggle" type="button" title="Passwort anzeigen/ausblenden">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+        <div class="form-text">Bleibt beim Speichern unverändert, solange das Feld leer ist. Das Passwort wird verschlüsselt in SQLite gespeichert.</div>
+        {% if device and device.encrypted_password %}
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="clear_password" id="clear_password">
+            <label class="form-check-label" for="clear_password">Gespeichertes Passwort löschen</label>
+          </div>
+        {% endif %}
+      </div>
+      <div class="col-12 col-lg-6">
+        <label class="form-label">Gruppe</label>
+        <select class="form-select" name="group_id">
+          <option value="">Keine Gruppe</option>
+          {% for group in groups %}
+            <option value="{{ group.id }}" {% if device and device.group_id == group.id %}selected{% endif %}>{{ group.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label">Kunde</label>
+        <input class="form-control" name="customer" value="{{ device.customer if device and device.customer else '' }}">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label">Standort</label>
+        <input class="form-control" name="location" value="{{ device.location if device and device.location else '' }}">
+      </div>
+      <div class="col-12 col-lg-4">
+        <label class="form-label">Gerätetyp / Betriebssystem</label>
+        <select class="form-select" name="os">
+          {% set current_os = device.os if device and device.os else '' %}
+          <option value="">Nicht gesetzt</option>
+          {% for os in os_choices %}
+            <option value="{{ os }}" {% if current_os == os %}selected{% endif %}>{{ os }}</option>
+          {% endfor %}
+          {% if current_os and current_os not in os_choices %}
+            <option value="{{ current_os }}" selected>{{ current_os }}</option>
+          {% endif %}
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Tags</label>
+        <input class="form-control" name="tags" value="{{ device.tags if device and device.tags else '' }}" placeholder="server, kunde-a, vpn">
+      </div>
+      <div class="col-12">
+        <label class="form-label">Notizen</label>
+        <textarea class="form-control" name="notes" rows="4">{{ device.notes if device and device.notes else '' }}</textarea>
+      </div>
+      <div class="col-12 d-flex gap-4">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="favorite" id="favorite" {% if device and device.favorite %}checked{% endif %}>
+          <label class="form-check-label" for="favorite">Favorit</label>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="online" id="online" {% if device and device.online %}checked{% endif %}>
+          <label class="form-check-label" for="online">Online markieren</label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card-footer bg-transparent d-flex justify-content-between gap-2">
+    <div>
+      {% if device %}
+      <button class="btn btn-outline-danger" form="deleteForm" type="submit" onclick="return confirm('Dieses Gerät wirklich löschen?')">
+        <i class="bi bi-trash me-1"></i>Löschen
+      </button>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" href="{{ url_for('devices') }}">Abbrechen</a>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Speichern</button>
+    </div>
+  </div>
+</form>
+
+{% if device %}
+<form id="deleteForm" method="post" action="{{ url_for('device_delete', device_id=device.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endif %}
+{% endblock %}
