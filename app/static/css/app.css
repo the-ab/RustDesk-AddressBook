@@ -275,3 +275,67 @@ body {
 .tab-pane > .card, .tab-pane > .row > [class*="col-"] > .card {
   scroll-margin-top: 6rem;
 }
+
+/* Import layout */
+.import-sidebar { overflow: hidden; }
+@media (min-width: 992px) {
+  .import-sidebar.sticky-lg-top { top: 5.25rem; }
+}
+.settings-nav-label { display: inline-flex; flex-direction: column; line-height: 1.12; }
+.settings-nav-label span:last-child { font-size: .92em; opacity: .9; }
+
+/* Device view modes */
+.device-list-table th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--bs-secondary-color); }
+.device-list-table td, .device-list-table th { vertical-align: middle; }
+.device-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: .75rem;
+}
+.device-icon-tile {
+  position: relative;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: var(--app-card-bg);
+  box-shadow: var(--app-shadow);
+  padding: .8rem .6rem .65rem;
+  min-height: 112px;
+}
+.device-icon-main {
+  color: var(--bs-body-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+  text-align: center;
+  min-width: 0;
+}
+.device-icon-main i {
+  font-size: 1.75rem;
+  color: var(--bs-primary);
+}
+.device-icon-main span {
+  width: 100%;
+  font-size: .86rem;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.device-icon-status {
+  position: absolute;
+  width: .68rem;
+  height: .68rem;
+  border-radius: 999px;
+  top: .55rem;
+  left: .55rem;
+}
+.device-icon-edit {
+  position: absolute;
+  top: .35rem;
+  right: .45rem;
+  color: var(--bs-secondary-color);
+}
+.device-icon-edit:hover { color: var(--bs-primary); }

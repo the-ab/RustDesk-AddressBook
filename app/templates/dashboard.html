@@ -7,6 +7,11 @@
     <div class="text-secondary">{{ t('dashboard.subtitle', 'Zentrales Adressbuch für deine RustDesk-Geräte.') }}</div>
   </div>
   <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="btn-group" role="group" aria-label="{{ t('views.label', 'Ansicht') }}">
+      <a class="btn btn-sm {% if device_view == 'cards' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('dashboard', view='cards') }}" title="{{ t('views.cards', 'Karten') }}"><i class="bi bi-grid-3x3-gap"></i></a>
+      <a class="btn btn-sm {% if device_view == 'list' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('dashboard', view='list') }}" title="{{ t('views.list', 'Liste') }}"><i class="bi bi-list-ul"></i></a>
+      <a class="btn btn-sm {% if device_view == 'icons' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('dashboard', view='icons') }}" title="{{ t('views.icons', 'Kleine Symbole') }}"><i class="bi bi-grid"></i></a>
+    </div>
     <form method="post" action="{{ url_for('sync_rustdesk_live_status') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-outline-success" type="submit" {% if not status_settings.hbbs_host %}title="hbbs Host unter Einstellungen eintragen"{% endif %}>
@@ -39,16 +44,16 @@
       <h2 class="h5 mb-0"><i class="bi bi-star me-1"></i>{{ t('dashboard.favorites', 'Favoriten') }}</h2>
       <a href="{{ url_for('devices', fav='1') }}" class="small text-decoration-none">{{ t('dashboard.show_all', 'Alle anzeigen') }}</a>
     </div>
-    {% if favorites %}<div class="row g-3">{% for device in favorites %}<div class="col-12 col-md-6">{% include "_device_card.html" %}</div>{% endfor %}</div>{% else %}<div class="empty-state">{{ t('dashboard.no_favorites', 'Noch keine Favoriten vorhanden.') }}</div>{% endif %}
+    {% if favorites %}{% set device_items = favorites %}{% include "_device_collection.html" %}{% else %}<div class="empty-state">{{ t('dashboard.no_favorites', 'Noch keine Favoriten vorhanden.') }}</div>{% endif %}
   </div>
   <div class="col-12 col-xl-4">
-    <div class="card app-card mb-4"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-search me-1"></i>{{ t('dashboard.quick_search', 'Schnellsuche') }}</h2><form action="{{ url_for('devices') }}" method="get"><div class="input-group"><input class="form-control" name="q" placeholder="Name, ID, Kunde, Standort..."><button class="btn btn-primary" type="submit">{{ t('common.search', 'Suchen') }}</button></div></form></div></div>
-    <div class="card app-card"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-collection me-1"></i>{{ t('dashboard.groups', 'Gruppen') }}</h2><div class="d-flex flex-wrap gap-2">{% for group in groups %}<a class="badge text-bg-{{ group.color }} text-decoration-none p-2" href="{{ url_for('devices', group=group.id) }}"><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</a>{% else %}<span class="text-secondary">{{ t('dashboard.no_groups', 'Keine Gruppen vorhanden.') }}</span>{% endfor %}</div></div></div>
+    <div class="card app-card mb-4"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-search me-1"></i>{{ t('dashboard.quick_search', 'Schnellsuche') }}</h2><form action="{{ url_for('devices') }}" method="get"><input type="hidden" name="view" value="{{ device_view }}"><div class="input-group"><input class="form-control" name="q" placeholder="Name, ID, Kunde, Standort..."><button class="btn btn-primary" type="submit">{{ t('common.search', 'Suchen') }}</button></div></form></div></div>
+    <div class="card app-card"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-collection me-1"></i>{{ t('dashboard.groups', 'Gruppen') }}</h2><div class="d-flex flex-wrap gap-2">{% for group in groups %}<a class="badge text-bg-{{ group.color }} text-decoration-none p-2" href="{{ url_for('devices', group=group.id, view=device_view) }}"><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</a>{% else %}<span class="text-secondary">{{ t('dashboard.no_groups', 'Keine Gruppen vorhanden.') }}</span>{% endfor %}</div></div></div>
   </div>
 </div>
 
 <div class="mt-4">
   <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 mb-0"><i class="bi bi-clock-history me-1"></i>{{ t('dashboard.recent', 'Zuletzt geändert') }}</h2></div>
-  {% if recent %}<div class="row g-3">{% for device in recent %}<div class="col-12 col-md-6 col-xl-3">{% include "_device_card.html" %}</div>{% endfor %}</div>{% else %}<div class="empty-state">{{ t('dashboard.no_devices', 'Noch keine Geräte angelegt.') }}</div>{% endif %}
+  {% if recent %}{% set device_items = recent %}{% include "_device_collection.html" %}{% else %}<div class="empty-state">{{ t('dashboard.no_devices', 'Noch keine Geräte angelegt.') }}</div>{% endif %}
 </div>
 {% endblock %}

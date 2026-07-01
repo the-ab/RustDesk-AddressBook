@@ -133,6 +133,7 @@ TRANSLATIONS = {
         "nav.settings": "Settings",
         "nav.update_available": "Update available",
         "nav.logout": "Logout",
+        "nav.toggle": "Toggle navigation",
         "common.save": "Save",
         "common.active": "Active",
         "common.inactive": "Inactive",
@@ -142,6 +143,7 @@ TRANSLATIONS = {
         "common.all": "All",
         "common.never_checked": "never checked",
         "common.no_online_check": "no online status check",
+        "common.no_message": "No message received.",
         "dashboard.title": "Dashboard",
         "dashboard.subtitle": "Central address book for your RustDesk devices.",
         "dashboard.add_device": "Add device",
@@ -197,6 +199,26 @@ TRANSLATIONS = {
         "settings.admin.repeat_password": "Repeat new password",
         "settings.twofa.title": "2FA / Authenticator app",
         "settings.twofa.subtitle": "Additional one-time code for the admin login.",
+        "settings.twofa.pending": "Setup pending",
+        "settings.twofa.recovery_title": "Recovery codes",
+        "settings.twofa.recovery_intro": "Save these codes securely now. They are shown only once. Each code can be used exactly once instead of the authenticator code.",
+        "settings.twofa.enabled_msg": "2FA is enabled. The next login requires an authenticator code or a one-time recovery code.",
+        "settings.twofa.recovery_available": "Recovery codes available",
+        "settings.twofa.recovery_hash_notice": "Codes are stored only as hashes and cannot be read afterwards.",
+        "settings.twofa.code_or_recovery": "2FA code or recovery code",
+        "settings.twofa.disable_confirm": "Really disable 2FA?",
+        "settings.twofa.disable": "Disable 2FA",
+        "settings.twofa.regenerate_title": "Regenerate recovery codes",
+        "settings.twofa.regenerate_help": "Creates new codes and invalidates all old recovery codes.",
+        "settings.twofa.regenerate_confirm": "Create new recovery codes and invalidate all old ones?",
+        "settings.twofa.regenerate": "Create new recovery codes",
+        "settings.twofa.scan_help": "Scan the QR code with your authenticator app and then confirm a current code. Enabling also creates one-time recovery codes.",
+        "settings.twofa.manual_secret": "Secret for manual entry",
+        "settings.twofa.app_code": "2FA code from app",
+        "settings.twofa.enable": "Enable 2FA",
+        "settings.twofa.cancel_setup": "Discard setup",
+        "settings.twofa.setup": "Set up 2FA",
+        "settings.twofa.setup_help": "After enabling, recovery codes are shown; save them offline.",
         "settings.os.title": "Device type / operating system choices",
         "settings.os.values": "Choices",
         "settings.os.help": "One entry per line. This list appears in the device form. Existing devices keep their current value.",
@@ -227,6 +249,8 @@ TRANSLATIONS = {
         "settings.update.title": "Update check",
         "settings.update.help": "Checks the configured download server through latest.txt and shows available changes.",
         "settings.update.now": "Check now",
+        "settings.update.checking": "Checking...",
+        "settings.update.failed": "Update check failed",
         "settings.update.none": "No online update check has been performed yet.",
         "settings.update.available": "Update available",
         "settings.update.current": "Current",
@@ -240,6 +264,170 @@ TRANSLATIONS = {
         "settings.security.fernet": "Device passwords in the database are encrypted with Fernet. The key is stored in ./data/config.json.",
         "settings.security.backups": "For portable backups, create encrypted backups with AES-256-GCM and PBKDF2-HMAC-SHA256.",
         "settings.security.data_backup": "Back up ./data and ./backups regularly. Without ./data/config.json, saved device passwords cannot be decrypted.",
+        "common.connect": "Connect",
+        "common.edit": "Edit",
+        "common.delete": "Delete",
+        "common.download": "Download",
+        "common.upload": "Upload",
+        "common.file": "File",
+        "common.group": "Group",
+        "common.new_group_optional": "New group optional",
+        "common.update_existing": "Update existing devices with the same RustDesk ID",
+        "common.password": "Password",
+        "common.current_password": "Current password",
+        "common.cancel": "Cancel",
+        "common.close": "Close",
+        "release.title": "Show release changes",
+        "common.status": "Status",
+        "common.last_check": "Last check",
+        "common.changed": "Changed",
+        "common.created": "Created",
+        "common.updated": "Updated",
+        "common.skipped": "Skipped",
+        "common.duration": "Duration",
+        "common.bytes": "Transferred",
+        "common.notes": "Notes",
+        "common.customer": "Customer",
+        "common.location": "Location",
+        "common.tags": "Tags",
+        "common.yes": "Yes",
+        "common.no": "No",
+        "common.default": "Default",
+        "views.label": "View",
+        "views.cards": "Cards",
+        "views.list": "List",
+        "views.icons": "Small icons",
+        "device.card.favorite_toggle": "Toggle favorite",
+        "device.card.connect": "Connect",
+        "device.card.edit": "Edit",
+        "device.card.manual_status": "Toggle manual status",
+        "device.card.online_title": "Online / last live status online",
+        "device.card.offline_title": "Offline / last live status offline",
+        "device.card.no_group": "No group",
+        "device_form.title_new": "Add device",
+        "device_form.title_edit": "Edit device",
+        "device_form.subtitle": "Store RustDesk ID and optional password.",
+        "device_form.name": "Name",
+        "device_form.rustdesk_id": "RustDesk ID",
+        "device_form.rustdesk_password": "RustDesk password",
+        "device_form.password_placeholder_saved": "Saved password remains unchanged",
+        "device_form.password_placeholder_optional": "Optional",
+        "device_form.password_help": "Remains unchanged when the field is empty. The password is stored encrypted in SQLite.",
+        "device_form.clear_password": "Delete saved password",
+        "device_form.group": "Group",
+        "device_form.no_group": "No group",
+        "device_form.device_type": "Device type / operating system",
+        "device_form.favorite": "Favorite",
+        "device_form.online_manual": "Manual online status",
+        "device_form.save": "Save device",
+        "device_form.delete_confirm": "Really delete this device?",
+        "backup.title": "Backup",
+        "backup.subtitle": "Back up the database, create encrypted full backups, download and restore.",
+        "backup.create": "Create backup",
+        "backup.important": "Important",
+        "backup.warning": "For a complete restore including device passwords, ./data/config.json is required. Create an encrypted full backup for that. It includes the database, config.json, data/ssh, data/certs and logs. Unencrypted full backups are not offered for security reasons.",
+        "backup.file": "File",
+        "backup.type": "Type",
+        "backup.size": "Size",
+        "backup.changed": "Changed",
+        "backup.actions": "Actions",
+        "backup.full": "Full backup",
+        "backup.encrypted": "encrypted",
+        "backup.password_placeholder": "Backup password",
+        "backup.restore_confirm": "Really restore this backup? Full backups also overwrite config.json, SSH and certificate files. After restoring a full backup, the container must be restarted.",
+        "backup.restore": "Restore",
+        "backup.delete_confirm": "Really delete this backup?",
+        "backup.none": "No backups yet.",
+        "backup.host_folder": "Backups are also stored in the host folder ./backups.",
+        "backup.full_create": "Create encrypted full backup",
+        "backup.full_help": "Includes addressbook.db, config.json, data/ssh, data/certs and data/logs. This is the recommended restore file for server migration or total failure.",
+        "backup.full_password": "Full backup password",
+        "backup.full_password_help": "At least 16 characters. This backup contains key material and should only be stored encrypted.",
+        "backup.repeat": "Repeat password",
+        "backup.db_create": "Create encrypted database backup",
+        "backup.db_password": "Backup password",
+        "backup.db_password_help": "At least 12 characters. Contains only the database; device passwords still require the matching config.json.",
+        "backup.upload_title": "Upload backup file",
+        "backup.restore_password": "Backup password for .rabenc or .rabfull",
+        "backup.upload_confirm": "Really restore uploaded backup? The current state is backed up automatically first.",
+        "backup.upload_restore": "Upload & restore",
+        "groups.title": "Groups",
+        "groups.subtitle": "Groups for customers, locations or device types. Icon and color can be selected directly.",
+        "groups.new": "New group",
+        "groups.name": "Name",
+        "groups.color": "Color",
+        "groups.icon": "Icon",
+        "groups.preview_help": "The preview on the left shows the selected Bootstrap icon.",
+        "groups.create": "Create group",
+        "groups.assigned": "device(s) assigned",
+        "groups.show_devices": "Show devices",
+        "groups.delete_confirm": "Delete group? Devices remain unchanged.",
+        "groups.current": "Current",
+        "groups.none": "No groups yet.",
+        "import.title": "Import / Export",
+        "import.subtitle": "CSV import/export, RustDesk server import, SSH snapshot import and optional direct DB import in one place.",
+        "import.menu.csv": "CSV import / export",
+        "import.menu.server": "Server DB upload",
+        "import.menu.ssh": "SSH import",
+        "import.menu.direct": "Direct DB import",
+        "import.menu.notes": "Notes",
+        "import.csv.title": "CSV import",
+        "import.csv.file": "CSV file",
+        "import.csv.button": "Import CSV",
+        "import.csv.expected": "Expected columns",
+        "import.csv.help": "Required fields are name and rustdesk_id. Groups are created automatically if they do not exist.",
+        "import.export.title": "CSV export",
+        "import.export.help": "Export your address book as CSV. For security reasons, export without device passwords is the default.",
+        "import.export.no_passwords": "Export without passwords",
+        "import.export.with_passwords": "Export with passwords",
+        "import.export.password_warning": "This export contains decrypted device passwords in clear text. Continue?",
+        "import.server.title": "RustDesk server import",
+        "import.server.files": "RustDesk server files",
+        "import.server.files_help": "Best as ZIP or as multi-file upload: db_v2.sqlite3, db_v2.sqlite3-wal and optionally db_v2.sqlite3-shm.",
+        "import.server.button": "Import server DB",
+        "import.ssh.title": "RustDesk SSH import",
+        "import.ssh.help": "Fetches a consistent snapshot copy of the RustDesk server database via SSH. A dedicated SSH key with forced command on the RustDesk server is recommended.",
+        "import.ssh.host": "SSH host",
+        "import.ssh.port": "SSH port",
+        "import.ssh.user": "SSH user",
+        "import.ssh.timeout": "Timeout seconds",
+        "import.ssh.key_path": "Private key path in container",
+        "import.ssh.key_help": "For security, the key must be below /data; recommended: /data/ssh/rustdesk_import_ed25519.",
+        "import.ssh.known_hosts": "Known hosts file",
+        "import.ssh.remote_command": "Remote command optional",
+        "import.ssh.remote_help": "Leave empty when authorized_keys uses a restricted forced command.",
+        "import.ssh.test": "Test SSH transfer",
+        "import.ssh.import": "Import via SSH",
+        "import.ssh.last": "Last SSH test / import",
+        "import.ssh.time": "Time",
+        "import.ssh.peers": "Peers",
+        "import.ssh.stderr": "SSH stderr",
+        "import.direct.title": "Direct DB import",
+        "import.direct.help": "Uses a RustDesk server database mounted read-only. WAL/SHM are considered during the SQLite snapshot.",
+        "import.direct.button": "Realtime import from mounted DB",
+        "import.direct.diagnose": "DB diagnostics",
+        "import.direct.active": "active",
+        "import.direct.not_found": "not found",
+        "import.direct.disabled": "not enabled",
+        "import.direct.disabled_title": "RUSTDESK_SERVER_DB is not set or the file does not exist",
+        "db.status.not_set": "RUSTDESK_SERVER_DB is not set. Direct DB import and DB diagnostics are disabled.",
+        "db.status.active": "Active",
+        "db.status.wal_visible": "WAL visible",
+        "db.status.shm_visible": "SHM visible",
+        "db.status.not_found": "RUSTDESK_SERVER_DB is set, but the file was not found",
+        "import.notes.title": "Notes",
+        "import.notes.status": "Online status is no longer imported from peer.status. Use Live status hbbs for that.",
+        "import.notes.db": "The server DB remains available for device import, WAL/SHM snapshot and diagnostics.",
+        "import.notes.passwords": "Unattended device passwords are normally not stored in the free server database and therefore remain empty.",
+        "settings.menu.display_line1": "Display",
+        "settings.menu.display_line2": "& language",
+        "settings.update.hour_1": "1 hour",
+        "settings.update.hour_3": "3 hours",
+        "settings.update.hour_6": "6 hours",
+        "settings.update.hour_12": "12 hours",
+        "settings.update.hour_24": "24 hours",
+        "settings.update.hour_48": "2 days",
+        "settings.update.hour_168": "7 days",
         "theme.light": "Light mode",
         "theme.dark": "Dark mode",
         "status.manual": "Manual only",
@@ -250,6 +438,19 @@ TRANSLATIONS = {
         "sort.updated": "Recently changed",
     }
 }
+
+
+def _resolve_device_view(value: str | None = None) -> str:
+    allowed = {"cards", "list", "icons"}
+    selected = (value or "").strip().lower()
+    if selected in allowed:
+        session["device_view"] = selected
+        return selected
+    stored = str(session.get("device_view") or "cards").strip().lower()
+    if stored in allowed:
+        return stored
+    session["device_view"] = "cards"
+    return "cards"
 
 
 def _short_app_version(version: str) -> str:
@@ -687,6 +888,7 @@ def register_routes(app: Flask) -> None:
     @app.route("/")
     @login_required
     def dashboard():
+        device_view = _resolve_device_view(request.args.get("view"))
         total_devices = Device.query.count()
         favorite_devices = Device.query.filter_by(favorite=True).count()
         online_devices = Device.query.filter_by(online=True).count()
@@ -701,6 +903,7 @@ def register_routes(app: Flask) -> None:
             groups=groups,
             favorites=favorites,
             recent=recent,
+            device_view=device_view,
         )
 
     @app.route("/devices")
@@ -711,6 +914,7 @@ def register_routes(app: Flask) -> None:
         fav = request.args.get("fav", "").strip()
         os_filter = request.args.get("os", "").strip()
         sort = request.args.get("sort", "online").strip().lower()
+        device_view = _resolve_device_view(request.args.get("view"))
 
         query = Device.query
         if q:
@@ -764,6 +968,7 @@ def register_routes(app: Flask) -> None:
             selected_sort=sort,
             sort_choices=sort_choices,
             available_os=available_os,
+            device_view=device_view,
         )
 
     @app.route("/devices/new", methods=["GET", "POST"])
@@ -1874,7 +2079,7 @@ def _rustdesk_server_db_status() -> dict:
             "configured": False,
             "exists": False,
             "path": "",
-            "message": "RUSTDESK_SERVER_DB ist nicht gesetzt. Direkter DB-Import und DB-Diagnose sind deaktiviert.",
+            "message": _t("db.status.not_set", "RUSTDESK_SERVER_DB ist nicht gesetzt. Direkter DB-Import und DB-Diagnose sind deaktiviert."),
             "badge": "text-bg-secondary",
             "family": {"main": False, "wal": False, "shm": False},
         }
@@ -1884,15 +2089,15 @@ def _rustdesk_server_db_status() -> dict:
     if exists:
         extra = []
         if family.get("wal"):
-            extra.append("WAL sichtbar")
+            extra.append(_t("db.status.wal_visible", "WAL sichtbar"))
         if family.get("shm"):
-            extra.append("SHM sichtbar")
+            extra.append(_t("db.status.shm_visible", "SHM sichtbar"))
         suffix = " (" + ", ".join(extra) + ")" if extra else ""
         return {
             "configured": True,
             "exists": True,
             "path": configured,
-            "message": f"Aktiv: {configured}{suffix}",
+            "message": f"{_t('db.status.active', 'Aktiv')}: {configured}{suffix}",
             "badge": "text-bg-success",
             "family": family,
         }
@@ -1900,7 +2105,7 @@ def _rustdesk_server_db_status() -> dict:
         "configured": True,
         "exists": False,
         "path": configured,
-        "message": f"RUSTDESK_SERVER_DB ist gesetzt, aber die Datei wurde nicht gefunden: {configured}",
+        "message": f"{_t('db.status.not_found', 'RUSTDESK_SERVER_DB ist gesetzt, aber die Datei wurde nicht gefunden')}: {configured}",
         "badge": "text-bg-warning",
         "family": family,
     }

@@ -1,108 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Gruppen - RustDesk AddressBook{% endblock %}
+{% block title %}{{ t('groups.title', 'Gruppen') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
 {% set icon_values = group_icon_choices | map(attribute=0) | list %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
-    <h1 class="h3 mb-1">Gruppen</h1>
-    <div class="text-secondary">Gruppen für Kunden, Standorte oder Gerätetypen. Icon und Farbe können direkt ausgewählt werden.</div>
+    <h1 class="h3 mb-1">{{ t('groups.title', 'Gruppen') }}</h1>
+    <div class="text-secondary">{{ t('groups.subtitle', 'Gruppen für Kunden, Standorte oder Gerätetypen. Icon und Farbe können direkt ausgewählt werden.') }}</div>
   </div>
 </div>
 
 <div class="row g-4">
   <div class="col-12 col-lg-4">
-    <div class="card app-card">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Neue Gruppe</h2>
-        <form method="post">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-3">
-            <label class="form-label">Name</label>
-            <input class="form-control" name="name" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Farbe</label>
-            <select class="form-select" name="color">
-              {% for value, label in group_color_choices %}
-                <option value="{{ value }}">{{ label }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="form-label">Icon</label>
-            <div class="input-group">
-              <span class="input-group-text group-icon-preview" id="newGroupIconPreview"><i class="bi bi-collection"></i></span>
-              <select class="form-select group-icon-select" name="icon" data-preview-target="#newGroupIconPreview">
-                {% for value, label in group_icon_choices %}
-                  <option value="{{ value }}" {% if value == 'collection' %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="form-text">Die Vorschau links zeigt das ausgewählte Bootstrap-Icon.</div>
-          </div>
-          <button class="btn btn-primary w-100" type="submit">Gruppe anlegen</button>
-        </form>
-      </div>
-    </div>
+    <div class="card app-card"><div class="card-body"><h2 class="h5 mb-3">{{ t('groups.new', 'Neue Gruppe') }}</h2><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="mb-3"><label class="form-label">{{ t('groups.name', 'Name') }}</label><input class="form-control" name="name" required></div><div class="mb-3"><label class="form-label">{{ t('groups.color', 'Farbe') }}</label><select class="form-select" name="color">{% for value, label in group_color_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div><div class="mb-4"><label class="form-label">{{ t('groups.icon', 'Icon') }}</label><div class="input-group"><span class="input-group-text group-icon-preview" id="newGroupIconPreview"><i class="bi bi-collection"></i></span><select class="form-select group-icon-select" name="icon" data-preview-target="#newGroupIconPreview">{% for value, label in group_icon_choices %}<option value="{{ value }}" {% if value == 'collection' %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><div class="form-text">{{ t('groups.preview_help', 'Die Vorschau links zeigt das ausgewählte Bootstrap-Icon.') }}</div></div><button class="btn btn-primary w-100" type="submit">{{ t('groups.create', 'Gruppe anlegen') }}</button></form></div></div>
   </div>
-
-  <div class="col-12 col-lg-8">
-    <div class="d-grid gap-3">
-      {% for group in groups %}
-        <div class="card app-card">
-          <div class="card-body">
-            <div class="d-flex flex-column flex-xl-row justify-content-between gap-3">
-              <div>
-                <span class="badge text-bg-{{ group.color }} mb-2"><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</span>
-                <div class="text-secondary small">{{ group.devices.count() }} Gerät(e) zugeordnet</div>
-              </div>
-              <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('devices', group=group.id) }}">Geräte anzeigen</a>
-                <form method="post" action="{{ url_for('group_delete', group_id=group.id) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-outline-danger btn-sm" onclick="return confirm('Gruppe löschen? Geräte bleiben erhalten.');" type="submit">Löschen</button>
-                </form>
-              </div>
-            </div>
-
-            <form method="post" action="{{ url_for('group_edit', group_id=group.id) }}" class="row g-2 mt-3 align-items-end">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <div class="col-12 col-md-4">
-                <label class="form-label small text-secondary">Name</label>
-                <input class="form-control form-control-sm" name="name" value="{{ group.name }}" required>
-              </div>
-              <div class="col-6 col-md-3">
-                <label class="form-label small text-secondary">Farbe</label>
-                <select class="form-select form-select-sm" name="color">
-                  {% for value, label in group_color_choices %}
-                    <option value="{{ value }}" {% if group.color == value %}selected{% endif %}>{{ label }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-6 col-md-4">
-                <label class="form-label small text-secondary">Icon</label>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text group-icon-preview" id="groupIconPreview{{ group.id }}"><i class="bi bi-{{ group.icon }}"></i></span>
-                  <select class="form-select group-icon-select" name="icon" data-preview-target="#groupIconPreview{{ group.id }}">
-                    {% if group.icon not in icon_values %}
-                      <option value="{{ group.icon }}" selected>Aktuell: {{ group.icon }}</option>
-                    {% endif %}
-                    {% for value, label in group_icon_choices %}
-                      <option value="{{ value }}" {% if group.icon == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="col-12 col-md-1">
-                <button class="btn btn-outline-primary btn-sm w-100" type="submit" title="Speichern"><i class="bi bi-save"></i></button>
-              </div>
-            </form>
-          </div>
-        </div>
-      {% else %}
-        <div class="card app-card"><div class="card-body text-center text-secondary py-4">Keine Gruppen vorhanden.</div></div>
-      {% endfor %}
-    </div>
-  </div>
+  <div class="col-12 col-lg-8"><div class="d-grid gap-3">{% for group in groups %}<div class="card app-card"><div class="card-body"><div class="d-flex flex-column flex-xl-row justify-content-between gap-3"><div><span class="badge text-bg-{{ group.color }} mb-2"><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</span><div class="text-secondary small">{{ group.devices.count() }} {{ t('groups.assigned', 'Gerät(e) zugeordnet') }}</div></div><div class="d-flex flex-wrap gap-2"><a class="btn btn-outline-secondary btn-sm" href="{{ url_for('devices', group=group.id) }}">{{ t('groups.show_devices', 'Geräte anzeigen') }}</a><form method="post" action="{{ url_for('group_delete', group_id=group.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger btn-sm" onclick="return confirm('{{ t('groups.delete_confirm', 'Gruppe löschen? Geräte bleiben erhalten.') }}');" type="submit">{{ t('common.delete', 'Löschen') }}</button></form></div></div><form method="post" action="{{ url_for('group_edit', group_id=group.id) }}" class="row g-2 mt-3 align-items-end"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="col-12 col-md-4"><label class="form-label small text-secondary">{{ t('groups.name', 'Name') }}</label><input class="form-control form-control-sm" name="name" value="{{ group.name }}" required></div><div class="col-6 col-md-3"><label class="form-label small text-secondary">{{ t('groups.color', 'Farbe') }}</label><select class="form-select form-select-sm" name="color">{% for value, label in group_color_choices %}<option value="{{ value }}" {% if group.color == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div><div class="col-6 col-md-4"><label class="form-label small text-secondary">{{ t('groups.icon', 'Icon') }}</label><div class="input-group input-group-sm"><span class="input-group-text group-icon-preview" id="groupIconPreview{{ group.id }}"><i class="bi bi-{{ group.icon }}"></i></span><select class="form-select group-icon-select" name="icon" data-preview-target="#groupIconPreview{{ group.id }}">{% if group.icon not in icon_values %}<option value="{{ group.icon }}" selected>{{ t('groups.current', 'Aktuell') }}: {{ group.icon }}</option>{% endif %}{% for value, label in group_icon_choices %}<option value="{{ value }}" {% if group.icon == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div></div><div class="col-12 col-md-1"><button class="btn btn-outline-primary btn-sm w-100" type="submit" title="{{ t('common.save', 'Speichern') }}"><i class="bi bi-save"></i></button></div></form></div></div>{% else %}<div class="card app-card"><div class="card-body text-center text-secondary py-4">{{ t('groups.none', 'Keine Gruppen vorhanden.') }}</div></div>{% endfor %}</div></div>
 </div>
 {% endblock %}

@@ -2,20 +2,20 @@
 
 Selfhosted RustDesk-Adressbuch als Docker-Projekt mit Flask, SQLite, Login, 2FA, Gruppen, Geräteverwaltung, Import/Export, Backups, HTTPS direkt im Container, hbbs-Live-Status und SSH-Import der RustDesk-Serverdatenbank.
 
-## Neu in 0.5.17
+## Neu in 0.5.18
 
-- Sprachumschaltung Deutsch/Englisch ergänzt.
-- Einstellungsbereich neu strukturiert: linke Navigation, rechter Detailbereich.
-- Dashboard, Geräte-Seite und Einstellungen nutzen zentrale Übersetzungen für die wichtigsten Texte.
-- Darstellung und Sprache werden gemeinsam unter **Einstellungen → Darstellung & Sprache** gespeichert.
-- Die Einstellungen sind in Bereiche wie Admin-Konto, 2FA, Gerätetypen, Online-Status, Brute-Force, Update-Check und Sicherheitshinweise aufgeteilt.
+- Englische Übersetzungen für zentrale Bereiche erweitert.
+- Import / Export ist jetzt wie die Einstellungen in Kategorien mit linker Navigation aufgeteilt.
+- Dashboard und Geräte-Seite können zwischen Kartenansicht, Listenansicht und kleinen Symbolen umgeschaltet werden.
+- Die gewählte Geräteansicht wird in der Session gespeichert.
+- Der Menüpunkt „Display & language“ wird in der Einstellungsnavigation zweizeilig dargestellt.
 
 ## Download / Neuinstallation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0517.zip
-unzip rustdesk-addressbook-v0517.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0518.zip
+unzip rustdesk-addressbook-v0518.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -45,7 +45,7 @@ https://SERVER-IP:5443
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.zip -O updates/rustdesk-addressbook-update-flat-v0517.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0518.zip -O updates/rustdesk-addressbook-update-flat-v0518.zip
 ./scripts/update.sh
 ```
 
@@ -63,13 +63,13 @@ Das Script prüft zuerst den vorhandenen Ordner `updates/`. Wenn dort keine neue
 Du nutzt `latest.txt`. Die minimale Variante ist:
 
 ```text
-rustdesk-addressbook-update-flat-v0517.zip
+rustdesk-addressbook-update-flat-v0518.zip
 ```
 
 Damit WebUI und Update-Script zusätzlich die Änderungen anzeigen können, kannst du die Änderungen direkt darunter schreiben:
 
 ```text
-rustdesk-addressbook-update-flat-v0517.zip
+rustdesk-addressbook-update-flat-v0518.zip
 - Update-Check nutzt latest.txt ohne latest.json-Prüfung.
 - Update-Script zeigt Änderungen vor Download und Installation.
 - Ja/Nein-Abfragen nutzen [J/n] und [j/N].
@@ -78,13 +78,13 @@ rustdesk-addressbook-update-flat-v0517.zip
 Alternativ kannst du neben der ZIP eine Datei mit gleichem Namen und `.txt` oder `.md` ablegen, zum Beispiel:
 
 ```text
-https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.txt
+https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0518.txt
 ```
 
 oder:
 
 ```text
-https://dl.ab-xnet.de/release-notes-v0517.txt
+https://dl.ab-xnet.de/release-notes-v0518.txt
 ```
 
 
@@ -158,13 +158,13 @@ Ohne `data/config.json` können gespeicherte Gerätepasswörter nicht entschlüs
 Im Footer der WebUI steht:
 
 ```text
-RustDesk AddressBook 0.5.17
+RustDesk AddressBook 0.5.18
 ```
 
 Zusätzlich:
 
 ```bash
-docker exec -it rustdesk-addressbook grep -n "0.5.17-language-settings-layout" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.18-i18n-import-device-views" /app/app/config.py
 ```
 
 ## Sicherheitshinweis
@@ -173,7 +173,7 @@ Die App verschlüsselt Gerätepasswörter feldweise und bietet verschlüsselte B
 
 ## Sprache und Einstellungen
 
-Ab Version 0.5.17 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
+Ab Version 0.5.18 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
 Die Auswahl befindet sich unter **Einstellungen → Darstellung & Sprache**.
 
 Der Einstellungsbereich ist in eine linke Navigation und einen rechten Detailbereich aufgeteilt.

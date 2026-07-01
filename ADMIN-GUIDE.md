@@ -8,8 +8,8 @@ Empfohlen ist das interaktive Installationsscript. Die Komplettversion entpackt 
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0517.zip
-unzip rustdesk-addressbook-v0517.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0518.zip
+unzip rustdesk-addressbook-v0518.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -44,8 +44,8 @@ HTTP ist standardmäßig deaktiviert. Wenn HTTP im Installationsscript aktiviert
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0517.zip
-unzip rustdesk-addressbook-v0517.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0518.zip
+unzip rustdesk-addressbook-v0518.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -60,7 +60,7 @@ Es gibt zwei empfohlene Wege. In beiden Fällen wird am Ende nur das Update-Scri
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.zip -O updates/rustdesk-addressbook-update-flat-v0517.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0518.zip -O updates/rustdesk-addressbook-update-flat-v0518.zip
 ./scripts/update.sh
 ```
 
@@ -85,13 +85,13 @@ Die früheren Optionen `--check-online` und `--online` sind für den normalen Be
 Minimale Variante:
 
 ```text
-rustdesk-addressbook-update-flat-v0517.zip
+rustdesk-addressbook-update-flat-v0518.zip
 ```
 
 Empfohlene Variante mit Änderungen für WebUI und Update-Script:
 
 ```text
-rustdesk-addressbook-update-flat-v0517.zip
+rustdesk-addressbook-update-flat-v0518.zip
 - Update-Check nutzt latest.txt ohne latest.json-Prüfung.
 - Update-Script zeigt Änderungen vor Download und Installation.
 - Ja/Nein-Abfragen nutzen [J/n] und [j/N].
@@ -100,9 +100,9 @@ rustdesk-addressbook-update-flat-v0517.zip
 Alternativ kann neben der ZIP eine separate Notizdatei liegen:
 
 ```text
-rustdesk-addressbook-update-flat-v0517.txt
-release-notes-v0517.txt
-releases/v0517.txt
+rustdesk-addressbook-update-flat-v0518.txt
+release-notes-v0518.txt
+releases/v0518.txt
 ```
 
 
@@ -136,7 +136,7 @@ cd /opt/rustdesk-addressbook
 docker compose down
 cp -a data ../rustdesk-addressbook-data-backup
 cp -a backups ../rustdesk-addressbook-backups-backup 2>/dev/null || true
-unzip -o updates/rustdesk-addressbook-update-flat-v0517.zip
+unzip -o updates/rustdesk-addressbook-update-flat-v0518.zip
 docker compose build --no-cache
 docker compose up -d --force-recreate --remove-orphans
 ```
@@ -492,7 +492,7 @@ PY
 
 ## Sprache und Einstellungen
 
-Ab Version 0.5.17 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
+Ab Version 0.5.18 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
 Die Auswahl befindet sich unter **Einstellungen → Darstellung & Sprache**.
 
 Der Einstellungsbereich ist in eine linke Navigation und einen rechten Detailbereich aufgeteilt.

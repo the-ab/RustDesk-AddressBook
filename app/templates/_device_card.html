@@ -4,9 +4,9 @@
       <div class="min-w-0">
         <div class="d-flex align-items-center gap-2">
           {% if device.online %}
-            <span class="status-dot bg-success" title="Online / letzter Serverstatus online"></span>
+            <span class="status-dot bg-success" title="{{ t('device.card.online_title', 'Online / letzter Serverstatus online') }}"></span>
           {% else %}
-            <span class="status-dot bg-secondary" title="Offline / letzter Serverstatus offline"></span>
+            <span class="status-dot bg-secondary" title="{{ t('device.card.offline_title', 'Offline / letzter Serverstatus offline') }}"></span>
           {% endif %}
           <h2 class="h6 mb-0 text-truncate">{{ device.name }}</h2>
         </div>
@@ -14,7 +14,7 @@
       </div>
       <form method="post" action="{{ url_for('device_toggle_favorite', device_id=device.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="btn btn-sm btn-link star-btn" title="Favorit umschalten">
+        <button class="btn btn-sm btn-link star-btn" title="{{ t('device.card.favorite_toggle', 'Favorit umschalten') }}">
           {% if device.favorite %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
         </button>
       </form>
@@ -39,14 +39,14 @@
 
     <div class="mt-auto d-flex flex-wrap gap-2">
       <a class="btn btn-primary btn-sm" href="{{ url_for('device_connect', device_id=device.id) }}">
-        <i class="bi bi-plug me-1"></i>Verbinden
+        <i class="bi bi-plug me-1"></i>{{ t('device.card.connect', 'Verbinden') }}
       </a>
       <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('device_edit', device_id=device.id) }}">
-        <i class="bi bi-pencil me-1"></i>Bearbeiten
+        <i class="bi bi-pencil me-1"></i>{{ t('device.card.edit', 'Bearbeiten') }}
       </a>
       <form method="post" action="{{ url_for('device_toggle_online', device_id=device.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button class="btn btn-outline-secondary btn-sm" type="submit" title="Manuellen Status umschalten">
+        <button class="btn btn-outline-secondary btn-sm" type="submit" title="{{ t('device.card.manual_status', 'Manuellen Status umschalten') }}">
           {% if device.online %}<i class="bi bi-toggle-on me-1"></i>Online{% else %}<i class="bi bi-toggle-off me-1"></i>Offline{% endif %}
         </button>
       </form>

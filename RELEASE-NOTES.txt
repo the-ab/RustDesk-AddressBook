@@ -1,7 +1,6 @@
-0.5.17-language-settings-layout
-- Sprachumschaltung Deutsch/Englisch ergänzt.
-- Kernbereiche der WebUI nutzen jetzt eine einfache Übersetzungsfunktion.
-- Einstellungen neu strukturiert: linke Navigation, rechter Detailbereich.
-- Bereiche in den Einstellungen sind jetzt getrennt nach Darstellung/Sprache, Admin-Konto, 2FA, Gerätetypen, Online-Status, Brute-Force-Sperre, Update-Check und Sicherheitshinweisen.
-- Dashboard und Geräte-Seite verwenden die neue Sprachlogik für zentrale Texte.
-- Versionsanzeige und Update-Mechanik bleiben unverändert.
+0.5.18-i18n-import-device-views
+- Englische Übersetzungen für zentrale Bereiche erweitert: Dashboard, Geräte, Gruppen, Import / Export, Einstellungen und Geräteformular.
+- Einstellungen: Display & language wird in der linken Navigation zweizeilig dargestellt.
+- Import / Export erhält eine linke Kategorienavigation mit rechter Detailansicht.
+- Dashboard und Geräte-Seite können zwischen Kartenansicht, Listenansicht und kleinen Symbolen umgeschaltet werden.
+- Die gewählte Geräteansicht wird in der Session gespeichert und weiterverwendet.

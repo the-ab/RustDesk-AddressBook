@@ -17,7 +17,7 @@
       <i class="bi bi-display me-2"></i>RustDesk AddressBook
     </a>
     {% if current_user.is_authenticated %}
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="Navigation umschalten">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="{{ t('nav.toggle', 'Navigation umschalten') }}">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="mainNav">
@@ -31,7 +31,7 @@
         <li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}"><i class="bi bi-gear me-1"></i>{{ t('nav.settings', 'Einstellungen') }}</a></li>
       </ul>
       <div class="d-flex align-items-center gap-2">
-        <a id="updateAvailableBadge" class="btn btn-warning btn-sm {% if not update_check_info.available %}d-none{% endif %}" href="{{ url_for('settings') }}#update-check-card" title="Zum Update-Check">
+        <a id="updateAvailableBadge" class="btn btn-warning btn-sm {% if not update_check_info.available %}d-none{% endif %}" href="{{ url_for('settings') }}#update-check-card" title="{{ t('settings.update.title', 'Update-Check') }}">
           <i class="bi bi-cloud-arrow-down me-1"></i>{{ t('nav.update_available', 'Update verfügbar') }}
         </a>
         <span class="badge rounded-pill text-bg-secondary d-none d-xl-inline">{{ app_language|upper }}</span>
@@ -53,7 +53,7 @@
       {% for category, message in messages %}
         <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
           {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Schließen"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ t('common.close', 'Schließen') }}"></button>
         </div>
       {% endfor %}
       </div>
@@ -78,9 +78,19 @@
     endpoint: {{ url_for("api_update_check")|tojson }},
     settingsUrl: {{ (url_for('settings') + '#update-check-card')|tojson }}
   };
+  window.RAB_I18N = {
+    updateAvailable: {{ t('settings.update.available', 'Update verfügbar')|tojson }},
+    current: {{ t('settings.update.current', 'Aktuell')|tojson }},
+    error: {{ t('common.error', 'Fehler')|tojson }},
+    noMessage: {{ t('common.no_message', 'Keine Meldung erhalten.')|tojson }},
+    download: {{ t('common.download', 'Download')|tojson }},
+    changes: {{ t('settings.update.changes', 'Änderungen dieser Version')|tojson }},
+    checking: {{ t('settings.update.checking', 'Prüfe...')|tojson }},
+    updateFailed: {{ t('settings.update.failed', 'Update-Check fehlgeschlagen')|tojson }}
+  };
 </script>
 {% endif %}
-<footer class="container-fluid px-3 px-lg-4 pb-3 text-secondary small">RustDesk AddressBook <a class="text-secondary" href="{{ url_for('release_notes') }}" title="Release-Änderungen anzeigen">{{ app_version_short }}</a></footer>
+<footer class="container-fluid px-3 px-lg-4 pb-3 text-secondary small">RustDesk AddressBook <a class="text-secondary" href="{{ url_for('release_notes') }}" title="{{ t('release.title', 'Release-Änderungen anzeigen') }}">{{ app_version_short }}</a></footer>
 <script src="{{ url_for('static', filename='js/app.js', v=app_version) }}"></script>
 </body>
 </html>

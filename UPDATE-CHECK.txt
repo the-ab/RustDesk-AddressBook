@@ -1,5 +1,6 @@
-rustdesk-addressbook-update-flat-v0517.zip
-- Sprachumschaltung Deutsch/Englisch ergänzt.
-- Einstellungsbereich mit linker Navigation und rechter Detailansicht neu aufgebaut.
-- Dashboard und Geräte-Seite nutzen zentrale Übersetzungen für die wichtigsten Texte.
-- Einstellungen sind übersichtlicher nach Darstellung, Admin, 2FA, Gerätetypen, Online-Status, Brute-Force, Update und Sicherheitshinweisen gruppiert.
+rustdesk-addressbook-update-flat-v0518.zip
+- Englische Übersetzungen für zentrale Bereiche erweitert.
+- Import / Export ist jetzt in Kategorien mit linker Navigation und rechter Detailansicht aufgeteilt.
+- Dashboard und Geräte-Seite können zwischen Kartenansicht, Listenansicht und kleinen Symbolen umgeschaltet werden.
+- Die gewählte Geräteansicht wird in der Session gespeichert.
+- Display & language wird in der Einstellungsnavigation zweizeilig dargestellt.

@@ -83,6 +83,7 @@
   const updateButton = document.getElementById('updateCheckButton');
   const updateResult = document.getElementById('updateCheckResult');
   const updateBadge = document.getElementById('updateAvailableBadge');
+  const i18n = window.RAB_I18N || {};
 
   const renderUpdateCheck = (data) => {
     if (updateBadge) {
@@ -90,15 +91,15 @@
     }
     if (!updateResult) return;
     const badgeClass = data.update_available ? 'text-bg-warning' : (data.ok ? 'text-bg-success' : 'text-bg-danger');
-    const badgeText = data.update_available ? 'Update verfügbar' : (data.ok ? 'Aktuell' : 'Fehler');
+    const badgeText = data.update_available ? (i18n.updateAvailable || 'Update verfügbar') : (data.ok ? (i18n.current || 'Aktuell') : (i18n.error || 'Fehler'));
     const details = [];
     details.push(`<div class="mb-1"><span class="badge ${badgeClass}">${badgeText}</span><span class="ms-2 text-secondary">${escapeHtml(data.checked_at || '')}</span></div>`);
-    details.push(`<div>${escapeHtml(data.message || 'Keine Meldung erhalten.')}</div>`);
+    details.push(`<div>${escapeHtml(data.message || i18n.noMessage || 'Keine Meldung erhalten.')}</div>`);
     if (data.download_url) {
-      details.push(`<div class="mt-1 text-secondary">Download: <code>${escapeHtml(data.download_url)}</code></div>`);
+      details.push(`<div class="mt-1 text-secondary">${escapeHtml(i18n.download || 'Download')}: <code>${escapeHtml(data.download_url)}</code></div>`);
     }
     if (data.release_notes && data.release_notes.length) {
-      details.push(`<div class="mt-3 fw-semibold">Änderungen dieser Version</div><ul class="mb-0 mt-1">${data.release_notes.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`);
+      details.push(`<div class="mt-3 fw-semibold">${escapeHtml(i18n.changes || 'Änderungen dieser Version')}</div><ul class="mb-0 mt-1">${data.release_notes.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`);
     }
     updateResult.innerHTML = details.join('');
   };
@@ -110,7 +111,7 @@
     if (showButtonState && updateButton) {
       updateButton.disabled = true;
       originalHtml = updateButton.innerHTML;
-      updateButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Prüfe...';
+      updateButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + escapeHtml(i18n.checking || 'Prüfe...');
     }
     try {
       const response = await fetch(url, {headers: {'Accept': 'application/json'}});
@@ -119,7 +120,7 @@
       return data;
     } catch (error) {
       if (updateResult) {
-        updateResult.innerHTML = `<div><span class="badge text-bg-danger">Fehler</span></div><div class="mt-1">Update-Check fehlgeschlagen: ${escapeHtml(String(error))}</div>`;
+        updateResult.innerHTML = `<div><span class="badge text-bg-danger">${escapeHtml(i18n.error || 'Fehler')}</span></div><div class="mt-1">${escapeHtml(i18n.updateFailed || 'Update-Check fehlgeschlagen')}: ${escapeHtml(String(error))}</div>`;
       }
       return null;
     } finally {

@@ -1,0 +1,51 @@
+{% if device_items %}
+  {% if device_view == 'list' %}
+    <div class="card app-card overflow-hidden">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0 device-list-table">
+          <thead>
+            <tr>
+              <th>{{ t('common.status', 'Status') }}</th>
+              <th>{{ t('device_form.name', 'Name') }}</th>
+              <th>RustDesk ID</th>
+              <th>{{ t('common.group', 'Gruppe') }}</th>
+              <th>{{ t('devices.device_type', 'Gerätetyp') }}</th>
+              <th class="text-end">{{ t('common.edit', 'Bearbeiten') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for device in device_items %}
+            <tr>
+              <td>{% if device.online %}<span class="badge text-bg-success">Online</span>{% else %}<span class="badge text-bg-secondary">Offline</span>{% endif %}</td>
+              <td><div class="fw-semibold text-truncate">{{ device.name }}</div><div class="text-secondary small">{{ device.customer or '' }}{% if device.customer and device.location %} · {% endif %}{{ device.location or '' }}</div></td>
+              <td><code>{{ device.rustdesk_id }}</code></td>
+              <td>{% if device.group %}<span class="badge text-bg-{{ device.group.color }}">{{ device.group.name }}</span>{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
+              <td>{% if device.os %}<i class="bi {{ os_icon_class(device.os) }} me-1"></i>{{ device.os }}{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
+              <td class="text-end"><div class="btn-group btn-group-sm"><a class="btn btn-primary" href="{{ url_for('device_connect', device_id=device.id) }}"><i class="bi bi-plug"></i></a><a class="btn btn-outline-secondary" href="{{ url_for('device_edit', device_id=device.id) }}"><i class="bi bi-pencil"></i></a></div></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% elif device_view == 'icons' %}
+    <div class="device-icon-grid">
+      {% for device in device_items %}
+        <div class="device-icon-tile app-card">
+          <div class="device-icon-status {% if device.online %}bg-success{% else %}bg-secondary{% endif %}"></div>
+          <a class="device-icon-main text-decoration-none" href="{{ url_for('device_connect', device_id=device.id) }}" title="{{ t('common.connect', 'Verbinden') }}: {{ device.name }}">
+            <i class="bi {{ os_icon_class(device.os) if device.os else 'bi-pc-display-horizontal' }}"></i>
+            <span>{{ device.name }}</span>
+          </a>
+          <a class="device-icon-edit" href="{{ url_for('device_edit', device_id=device.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="row g-3">
+      {% for device in device_items %}
+        <div class="col-12 col-md-6 col-xl-4 col-xxl-3">{% include "_device_card.html" %}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endif %}
