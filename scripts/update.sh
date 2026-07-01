@@ -32,7 +32,7 @@ Ablauf ohne Parameter:
   3. Bei verfügbarem Online-Update fragt es, ob heruntergeladen und installiert werden soll.
 
 Manuelles Update:
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0516.zip -O updates/rustdesk-addressbook-update-flat-v0516.zip
+  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.zip -O updates/rustdesk-addressbook-update-flat-v0517.zip
   ./scripts/update.sh
 
 Standard-Aufruf:
@@ -43,16 +43,16 @@ Wenn dort keine neuere Version liegt, wird automatisch online unter RAB_UPDATE_B
 Bei verfügbarer Online-Version werden die Änderungen angezeigt und das Script fragt nach Download und Installation.
 
 Manuelles Update bleibt möglich:
-  cp rustdesk-addressbook-update-flat-v0516.zip updates/
+  cp rustdesk-addressbook-update-flat-v0517.zip updates/
   ./scripts/update.sh
 
 Direkte ZIP-Pfade bleiben unterstützt:
-  ./scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0516.zip
+  ./scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0517.zip
 
 Online-Manifest unter RAB_UPDATE_BASE_URL:
-  latest.txt  erste Zeile: rustdesk-addressbook-update-flat-v0516.zip
+  latest.txt  erste Zeile: rustdesk-addressbook-update-flat-v0517.zip
               Folgezeilen optional als Release-Notizen
-Alternativ kann neben der ZIP eine Datei rustdesk-addressbook-update-flat-v0516.txt oder release-notes-v0516.txt liegen.
+Alternativ kann neben der ZIP eine Datei rustdesk-addressbook-update-flat-v0517.txt oder release-notes-v0517.txt liegen.
 USAGE
 }
 

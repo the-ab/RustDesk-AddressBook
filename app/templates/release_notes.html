@@ -18,6 +18,13 @@
 </div>
 
 {% set releases = [
+  ('0.5.17', [
+    'Sprachumschaltung Deutsch/Englisch ergänzt.',
+    'Einstellungen neu strukturiert: linke Navigation mit Detailbereich rechts.',
+    'Dashboard, Geräte-Seite und Einstellungsbereich nutzen zentrale Übersetzungen für die wichtigsten Texte.',
+    'Darstellung und Sprache werden gemeinsam unter Einstellungen → Darstellung & Sprache gespeichert.',
+    'Die neue Einstellungsnavigation reduziert Scrollen und gruppiert die Optionen übersichtlicher.'
+  ]),
   ('0.5.16', [
     'Dashboard und Geräte-Seite zeigen den hbbs Live-Status kompakter direkt neben dem Live-Status-Button.',
     'Der separate Online-Statuscheck-Block wurde vom Dashboard entfernt.',
@@ -189,7 +196,7 @@
   <div class="card-body">
     <h2 class="h5">Update-Hinweis</h2>
     <p class="text-secondary mb-2">Variante A: Kopiere die neue Flat-Update-ZIP in <code>updates/</code> und starte das Script ohne Parameter.</p>
-    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0516.zip -O updates/rustdesk-addressbook-update-flat-v0516.zip
+    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.zip -O updates/rustdesk-addressbook-update-flat-v0517.zip
 ./scripts/update.sh</pre>
     <p class="text-secondary mb-2 mt-3">Variante B: Starte nur das Script. Es prüft lokale Updates, danach online, zeigt Änderungen an und fragt nach Download/Installation.</p>
     <pre class="codebox">./scripts/update.sh</pre>

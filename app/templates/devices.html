@@ -1,95 +1,52 @@
 {% extends "base.html" %}
-{% block title %}Geräte - RustDesk AddressBook{% endblock %}
+{% block title %}{{ t('devices.title', 'Geräte') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
   <div>
-    <h1 class="h3 mb-1">Geräte</h1>
-    <div class="text-secondary">Suchen, filtern, Online-Status live abfragen und direkt per RustDesk verbinden.</div>
+    <h1 class="h3 mb-1">{{ t('devices.title', 'Geräte') }}</h1>
+    <div class="text-secondary">{{ t('devices.subtitle', 'Suchen, filtern, Online-Status live abfragen und direkt per RustDesk verbinden.') }}</div>
   </div>
   <div class="d-flex flex-wrap align-items-center gap-2">
     <form method="post" action="{{ url_for('sync_rustdesk_live_status') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-outline-success" type="submit" {% if not status_settings.hbbs_host %}title="hbbs Host unter Einstellungen eintragen"{% endif %}>
-        <i class="bi bi-broadcast-pin me-1"></i>Live-Status hbbs
+        <i class="bi bi-broadcast-pin me-1"></i>{{ t('devices.live_status', 'Live-Status hbbs') }}
       </button>
     </form>
     <div class="status-inline small text-secondary">
       {% if status_check_info.checked_at %}
-        <span class="badge {% if status_check_info.ok %}text-bg-success{% else %}text-bg-danger{% endif %} me-1">{% if status_check_info.ok %}OK{% else %}Fehler{% endif %}</span>
+        <span class="badge {% if status_check_info.ok %}text-bg-success{% else %}text-bg-danger{% endif %} me-1">{% if status_check_info.ok %}{{ t('common.ok', 'OK') }}{% else %}{{ t('common.error', 'Fehler') }}{% endif %}</span>
         <span>{{ status_check_info.checked_at }}</span>
         {% if status_check_info.message %}<span class="d-none d-xl-inline ms-1">· {{ status_check_info.message }}</span>{% endif %}
       {% else %}
-        <span class="badge text-bg-secondary me-1">nie geprüft</span>
-        <span>kein Online-Statuscheck</span>
+        <span class="badge text-bg-secondary me-1">{{ t('common.never_checked', 'nie geprüft') }}</span>
+        <span>{{ t('common.no_online_check', 'kein Online-Statuscheck') }}</span>
       {% endif %}
     </div>
-    <a class="btn btn-primary" href="{{ url_for('device_new') }}"><i class="bi bi-plus-lg me-1"></i>Gerät anlegen</a>
+    <a class="btn btn-primary" href="{{ url_for('device_new') }}"><i class="bi bi-plus-lg me-1"></i>{{ t('devices.add_device', 'Gerät anlegen') }}</a>
   </div>
 </div>
 
 {% if not status_settings.hbbs_host %}
-  <div class="alert alert-info">
-    Für den automatischen Online-Status trage unter <strong>Einstellungen → Online-Status</strong> deinen <code>hbbs</code>-Host ein und nutze anschließend <strong>Live-Status hbbs</strong>. Server-DB-Import und Diagnose findest du unter <strong>Import / Export</strong>.
-  </div>
+  <div class="alert alert-info">{{ t('devices.hbbs_missing', 'Für den automatischen Online-Status trage unter Einstellungen → Online-Status deinen hbbs-Host ein und nutze anschließend Live-Status hbbs. Server-DB-Import und Diagnose findest du unter Import / Export.') }}</div>
 {% endif %}
 
 <div class="card app-card mb-4">
   <div class="card-body">
     <form class="row g-2 align-items-end" method="get">
-      <div class="col-12 col-lg-3">
-        <label class="form-label">Suche</label>
-        <input class="form-control" name="q" value="{{ q }}" placeholder="Name, RustDesk-ID, Kunde, Standort, Tags...">
-      </div>
-      <div class="col-12 col-lg-2">
-        <label class="form-label">Gruppe</label>
-        <select class="form-select" name="group">
-          <option value="">Alle Gruppen</option>
-          {% for group in groups %}
-            <option value="{{ group.id }}" {% if selected_group|string == group.id|string %}selected{% endif %}>{{ group.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-12 col-lg-2">
-        <label class="form-label">Gerätetyp</label>
-        <select class="form-select" name="os">
-          <option value="">Alle</option>
-          {% for item in available_os %}
-            <option value="{{ item }}" {% if selected_os == item %}selected{% endif %}>{{ item }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-12 col-lg-2">
-        <label class="form-label">Favoriten</label>
-        <select class="form-select" name="fav">
-          <option value="">Alle</option>
-          <option value="1" {% if fav == '1' %}selected{% endif %}>Nur Favoriten</option>
-        </select>
-      </div>
-      <div class="col-12 col-lg-2">
-        <label class="form-label">Sortierung</label>
-        <select class="form-select" name="sort">
-          {% for value, label in sort_choices.items() %}
-            <option value="{{ value }}" {% if selected_sort == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-12 col-lg-1 d-grid">
-        <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
-      </div>
+      <div class="col-12 col-lg-3"><label class="form-label">{{ t('devices.search', 'Suche') }}</label><input class="form-control" name="q" value="{{ q }}" placeholder="Name, RustDesk-ID, Kunde, Standort, Tags..."></div>
+      <div class="col-12 col-lg-2"><label class="form-label">{{ t('devices.group', 'Gruppe') }}</label><select class="form-select" name="group"><option value="">{{ t('devices.all_groups', 'Alle Gruppen') }}</option>{% for group in groups %}<option value="{{ group.id }}" {% if selected_group|string == group.id|string %}selected{% endif %}>{{ group.name }}</option>{% endfor %}</select></div>
+      <div class="col-12 col-lg-2"><label class="form-label">{{ t('devices.device_type', 'Gerätetyp') }}</label><select class="form-select" name="os"><option value="">{{ t('common.all', 'Alle') }}</option>{% for item in available_os %}<option value="{{ item }}" {% if selected_os == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+      <div class="col-12 col-lg-2"><label class="form-label">{{ t('devices.favorites', 'Favoriten') }}</label><select class="form-select" name="fav"><option value="">{{ t('common.all', 'Alle') }}</option><option value="1" {% if fav == '1' %}selected{% endif %}>{{ t('devices.only_favorites', 'Nur Favoriten') }}</option></select></div>
+      <div class="col-12 col-lg-2"><label class="form-label">{{ t('devices.sort', 'Sortierung') }}</label><select class="form-select" name="sort">{% for value, label in sort_choices.items() %}<option value="{{ value }}" {% if selected_sort == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="col-12 col-lg-1 d-grid"><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div>
     </form>
   </div>
 </div>
 
 {% if devices %}
-  <div class="row g-3">
-    {% for device in devices %}
-      <div class="col-12 col-md-6 col-xl-4 col-xxl-3">{% include "_device_card.html" %}</div>
-    {% endfor %}
-  </div>
+  <div class="row g-3">{% for device in devices %}<div class="col-12 col-md-6 col-xl-4 col-xxl-3">{% include "_device_card.html" %}</div>{% endfor %}</div>
 {% else %}
-  <div class="empty-state">
-    Keine Geräte gefunden.
-    <div class="mt-3"><a class="btn btn-primary" href="{{ url_for('device_new') }}">Erstes Gerät anlegen</a></div>
-  </div>
+  <div class="empty-state">{{ t('devices.no_results', 'Keine Geräte gefunden.') }}<div class="mt-3"><a class="btn btn-primary" href="{{ url_for('device_new') }}">{{ t('devices.first_device', 'Erstes Gerät anlegen') }}</a></div></div>
 {% endif %}
 {% endblock %}

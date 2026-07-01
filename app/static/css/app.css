@@ -253,3 +253,25 @@ body {
     white-space: normal;
   }
 }
+
+
+/* Settings layout */
+.settings-sidebar { overflow: hidden; }
+@media (min-width: 992px) {
+  .settings-sidebar.sticky-lg-top { top: 5.25rem; }
+}
+.settings-nav .list-group-item {
+  border-left: 0;
+  border-right: 0;
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+.settings-nav .list-group-item:first-child { border-top: 0; }
+.settings-nav .list-group-item:last-child { border-bottom: 0; }
+.settings-nav .list-group-item.active {
+  font-weight: 600;
+}
+.tab-pane > .card, .tab-pane > .row > [class*="col-"] > .card {
+  scroll-margin-top: 6rem;
+}

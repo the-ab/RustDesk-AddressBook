@@ -2,20 +2,20 @@
 
 Selfhosted RustDesk-Adressbuch als Docker-Projekt mit Flask, SQLite, Login, 2FA, Gruppen, Geräteverwaltung, Import/Export, Backups, HTTPS direkt im Container, hbbs-Live-Status und SSH-Import der RustDesk-Serverdatenbank.
 
-## Neu in 0.5.16
+## Neu in 0.5.17
 
-- Dashboard kompakter: Der hbbs Live-Statuscheck ist jetzt direkt neben dem Button **Live-Status hbbs** platziert.
-- Geräte-Seite kompakter: Button und letzter Statuscheck sind kombiniert.
-- Import / Export zeigt keinen hbbs Live-Status-Button mehr.
-- DB Diagnose wird nur noch angezeigt, wenn `RUSTDESK_SERVER_DB` gesetzt ist.
-- Direkter DB-Import zeigt den Zustand des read-only Mounts klar an: aktiv, nicht gefunden oder nicht aktiviert.
+- Sprachumschaltung Deutsch/Englisch ergänzt.
+- Einstellungsbereich neu strukturiert: linke Navigation, rechter Detailbereich.
+- Dashboard, Geräte-Seite und Einstellungen nutzen zentrale Übersetzungen für die wichtigsten Texte.
+- Darstellung und Sprache werden gemeinsam unter **Einstellungen → Darstellung & Sprache** gespeichert.
+- Die Einstellungen sind in Bereiche wie Admin-Konto, 2FA, Gerätetypen, Online-Status, Brute-Force, Update-Check und Sicherheitshinweise aufgeteilt.
 
 ## Download / Neuinstallation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0516.zip
-unzip rustdesk-addressbook-v0516.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0517.zip
+unzip rustdesk-addressbook-v0517.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -45,7 +45,7 @@ https://SERVER-IP:5443
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0516.zip -O updates/rustdesk-addressbook-update-flat-v0516.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.zip -O updates/rustdesk-addressbook-update-flat-v0517.zip
 ./scripts/update.sh
 ```
 
@@ -63,13 +63,13 @@ Das Script prüft zuerst den vorhandenen Ordner `updates/`. Wenn dort keine neue
 Du nutzt `latest.txt`. Die minimale Variante ist:
 
 ```text
-rustdesk-addressbook-update-flat-v0516.zip
+rustdesk-addressbook-update-flat-v0517.zip
 ```
 
 Damit WebUI und Update-Script zusätzlich die Änderungen anzeigen können, kannst du die Änderungen direkt darunter schreiben:
 
 ```text
-rustdesk-addressbook-update-flat-v0516.zip
+rustdesk-addressbook-update-flat-v0517.zip
 - Update-Check nutzt latest.txt ohne latest.json-Prüfung.
 - Update-Script zeigt Änderungen vor Download und Installation.
 - Ja/Nein-Abfragen nutzen [J/n] und [j/N].
@@ -78,13 +78,13 @@ rustdesk-addressbook-update-flat-v0516.zip
 Alternativ kannst du neben der ZIP eine Datei mit gleichem Namen und `.txt` oder `.md` ablegen, zum Beispiel:
 
 ```text
-https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0516.txt
+https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.txt
 ```
 
 oder:
 
 ```text
-https://dl.ab-xnet.de/release-notes-v0516.txt
+https://dl.ab-xnet.de/release-notes-v0517.txt
 ```
 
 
@@ -158,15 +158,26 @@ Ohne `data/config.json` können gespeicherte Gerätepasswörter nicht entschlüs
 Im Footer der WebUI steht:
 
 ```text
-RustDesk AddressBook 0.5.16
+RustDesk AddressBook 0.5.17
 ```
 
 Zusätzlich:
 
 ```bash
-docker exec -it rustdesk-addressbook grep -n "0.5.16-compact-status-db-mount-ui" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.17-language-settings-layout" /app/app/config.py
 ```
 
 ## Sicherheitshinweis
 
 Die App verschlüsselt Gerätepasswörter feldweise und bietet verschlüsselte Backups. Die laufende SQLite-Datenbank ist aber keine SQLCipher-Vollverschlüsselung. Wer `addressbook.db` und `data/config.json` zusammen erhält, muss als kritisch betrachtet werden. Für externe Ablage daher bevorzugt verschlüsselte `.rabfull`-Vollbackups verwenden und den Serverzugriff streng absichern. `.rabenc` enthält nur die Datenbank und benötigt zusätzlich die passende `config.json`.
+
+## Sprache und Einstellungen
+
+Ab Version 0.5.17 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
+Die Auswahl befindet sich unter **Einstellungen → Darstellung & Sprache**.
+
+Der Einstellungsbereich ist in eine linke Navigation und einen rechten Detailbereich aufgeteilt.
+Dadurch sind Admin-Konto, 2FA, Online-Status, Update-Check und weitere Optionen schneller erreichbar.
+
+Hinweis: Die Kernoberfläche ist übersetzt. Technische Logs, Import-Inhalte und einige Diagnosemeldungen bleiben bewusst unverändert oder deutschsprachig, damit bestehende Hinweise und Logs kompatibel bleiben.
+

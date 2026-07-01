@@ -53,8 +53,8 @@
         <h2 class="h4">Installation und Update</h2>
         <h3 class="h6 mt-3">Neuinstallation mit Installationsscript</h3>
 <pre class="bg-body-tertiary border rounded p-3"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0516.zip
-unzip rustdesk-addressbook-v0516.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0517.zip
+unzip rustdesk-addressbook-v0517.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -63,17 +63,17 @@ chmod +x scripts/install.sh scripts/update.sh
         <h3 class="h6 mt-3">Update einer bestehenden Installation</h3>
         <p><strong>Variante A:</strong> Update-ZIP manuell in den vorhandenen Ordner <code>updates/</code> laden:</p>
 <pre class="bg-body-tertiary border rounded p-3"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0516.zip -O updates/rustdesk-addressbook-update-flat-v0516.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.zip -O updates/rustdesk-addressbook-update-flat-v0517.zip
 ./scripts/update.sh</code></pre>
         <p><strong>Variante B:</strong> automatischer Online-Check und Download:</p>
 <pre class="bg-body-tertiary border rounded p-3"><code>cd /opt/rustdesk-addressbook
 ./scripts/update.sh</code></pre>
         <p>Das Updatescript erkennt lokale ZIPs in <code>updates/</code>. Ist lokal nichts Neueres vorhanden, prüft es online unter <code>RAB_UPDATE_BASE_URL</code>, zeigt bei verfügbarer Version die Änderungen an und fragt nach Download und Installation. Es erstellt automatisch eine Pre-Update-Sicherung und entfernt bei Bedarf einen alten Container mit demselben Namen.</p>
         <h3 class="h6 mt-3">Release-Notizen für Online-Updates</h3>
-<pre class="bg-body-tertiary border rounded p-3"><code>rustdesk-addressbook-update-flat-v0516.zip
+<pre class="bg-body-tertiary border rounded p-3"><code>rustdesk-addressbook-update-flat-v0517.zip
 - Änderung 1
 - Änderung 2</code></pre>
-        <p>Diese Zeilen können direkt in <code>latest.txt</code> unter der ZIP-Datei stehen. Alternativ kann eine separate Datei wie <code>rustdesk-addressbook-update-flat-v0516.txt</code> oder <code>release-notes-v0516.txt</code> im Download-Verzeichnis liegen. Die WebUI zeigt diese Änderungen unter <strong>Einstellungen → Update-Check</strong> an.</p>
+        <p>Diese Zeilen können direkt in <code>latest.txt</code> unter der ZIP-Datei stehen. Alternativ kann eine separate Datei wie <code>rustdesk-addressbook-update-flat-v0517.txt</code> oder <code>release-notes-v0517.txt</code> im Download-Verzeichnis liegen. Die WebUI zeigt diese Änderungen unter <strong>Einstellungen → Update-Check</strong> an.</p>
         <h3 class="h6 mt-3">WebUI öffnen</h3>
 <pre class="bg-body-tertiary border rounded p-3"><code>https://SERVER-IP:5443</code></pre>
         <div class="alert alert-info mb-0">HTTP ist standardmäßig deaktiviert. Bei HTTPS ohne eigenes Zertifikat wird automatisch ein selbstsigniertes Zertifikat erzeugt. Die Browser-Warnung ist in diesem Fall normal.</div>

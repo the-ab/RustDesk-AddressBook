@@ -117,6 +117,140 @@ STATUS_SOURCE_CHOICES = [
     ("hbbs", "hbbs Live-Abfrage"),
 ]
 
+LANGUAGE_CHOICES = [
+    ("de", "Deutsch"),
+    ("en", "English"),
+]
+
+TRANSLATIONS = {
+    "en": {
+        "nav.devices": "Devices",
+        "nav.groups": "Groups",
+        "nav.import_export": "Import / Export",
+        "nav.backup": "Backup",
+        "nav.security": "Security",
+        "nav.help": "Help",
+        "nav.settings": "Settings",
+        "nav.update_available": "Update available",
+        "nav.logout": "Logout",
+        "common.save": "Save",
+        "common.active": "Active",
+        "common.inactive": "Inactive",
+        "common.error": "Error",
+        "common.ok": "OK",
+        "common.search": "Search",
+        "common.all": "All",
+        "common.never_checked": "never checked",
+        "common.no_online_check": "no online status check",
+        "dashboard.title": "Dashboard",
+        "dashboard.subtitle": "Central address book for your RustDesk devices.",
+        "dashboard.add_device": "Add device",
+        "dashboard.live_status": "Live status hbbs",
+        "dashboard.devices": "Devices",
+        "dashboard.favorites": "Favorites",
+        "dashboard.online": "Online",
+        "dashboard.show_all": "Show all",
+        "dashboard.no_favorites": "No favorites yet.",
+        "dashboard.quick_search": "Quick search",
+        "dashboard.groups": "Groups",
+        "dashboard.no_groups": "No groups yet.",
+        "dashboard.recent": "Recently changed",
+        "dashboard.no_devices": "No devices created yet.",
+        "devices.title": "Devices",
+        "devices.subtitle": "Search, filter, check online status and connect directly with RustDesk.",
+        "devices.add_device": "Add device",
+        "devices.live_status": "Live status hbbs",
+        "devices.search": "Search",
+        "devices.group": "Group",
+        "devices.all_groups": "All groups",
+        "devices.device_type": "Device type",
+        "devices.favorites": "Favorites",
+        "devices.only_favorites": "Only favorites",
+        "devices.sort": "Sort",
+        "devices.no_results": "No devices found.",
+        "devices.first_device": "Create first device",
+        "devices.hbbs_missing": "For automatic online status, enter your hbbs host under Settings → Online status and then use Live status hbbs. Server DB import and diagnostics are available under Import / Export.",
+        "settings.title": "Settings",
+        "settings.subtitle": "Manage appearance, language, admin security, imports, online status and update checks.",
+        "settings.menu.display": "Display & language",
+        "settings.menu.admin": "Admin account",
+        "settings.menu.twofa": "2FA / Authenticator",
+        "settings.menu.devices": "Device types",
+        "settings.menu.online": "Online status",
+        "settings.menu.bruteforce": "Brute-force protection",
+        "settings.menu.updates": "Update check",
+        "settings.menu.notes": "Security notes",
+        "settings.display.title": "Display & language",
+        "settings.display.theme": "Color scheme",
+        "settings.display.language": "Language",
+        "settings.display.language_help": "Currently available: German and English. The core user interface is translated; technical logs and some imported content remain unchanged.",
+        "settings.display.save": "Save display settings",
+        "settings.admin.username_title": "Change admin username",
+        "settings.admin.current_username": "Current username",
+        "settings.admin.new_username": "New username",
+        "settings.admin.username_help": "Allowed: letters, digits, dot, underscore, hyphen and @.",
+        "settings.admin.current_password_confirm": "Current password for confirmation",
+        "settings.admin.save_username": "Save username",
+        "settings.admin.password_title": "Change password",
+        "settings.admin.current_password": "Current password",
+        "settings.admin.new_password": "New password",
+        "settings.admin.repeat_password": "Repeat new password",
+        "settings.twofa.title": "2FA / Authenticator app",
+        "settings.twofa.subtitle": "Additional one-time code for the admin login.",
+        "settings.os.title": "Device type / operating system choices",
+        "settings.os.values": "Choices",
+        "settings.os.help": "One entry per line. This list appears in the device form. Existing devices keep their current value.",
+        "settings.os.save": "Save choices",
+        "settings.status.title": "Online status",
+        "settings.status.source": "Status source",
+        "settings.status.source_help": "Automatic online status is queried through hbbs live. If the query fails, existing states remain unchanged.",
+        "settings.status.host": "hbbs host",
+        "settings.status.port": "hbbs Online/NAT TCP port",
+        "settings.status.timeout": "Timeout seconds",
+        "settings.status.requester": "Requester ID",
+        "settings.status.batch": "Batch size",
+        "settings.status.auto": "Automatic query",
+        "settings.status.auto_label": "Automatically query online status while the WebUI is open",
+        "settings.status.interval": "Interval",
+        "settings.status.unit": "Unit",
+        "settings.status.minutes": "Minutes (1–10)",
+        "settings.status.hours": "Hours (1–24)",
+        "settings.status.warning": "This function uses RustDesk OnlineRequest/OnlineResponse against hbbs. It is useful in practice, but not an officially documented web API and may change with RustDesk versions.",
+        "settings.status.save": "Save status source",
+        "settings.status.last_check": "Last status check",
+        "settings.status.no_check": "No hbbs live check has been performed yet.",
+        "settings.bruteforce.title": "Brute-force protection",
+        "settings.bruteforce.help": "Applies to failed password and 2FA attempts per IP address or username. The fail2ban/CrowdSec log remains active as an additional layer.",
+        "settings.bruteforce.failures": "Failed attempts",
+        "settings.bruteforce.window": "Window minutes",
+        "settings.bruteforce.save": "Save lockout settings",
+        "settings.update.title": "Update check",
+        "settings.update.help": "Checks the configured download server through latest.txt and shows available changes.",
+        "settings.update.now": "Check now",
+        "settings.update.none": "No online update check has been performed yet.",
+        "settings.update.available": "Update available",
+        "settings.update.current": "Current",
+        "settings.update.changes": "Changes in this version",
+        "settings.update.auto": "Check automatically",
+        "settings.update.interval": "Interval",
+        "settings.update.save": "Save update check",
+        "settings.update.install_hint": "Updates are installed with ./scripts/update.sh. The script checks local ZIP files in updates/ and then the download server automatically.",
+        "settings.security.title": "Security notes",
+        "settings.security.https": "Run the app through HTTPS when it is reachable outside your LAN.",
+        "settings.security.fernet": "Device passwords in the database are encrypted with Fernet. The key is stored in ./data/config.json.",
+        "settings.security.backups": "For portable backups, create encrypted backups with AES-256-GCM and PBKDF2-HMAC-SHA256.",
+        "settings.security.data_backup": "Back up ./data and ./backups regularly. Without ./data/config.json, saved device passwords cannot be decrypted.",
+        "theme.light": "Light mode",
+        "theme.dark": "Dark mode",
+        "status.manual": "Manual only",
+        "status.hbbs": "hbbs live query",
+        "sort.online": "Online first",
+        "sort.name": "Name A-Z",
+        "sort.favorites": "Favorites first",
+        "sort.updated": "Recently changed",
+    }
+}
+
 
 def _short_app_version(version: str) -> str:
     raw = str(version or "dev").strip()
@@ -326,6 +460,9 @@ def register_template_helpers(app: Flask) -> None:
     app.jinja_env.globals["group_icon_choices"] = GROUP_ICON_CHOICES
     app.jinja_env.globals["group_color_choices"] = GROUP_COLOR_CHOICES
     app.jinja_env.globals["theme_choices"] = THEME_CHOICES
+    app.jinja_env.globals["language_choices"] = LANGUAGE_CHOICES
+    app.jinja_env.globals["get_language"] = _get_language
+    app.jinja_env.globals["t"] = _t
     app.jinja_env.globals["get_theme_mode"] = _get_theme_mode
     app.jinja_env.globals["status_source_choices"] = STATUS_SOURCE_CHOICES
     app.jinja_env.globals["get_status_settings"] = _get_status_settings
@@ -344,6 +481,9 @@ def register_template_helpers(app: Flask) -> None:
         return {
             "os_choices": _get_os_choices(),
             "theme_mode": _get_theme_mode(),
+            "app_language": _get_language(),
+            "theme_choices": _translated_theme_choices(),
+            "status_source_choices": _translated_status_source_choices(),
             "status_settings": _get_status_settings(),
             "status_check_info": _get_status_check_info(),
             "auto_status_settings": _get_auto_status_settings(),
@@ -594,10 +734,10 @@ def register_routes(app: Flask) -> None:
             query = query.filter(Device.os == os_filter)
 
         sort_choices = {
-            "online": "Online zuerst",
-            "name": "Name A-Z",
-            "favorites": "Favoriten zuerst",
-            "updated": "Zuletzt geändert",
+            "online": _t("sort.online", "Online zuerst"),
+            "name": _t("sort.name", "Name A-Z"),
+            "favorites": _t("sort.favorites", "Favoriten zuerst"),
+            "updated": _t("sort.updated", "Zuletzt geändert"),
         }
         if sort not in sort_choices:
             sort = "online"
@@ -1209,12 +1349,16 @@ def register_routes(app: Flask) -> None:
 
             if action == "theme":
                 theme_mode = request.form.get("theme_mode", "light").strip().lower()
+                language = request.form.get("language", _get_language()).strip().lower()
                 if theme_mode not in {"light", "dark"}:
                     flash("Ungültiger Darstellungsmodus.", "danger")
+                elif language not in {key for key, _label in LANGUAGE_CHOICES}:
+                    flash("Ungültige Sprache.", "danger")
                 else:
                     _set_setting("theme_mode", theme_mode)
-                    flash("Darstellung wurde gespeichert.", "success")
-                return redirect(url_for("settings"))
+                    _set_setting("language", language)
+                    flash("Darstellung und Sprache wurden gespeichert.", "success")
+                return redirect(url_for("settings") + "#display")
 
             if action == "os_choices":
                 raw = request.form.get("os_choices", "")
@@ -1395,6 +1539,7 @@ def register_routes(app: Flask) -> None:
             "settings.html",
             current_os_choices=_get_os_choices(),
             current_theme_mode=_get_theme_mode(),
+            current_language=_get_language(),
             totp_secret=_get_user_totp_secret(current_user),
             totp_qr_data_uri=_totp_qr_data_uri(current_user),
             recovery_code_count=_recovery_code_count(current_user),
@@ -2792,6 +2937,26 @@ def _get_update_auto_check_settings(checked_ts: int | None = None) -> dict:
 def _get_setting(key: str, default: str = "") -> str:
     setting = Setting.query.filter_by(key=key).first()
     return setting.value if setting else default
+
+
+def _get_language() -> str:
+    lang = _get_setting("language", "de").strip().lower()
+    return lang if lang in {key for key, _label in LANGUAGE_CHOICES} else "de"
+
+
+def _t(key: str, default: str | None = None) -> str:
+    lang = _get_language()
+    if lang == "de":
+        return default if default is not None else key
+    return TRANSLATIONS.get(lang, {}).get(key, default if default is not None else key)
+
+
+def _translated_theme_choices() -> list[tuple[str, str]]:
+    return [("light", _t("theme.light", "Heller Modus")), ("dark", _t("theme.dark", "Darkmode"))]
+
+
+def _translated_status_source_choices() -> list[tuple[str, str]]:
+    return [("manual", _t("status.manual", "Nur manuell")), ("hbbs", _t("status.hbbs", "hbbs Live-Abfrage"))]
 
 
 def _get_theme_mode() -> str:

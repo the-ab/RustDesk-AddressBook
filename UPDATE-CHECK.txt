@@ -1,6 +1,5 @@
-rustdesk-addressbook-update-flat-v0516.zip
-- Dashboard und Geräte-Seite zeigen den hbbs Live-Status kompakter direkt neben dem Live-Status-Button.
-- Der separate Online-Statuscheck-Block wurde vom Dashboard entfernt.
-- Import / Export zeigt keinen hbbs Live-Status-Button mehr.
-- DB Diagnose wird nur noch angezeigt, wenn RUSTDESK_SERVER_DB konfiguriert ist.
-- Direkter DB-Import zeigt klar an, ob der read-only Mount aktiv, nicht gefunden oder deaktiviert ist.
+rustdesk-addressbook-update-flat-v0517.zip
+- Sprachumschaltung Deutsch/Englisch ergänzt.
+- Einstellungsbereich mit linker Navigation und rechter Detailansicht neu aufgebaut.
+- Dashboard und Geräte-Seite nutzen zentrale Übersetzungen für die wichtigsten Texte.
+- Einstellungen sind übersichtlicher nach Darstellung, Admin, 2FA, Gerätetypen, Online-Status, Brute-Force, Update und Sicherheitshinweisen gruppiert.

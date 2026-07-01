@@ -9,6 +9,28 @@
 
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
+  function activateSettingsTabFromHash() {
+    const hash = window.location.hash;
+    if (!hash) return;
+    let targetPane = document.querySelector(hash);
+    if (hash === '#update-check-card') {
+      targetPane = document.querySelector('#updates');
+    } else if (targetPane && !targetPane.classList.contains('tab-pane')) {
+      targetPane = targetPane.closest('.tab-pane');
+    }
+    if (!targetPane || !targetPane.id) return;
+    const trigger = document.querySelector(`[data-bs-target="#${targetPane.id}"]`);
+    if (trigger) {
+      bootstrap.Tab.getOrCreateInstance(trigger).show();
+      if (hash !== `#${targetPane.id}`) {
+        setTimeout(() => document.querySelector(hash)?.scrollIntoView({block: 'start'}), 100);
+      }
+    }
+  }
+
+  activateSettingsTabFromHash();
+  window.addEventListener('hashchange', activateSettingsTabFromHash);
+
   document.querySelectorAll('.password-toggle').forEach((button) => {
     button.addEventListener('click', async () => {
       const group = button.closest('.input-group');

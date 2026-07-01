@@ -1,4 +1,7 @@
-Update-Hinweis-Badge oben rechts neben Admin/Logout ergänzt.
-Automatischer WebUI-Update-Check mit einstellbarem Intervall ergänzt.
-Update-Check in den Einstellungen zeigt weiterhin Release Notes aus latest.txt an.
-WebUI-Update-Installation bleibt bewusst nicht direkt eingebaut; Updates laufen über scripts/update.sh.
+0.5.17-language-settings-layout
+- Sprachumschaltung Deutsch/Englisch ergänzt.
+- Kernbereiche der WebUI nutzen jetzt eine einfache Übersetzungsfunktion.
+- Einstellungen neu strukturiert: linke Navigation, rechter Detailbereich.
+- Bereiche in den Einstellungen sind jetzt getrennt nach Darstellung/Sprache, Admin-Konto, 2FA, Gerätetypen, Online-Status, Brute-Force-Sperre, Update-Check und Sicherheitshinweisen.
+- Dashboard und Geräte-Seite verwenden die neue Sprachlogik für zentrale Texte.
+- Versionsanzeige und Update-Mechanik bleiben unverändert.

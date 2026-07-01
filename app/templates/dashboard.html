@@ -1,118 +1,54 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - RustDesk AddressBook{% endblock %}
+{% block title %}{{ t('dashboard.title', 'Dashboard') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
   <div>
-    <h1 class="h3 mb-1">Dashboard</h1>
-    <div class="text-secondary">Zentrales Adressbuch für deine RustDesk-Geräte.</div>
+    <h1 class="h3 mb-1">{{ t('dashboard.title', 'Dashboard') }}</h1>
+    <div class="text-secondary">{{ t('dashboard.subtitle', 'Zentrales Adressbuch für deine RustDesk-Geräte.') }}</div>
   </div>
   <div class="d-flex flex-wrap align-items-center gap-2">
     <form method="post" action="{{ url_for('sync_rustdesk_live_status') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-outline-success" type="submit" {% if not status_settings.hbbs_host %}title="hbbs Host unter Einstellungen eintragen"{% endif %}>
-        <i class="bi bi-broadcast-pin me-1"></i>Live-Status hbbs
+        <i class="bi bi-broadcast-pin me-1"></i>{{ t('dashboard.live_status', 'Live-Status hbbs') }}
       </button>
     </form>
     <div class="status-inline small text-secondary">
       {% if status_check_info.checked_at %}
-        <span class="badge {% if status_check_info.ok %}text-bg-success{% else %}text-bg-danger{% endif %} me-1">{% if status_check_info.ok %}OK{% else %}Fehler{% endif %}</span>
+        <span class="badge {% if status_check_info.ok %}text-bg-success{% else %}text-bg-danger{% endif %} me-1">{% if status_check_info.ok %}{{ t('common.ok', 'OK') }}{% else %}{{ t('common.error', 'Fehler') }}{% endif %}</span>
         <span>{{ status_check_info.checked_at }}</span>
         {% if status_check_info.message %}<span class="d-none d-xl-inline ms-1">· {{ status_check_info.message }}</span>{% endif %}
       {% else %}
-        <span class="badge text-bg-secondary me-1">nie geprüft</span>
-        <span>kein Online-Statuscheck</span>
+        <span class="badge text-bg-secondary me-1">{{ t('common.never_checked', 'nie geprüft') }}</span>
+        <span>{{ t('common.no_online_check', 'kein Online-Statuscheck') }}</span>
       {% endif %}
     </div>
-    <a class="btn btn-primary" href="{{ url_for('device_new') }}"><i class="bi bi-plus-lg me-1"></i>Gerät anlegen</a>
+    <a class="btn btn-primary" href="{{ url_for('device_new') }}"><i class="bi bi-plus-lg me-1"></i>{{ t('dashboard.add_device', 'Gerät anlegen') }}</a>
   </div>
 </div>
 
 <div class="row g-3 mb-4">
-  <div class="col-12 col-md-4">
-    <div class="card app-card stat-card">
-      <div class="card-body">
-        <div class="text-secondary small">Geräte</div>
-        <div class="display-6 fw-semibold">{{ total_devices }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-md-4">
-    <div class="card app-card stat-card">
-      <div class="card-body">
-        <div class="text-secondary small">Favoriten</div>
-        <div class="display-6 fw-semibold">{{ favorite_devices }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-md-4">
-    <div class="card app-card stat-card">
-      <div class="card-body">
-        <div class="text-secondary small">Online</div>
-        <div class="display-6 fw-semibold">{{ online_devices }}</div>
-      </div>
-    </div>
-  </div>
+  <div class="col-12 col-md-4"><div class="card app-card stat-card"><div class="card-body"><div class="text-secondary small">{{ t('dashboard.devices', 'Geräte') }}</div><div class="display-6 fw-semibold">{{ total_devices }}</div></div></div></div>
+  <div class="col-12 col-md-4"><div class="card app-card stat-card"><div class="card-body"><div class="text-secondary small">{{ t('dashboard.favorites', 'Favoriten') }}</div><div class="display-6 fw-semibold">{{ favorite_devices }}</div></div></div></div>
+  <div class="col-12 col-md-4"><div class="card app-card stat-card"><div class="card-body"><div class="text-secondary small">{{ t('dashboard.online', 'Online') }}</div><div class="display-6 fw-semibold">{{ online_devices }}</div></div></div></div>
 </div>
 
 <div class="row g-4">
   <div class="col-12 col-xl-8">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="h5 mb-0"><i class="bi bi-star me-1"></i>Favoriten</h2>
-      <a href="{{ url_for('devices', fav='1') }}" class="small text-decoration-none">Alle anzeigen</a>
+      <h2 class="h5 mb-0"><i class="bi bi-star me-1"></i>{{ t('dashboard.favorites', 'Favoriten') }}</h2>
+      <a href="{{ url_for('devices', fav='1') }}" class="small text-decoration-none">{{ t('dashboard.show_all', 'Alle anzeigen') }}</a>
     </div>
-    {% if favorites %}
-      <div class="row g-3">
-        {% for device in favorites %}
-          <div class="col-12 col-md-6">{% include "_device_card.html" %}</div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="empty-state">Noch keine Favoriten vorhanden.</div>
-    {% endif %}
+    {% if favorites %}<div class="row g-3">{% for device in favorites %}<div class="col-12 col-md-6">{% include "_device_card.html" %}</div>{% endfor %}</div>{% else %}<div class="empty-state">{{ t('dashboard.no_favorites', 'Noch keine Favoriten vorhanden.') }}</div>{% endif %}
   </div>
-
   <div class="col-12 col-xl-4">
-    <div class="card app-card mb-4">
-      <div class="card-body">
-        <h2 class="h5 mb-3"><i class="bi bi-search me-1"></i>Schnellsuche</h2>
-        <form action="{{ url_for('devices') }}" method="get">
-          <div class="input-group">
-            <input class="form-control" name="q" placeholder="Name, ID, Kunde, Standort...">
-            <button class="btn btn-primary" type="submit">Suchen</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div class="card app-card">
-      <div class="card-body">
-        <h2 class="h5 mb-3"><i class="bi bi-collection me-1"></i>Gruppen</h2>
-        <div class="d-flex flex-wrap gap-2">
-          {% for group in groups %}
-            <a class="badge text-bg-{{ group.color }} text-decoration-none p-2" href="{{ url_for('devices', group=group.id) }}">
-              <i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}
-            </a>
-          {% else %}
-            <span class="text-secondary">Keine Gruppen vorhanden.</span>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+    <div class="card app-card mb-4"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-search me-1"></i>{{ t('dashboard.quick_search', 'Schnellsuche') }}</h2><form action="{{ url_for('devices') }}" method="get"><div class="input-group"><input class="form-control" name="q" placeholder="Name, ID, Kunde, Standort..."><button class="btn btn-primary" type="submit">{{ t('common.search', 'Suchen') }}</button></div></form></div></div>
+    <div class="card app-card"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-collection me-1"></i>{{ t('dashboard.groups', 'Gruppen') }}</h2><div class="d-flex flex-wrap gap-2">{% for group in groups %}<a class="badge text-bg-{{ group.color }} text-decoration-none p-2" href="{{ url_for('devices', group=group.id) }}"><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</a>{% else %}<span class="text-secondary">{{ t('dashboard.no_groups', 'Keine Gruppen vorhanden.') }}</span>{% endfor %}</div></div></div>
   </div>
 </div>
 
 <div class="mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h5 mb-0"><i class="bi bi-clock-history me-1"></i>Zuletzt geändert</h2>
-  </div>
-  {% if recent %}
-    <div class="row g-3">
-      {% for device in recent %}
-        <div class="col-12 col-md-6 col-xl-3">{% include "_device_card.html" %}</div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="empty-state">Noch keine Geräte angelegt.</div>
-  {% endif %}
+  <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 mb-0"><i class="bi bi-clock-history me-1"></i>{{ t('dashboard.recent', 'Zuletzt geändert') }}</h2></div>
+  {% if recent %}<div class="row g-3">{% for device in recent %}<div class="col-12 col-md-6 col-xl-3">{% include "_device_card.html" %}</div>{% endfor %}</div>{% else %}<div class="empty-state">{{ t('dashboard.no_devices', 'Noch keine Geräte angelegt.') }}</div>{% endif %}
 </div>
 {% endblock %}

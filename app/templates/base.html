@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de" data-bs-theme="{{ theme_mode }}">
+<html lang="{{ app_language|default('de') }}" data-bs-theme="{{ theme_mode }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,22 +22,23 @@
     </button>
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('devices') }}"><i class="bi bi-pc-display-horizontal me-1"></i>Geräte</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('groups') }}"><i class="bi bi-collection me-1"></i>Gruppen</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('import_devices') }}"><i class="bi bi-arrow-down-up me-1"></i>Import / Export</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('backup') }}"><i class="bi bi-database-down me-1"></i>Backup</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('security') }}"><i class="bi bi-shield-lock me-1"></i>Sicherheit</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('help_page') }}"><i class="bi bi-question-circle me-1"></i>Anleitung</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}"><i class="bi bi-gear me-1"></i>Einstellungen</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('devices') }}"><i class="bi bi-pc-display-horizontal me-1"></i>{{ t('nav.devices', 'Geräte') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('groups') }}"><i class="bi bi-collection me-1"></i>{{ t('nav.groups', 'Gruppen') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('import_devices') }}"><i class="bi bi-arrow-down-up me-1"></i>{{ t('nav.import_export', 'Import / Export') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('backup') }}"><i class="bi bi-database-down me-1"></i>{{ t('nav.backup', 'Backup') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('security') }}"><i class="bi bi-shield-lock me-1"></i>{{ t('nav.security', 'Sicherheit') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('help_page') }}"><i class="bi bi-question-circle me-1"></i>{{ t('nav.help', 'Anleitung') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}"><i class="bi bi-gear me-1"></i>{{ t('nav.settings', 'Einstellungen') }}</a></li>
       </ul>
       <div class="d-flex align-items-center gap-2">
         <a id="updateAvailableBadge" class="btn btn-warning btn-sm {% if not update_check_info.available %}d-none{% endif %}" href="{{ url_for('settings') }}#update-check-card" title="Zum Update-Check">
-          <i class="bi bi-cloud-arrow-down me-1"></i>Update verfügbar
+          <i class="bi bi-cloud-arrow-down me-1"></i>{{ t('nav.update_available', 'Update verfügbar') }}
         </a>
+        <span class="badge rounded-pill text-bg-secondary d-none d-xl-inline">{{ app_language|upper }}</span>
         <span class="text-secondary small d-none d-lg-inline"><i class="bi bi-person-circle me-1"></i>{{ current_user.username }}</span>
         <form method="post" action="{{ url_for('logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button class="btn btn-outline-secondary btn-sm" type="submit">Logout</button>
+          <button class="btn btn-outline-secondary btn-sm" type="submit">{{ t('nav.logout', 'Logout') }}</button>
         </form>
       </div>
     </div>
