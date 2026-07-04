@@ -8,8 +8,8 @@ Empfohlen ist das interaktive Installationsscript. Die Komplettversion entpackt 
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0521.zip
-unzip rustdesk-addressbook-v0521.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0523.zip
+unzip rustdesk-addressbook-v0523.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -44,8 +44,8 @@ HTTP ist standardmäßig deaktiviert. Wenn HTTP im Installationsscript aktiviert
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0521.zip
-unzip rustdesk-addressbook-v0521.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0523.zip
+unzip rustdesk-addressbook-v0523.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -60,7 +60,7 @@ Es gibt zwei empfohlene Wege. In beiden Fällen wird am Ende nur das Update-Scri
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0521.zip -O updates/rustdesk-addressbook-update-flat-v0521.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates/rustdesk-addressbook-update-flat-v0523.zip
 ./scripts/update.sh
 ```
 
@@ -85,13 +85,13 @@ Die früheren Optionen `--check-online` und `--online` sind für den normalen Be
 Minimale Variante:
 
 ```text
-rustdesk-addressbook-update-flat-v0521.zip
+rustdesk-addressbook-update-flat-v0523.zip
 ```
 
 Empfohlene Variante mit Änderungen für WebUI und Update-Script:
 
 ```text
-rustdesk-addressbook-update-flat-v0521.zip
+rustdesk-addressbook-update-flat-v0523.zip
 - Update-Check nutzt latest.txt ohne latest.json-Prüfung.
 - Update-Script zeigt Änderungen vor Download und Installation.
 - Ja/Nein-Abfragen nutzen [J/n] und [j/N].
@@ -100,9 +100,9 @@ rustdesk-addressbook-update-flat-v0521.zip
 Alternativ kann neben der ZIP eine separate Notizdatei liegen:
 
 ```text
-rustdesk-addressbook-update-flat-v0521.txt
-release-notes-v0521.txt
-releases/v0521.txt
+rustdesk-addressbook-update-flat-v0523.txt
+release-notes-v0523.txt
+releases/v0523.txt
 ```
 
 
@@ -136,7 +136,7 @@ cd /opt/rustdesk-addressbook
 docker compose down
 cp -a data ../rustdesk-addressbook-data-backup
 cp -a backups ../rustdesk-addressbook-backups-backup 2>/dev/null || true
-unzip -o updates/rustdesk-addressbook-update-flat-v0521.zip
+unzip -o updates/rustdesk-addressbook-update-flat-v0523.zip
 docker compose build --no-cache
 docker compose up -d --force-recreate --remove-orphans
 ```
@@ -514,7 +514,7 @@ Hinweis: Die Kernoberfläche, Anleitung und Release-Ansicht sind zweisprachig. T
 Für die WebUI und das Update-Script kann `latest.txt` Sprachbereiche enthalten:
 
 ```text
-rustdesk-addressbook-update-flat-v0521.zip
+rustdesk-addressbook-update-flat-v0523.zip
 [de]
 - Deutsche Änderung
 [en]
@@ -524,10 +524,10 @@ rustdesk-addressbook-update-flat-v0521.zip
 Alternativ unterstützt die App sprachspezifische Dateien neben der ZIP:
 
 ```text
-rustdesk-addressbook-update-flat-v0521.en.txt
-rustdesk-addressbook-update-flat-v0521.de.txt
-release-notes-v0521.en.txt
-release-notes-v0521.de.txt
+rustdesk-addressbook-update-flat-v0523.en.txt
+rustdesk-addressbook-update-flat-v0523.de.txt
+release-notes-v0523.en.txt
+release-notes-v0523.de.txt
 ```
 
 Das Shell-Script nutzt standardmäßig Deutsch. Für englische Ausgabe kann es so gestartet werden:

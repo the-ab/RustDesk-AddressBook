@@ -19,6 +19,8 @@
 
 {% if app_language == 'en' %}
 {% set releases = [
+  ('0.5.23', ['Corrected the German release history so version 0.5.22 is shown in German when German is selected.', 'Re-added the missing 0.5.21 release entry in both language views.', 'Cleaned up the release history so the 0.5.21 and 0.5.22 changes are separated clearly.']),
+  ('0.5.22', ['Optional empty device fields such as customer, location, tags and notes no longer show or save a visible "None" value; existing placeholder values are cleaned on save.', 'Changed the groups overview from compact cards to a slim list view.', 'Automatic hbbs online status checks now accept custom numeric intervals; the unit is selected separately as minutes or hours.', 'Expanded the security status checks with log rotation, update check, hbbs configuration and HTTPS information.', 'Reviewed the help/admin documentation again for current features and relevant instructions.']),
   ('0.5.21', ['Unified version strings and Docker image defaults.', 'Limited the security audit event display to a scrollable area with about 10 visible rows.', 'Added weekly auth.log rotation with configurable retention.', 'Made the groups overview more compact.']),
   ('0.5.20', ['Restored the detailed Help/Admin Guide page with left-side navigation.', 'Re-added detailed content from the 0.5.18 guide and extended it with newer features.', 'Guide now covers all major functions: installation, updates, devices, groups, online status, imports, backups, settings, security and troubleshooting.']),
   ('0.5.19', ['Polished English UI translations across devices, groups, import/export, security, setup, help and release notes.', 'Display & language is shown on one line in the settings navigation again; the detail fields are stacked vertically.', 'File picker labels in Import / Export are controlled by the app language.', 'Update/release notes support language sections in latest.txt or language-specific release note files.']),
@@ -48,7 +50,9 @@
 ] %}
 {% else %}
 {% set releases = [
-  ('0.5.21', ['Unified version strings and Docker image defaults.', 'Limited the security audit event display to a scrollable area with about 10 visible rows.', 'Added weekly auth.log rotation with configurable retention.', 'Made the groups overview more compact.']),
+  ('0.5.23', ['Deutsche Release-Historie korrigiert: Version 0.5.22 wird bei deutscher Spracheinstellung vollständig auf Deutsch angezeigt.', 'Fehlenden Eintrag für Version 0.5.21 in beiden Sprachansichten ergänzt.', 'Release-Historie bereinigt: Änderungen aus 0.5.21 und 0.5.22 sind jetzt getrennt nachvollziehbar.']),
+  ('0.5.22', ['Leere optionale Gerätefelder wie Kunde, Standort, Tags und Notizen zeigen oder speichern kein sichtbares „None“ mehr; vorhandene „None“-Platzhalter werden beim Speichern bereinigt.', 'Gruppenansicht von kompakten Karten auf eine schlanke Listenansicht umgestellt.', 'Automatische hbbs-Online-Statusabfrage erlaubt frei gesetzte Zahlenwerte; die Einheit wird separat auf Minuten oder Stunden gestellt.', 'Sicherheitsstatus erweitert: zusätzlich werden Logrotation, Update-Check, hbbs-Konfiguration und HTTPS-Hinweis geprüft und angezeigt.', 'Anleitung und Admin-Dokumentation wurden erneut auf aktuelle Funktionen und relevante Angaben geprüft.']),
+  ('0.5.21', ['Versionsangaben und Docker-Image-Defaults vereinheitlicht.', 'Anzeige der Sicherheits-Audit-Ereignisse auf einen scrollbaren Bereich mit etwa 10 sichtbaren Zeilen begrenzt.', 'Wöchentliche auth.log-Rotation mit konfigurierbarer Aufbewahrung ergänzt.', 'Gruppenübersicht kompakter dargestellt.']),
   ('0.5.20', ['Anleitung/Hilfe-Seite wieder als ausführliche Langfassung mit linker Sprungnavigation aufgebaut.', 'Fehlende Inhalte aus der detaillierten 0.5.18-Anleitung wiederhergestellt und um neue Funktionen ergänzt.', 'Anleitung beschreibt wieder alle wichtigen Funktionen: Installation, Updates, Geräte, Gruppen, Online-Status, Import, Backup, Einstellungen, Sicherheit und Fehlerdiagnose.']),
   ('0.5.19', ['Englische UI-Übersetzungen für Geräte, Gruppen, Import/Export, Sicherheit, Setup, Anleitung und Release-Ansicht erweitert.', 'Display & language steht links wieder einzeilig; im Detailbereich sind Darstellung und Sprache untereinander angeordnet.', 'Dateiauswahl-Beschriftungen im Import/Export-Bereich werden jetzt über die App-Sprache gesteuert.', 'Update-/Release-Notizen unterstützen Sprachbereiche in latest.txt oder sprachspezifische Release-Notizdateien.']),
   ('0.5.18', ['Englische Übersetzungen für zentrale Bereiche erweitert.', 'Import / Export erhält eine linke Kategorienavigation mit rechter Detailansicht.', 'Dashboard und Geräte-Seite können zwischen Kartenansicht, Listenansicht und kleinen Symbolen umgeschaltet werden.', 'Die gewählte Geräteansicht wird in der Session gespeichert.']),
@@ -94,7 +98,7 @@
   <div class="card-body">
     <h2 class="h5">{{ t('release.update_note', 'Update-Hinweis') }}</h2>
     <p class="text-secondary mb-2">{{ t('release.option_a', 'Variante A: Kopiere die neue Flat-Update-ZIP in updates/ und starte das Script ohne Parameter.') }}</p>
-    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0519.zip -O updates/rustdesk-addressbook-update-flat-v0519.zip
+    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates/rustdesk-addressbook-update-flat-v0523.zip
 ./scripts/update.sh</pre>
     <p class="text-secondary mb-2 mt-3">{{ t('release.option_b', 'Variante B: Starte nur das Script. Es prüft lokale Updates, danach online, zeigt Änderungen an und fragt nach Download/Installation.') }}</p>
     <pre class="codebox">./scripts/update.sh</pre>

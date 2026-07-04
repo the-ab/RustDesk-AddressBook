@@ -289,6 +289,7 @@ TRANSLATIONS = {
         "common.changed": "Changed",
         "common.created": "Created",
         "common.updated": "Updated",
+        "common.actions": "Actions",
         "common.skipped": "Skipped",
         "common.duration": "Duration",
         "common.bytes": "Transferred",
@@ -442,6 +443,16 @@ TRANSLATIONS = {
         "sort.name": "Name A-Z",
         "sort.favorites": "Favorites first",
         "sort.updated": "Recently changed",
+        "settings.status.minutes_unit": "Minutes",
+        "settings.status.hours_unit": "Hours",
+        "security.report.log_rotation_name": "Auth log rotation",
+        "security.report.log_rotation_detail": "Every {days} day(s), keeping {keep} rotated file(s).",
+        "security.report.update_check_name": "Update check",
+        "security.report.update_check_detail": "Automatic update check is {state}. Interval: {hours} hour(s).",
+        "security.report.hbbs_name": "hbbs live status",
+        "security.report.hbbs_detail": "Status source: {source}. Host configured: {host}.",
+        "security.report.https_name": "HTTPS endpoint",
+        "security.report.https_detail": "The container provides HTTPS; set SESSION_COOKIE_SECURE and APP_HSTS for production HTTPS.",
     }
 }
 
@@ -616,6 +627,10 @@ def _migrate_schema() -> None:
             conn.exec_driver_sql("ALTER TABLE users ADD COLUMN security_signature TEXT")
             security_signature_created = True
         current_app.config["_SECURITY_SIGNATURE_INITIALIZE_MISSING"] = security_signature_created
+        # Clean legacy placeholder values that older templates could save when optional
+        # device fields were rendered as Python None.
+        for col in ("customer", "location", "tags", "notes"):
+            conn.exec_driver_sql(f"UPDATE devices SET {col}=NULL WHERE lower(trim(COALESCE({col}, ''))) IN ('none', 'null')")
 
 
 def _security_signature_payload(user: User) -> str:
@@ -1787,10 +1802,10 @@ def register_routes(app: Flask) -> None:
                     auto_value = 5
                 auto_unit = request.form.get("auto_status_unit", "minutes").strip().lower()
                 if auto_unit == "hours":
-                    auto_value = min(max(auto_value, 1), 24)
+                    auto_value = max(auto_value, 1)
                 else:
                     auto_unit = "minutes"
-                    auto_value = min(max(auto_value, 1), 10)
+                    auto_value = max(auto_value, 1)
 
                 _set_setting("status_source", source)
                 _set_setting("hbbs_host", hbbs_host)
@@ -2687,12 +2702,12 @@ def _get_auto_status_settings() -> dict:
     except ValueError:
         value = 5
     if unit == "hours":
-        value = min(max(value, 1), 24)
+        value = max(value, 1)
         seconds = value * 3600
         label = f"alle {value} Stunde{'n' if value != 1 else ''}"
     else:
         unit = "minutes"
-        value = min(max(value, 1), 10)
+        value = max(value, 1)
         seconds = value * 60
         label = f"alle {value} Minute{'n' if value != 1 else ''}"
     return {"enabled": enabled, "unit": unit, "value": value, "interval_seconds": seconds, "label": label}
@@ -2850,6 +2865,24 @@ def _security_audit_report() -> list[dict]:
     add(_t("security.report.sqlite_enc", "SQLite-Dateiverschlüsselung"), "info", _t("security.report.sqlite_enc_detail", "Die produktive SQLite-Datei ist nicht vollständig SQLCipher-verschlüsselt. Sensible Gerätepasswörter sind feldweise verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert."))
     settings = _get_bruteforce_settings()
     add(_t("security.report.bruteforce", "Brute-Force-Sperre"), "ok", _t("security.report.bruteforce_detail", "Limit {limit} Fehlversuche je IP/Benutzer innerhalb {window} Sekunden.").format(limit=settings["limit"], window=settings["window_seconds"]))
+
+    try:
+        rotate_days = int(current_app.config.get("AUTH_LOG_ROTATE_DAYS", 7))
+    except (TypeError, ValueError):
+        rotate_days = 7
+    try:
+        rotate_keep = int(current_app.config.get("AUTH_LOG_ROTATE_KEEP", 8))
+    except (TypeError, ValueError):
+        rotate_keep = 8
+    add(_t("security.report.log_rotation_name", "Auth-Logrotation"), "ok" if rotate_days > 0 and rotate_keep > 0 else "warn", _t("security.report.log_rotation_detail", "Alle {days} Tag(e), Aufbewahrung {keep} rotierte Datei(en).").format(days=rotate_days, keep=rotate_keep))
+
+    auto_update = _get_update_auto_check_settings()
+    add(_t("security.report.update_check_name", "Update-Check"), "ok" if auto_update.get("enabled") else "info", _t("security.report.update_check_detail", "Automatischer Update-Check ist {state}. Intervall: {hours} Stunde(n).").format(state=("aktiv" if auto_update.get("enabled") else "inaktiv"), hours=auto_update.get("interval_hours")))
+
+    status_settings = _get_status_settings()
+    add(_t("security.report.hbbs_name", "hbbs Live-Status"), "ok" if status_settings.get("source") == "hbbs" and status_settings.get("hbbs_host") else "info", _t("security.report.hbbs_detail", "Statusquelle: {source}. Host gesetzt: {host}.").format(source=status_settings.get("source"), host=("ja" if status_settings.get("hbbs_host") else "nein")))
+
+    add(_t("security.report.https_name", "HTTPS-Endpunkt"), "ok", _t("security.report.https_detail", "Der Container stellt HTTPS bereit; für produktiven HTTPS-Betrieb SESSION_COOKIE_SECURE und APP_HSTS aktivieren."))
     return items
 
 
@@ -3092,6 +3125,18 @@ def _restore_database_from_file(source: Path, db_file: Path, backup_dir: Path, *
                 pass
 
 
+def _clean_optional_text(value: str | None) -> str | None:
+    """Normalize optional form/device fields.
+
+    Older builds could accidentally render/save Python None as the literal text
+    "None" in optional fields. Treat these placeholder values as empty.
+    """
+    cleaned = str(value or "").strip()
+    if cleaned.lower() in {"none", "null"}:
+        return None
+    return cleaned or None
+
+
 def _fill_device_from_form(device: Device) -> None:
     name = request.form.get("name", "").strip()
     rustdesk_id = request.form.get("rustdesk_id", "").strip()
@@ -3110,11 +3155,11 @@ def _fill_device_from_form(device: Device) -> None:
         device.encrypted_password = encrypt_value(password)
     elif not getattr(device, "id", None):
         device.encrypted_password = None
-    device.customer = request.form.get("customer", "").strip() or None
-    device.location = request.form.get("location", "").strip() or None
+    device.customer = _clean_optional_text(request.form.get("customer", ""))
+    device.location = _clean_optional_text(request.form.get("location", ""))
     device.os = _normalize_os(request.form.get("os", "")) or None
-    device.tags = request.form.get("tags", "").strip() or None
-    device.notes = request.form.get("notes", "").strip() or None
+    device.tags = _clean_optional_text(request.form.get("tags", ""))
+    device.notes = _clean_optional_text(request.form.get("notes", ""))
     device.favorite = normalize_bool(request.form.get("favorite"))
     device.online = normalize_bool(request.form.get("online"))
     device.group_id = int(group_id) if group_id.isdigit() else None

@@ -48,61 +48,54 @@
 
   <div class="col-12 col-lg-8 col-xl-9">
     {% if groups %}
-      <div class="group-grid-compact">
-        {% for group in groups %}
-          <div class="card app-card group-card-compact">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                <div class="min-w-0">
-                  <span class="badge text-bg-{{ group.color }} text-truncate d-inline-flex align-items-center">
-                    <i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}
-                  </span>
-                  <div class="text-secondary small mt-1">{{ group.devices.count() }} {{ t('groups.assigned', 'Gerät(e) zugeordnet') }}</div>
-                </div>
-                <div class="d-flex gap-1 group-actions">
-                  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('devices', group=group.id) }}" title="{{ t('groups.show_devices', 'Geräte anzeigen') }}"><i class="bi bi-hdd-network"></i></a>
-                  <form method="post" action="{{ url_for('group_delete', group_id=group.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn btn-outline-danger btn-sm" onclick="return confirm('{{ t('groups.delete_confirm', 'Gruppe löschen? Geräte bleiben erhalten.') }}');" type="submit" title="{{ t('common.delete', 'Löschen') }}"><i class="bi bi-trash"></i></button>
-                  </form>
-                </div>
-              </div>
-
-              <form method="post" action="{{ url_for('group_edit', group_id=group.id) }}" class="row g-2 align-items-end">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="col-12">
-                  <label class="form-label small text-secondary">{{ t('groups.name', 'Name') }}</label>
+      <div class="card app-card group-list-card">
+        <div class="card-body p-0">
+          <div class="group-list-header d-none d-lg-grid px-3 py-2 small text-secondary fw-semibold border-bottom">
+            <div>{{ t('groups.name', 'Name') }}</div>
+            <div>{{ t('groups.color', 'Farbe') }}</div>
+            <div>{{ t('groups.icon', 'Icon') }}</div>
+            <div>{{ t('groups.assigned', 'Gerät(e) zugeordnet') }}</div>
+            <div class="text-end">{{ t('common.actions', 'Aktionen') }}</div>
+          </div>
+          {% for group in groups %}
+            <form method="post" action="{{ url_for('group_edit', group_id=group.id) }}" class="group-list-row px-3 py-2 border-bottom">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="group-list-name min-w-0">
+                <div class="d-flex align-items-center gap-2 min-w-0">
+                  <span class="badge text-bg-{{ group.color }} flex-shrink-0"><i class="bi bi-{{ group.icon }}"></i></span>
                   <input class="form-control form-control-sm" name="name" value="{{ group.name }}" required>
                 </div>
-                <div class="col-5">
-                  <label class="form-label small text-secondary">{{ t('groups.color', 'Farbe') }}</label>
-                  <select class="form-select form-select-sm" name="color">
-                    {% for value, label in group_color_choices %}
-                      <option value="{{ value }}" {% if group.color == value %}selected{% endif %}>{{ label }}</option>
+              </div>
+              <div>
+                <select class="form-select form-select-sm" name="color">
+                  {% for value, label in group_color_choices %}
+                    <option value="{{ value }}" {% if group.color == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text group-icon-preview" id="groupIconPreview{{ group.id }}"><i class="bi bi-{{ group.icon }}"></i></span>
+                  <select class="form-select group-icon-select" name="icon" data-preview-target="#groupIconPreview{{ group.id }}">
+                    {% if group.icon not in icon_values %}
+                      <option value="{{ group.icon }}" selected>{{ t('groups.current', 'Aktuell') }}: {{ group.icon }}</option>
+                    {% endif %}
+                    {% for value, label in group_icon_choices %}
+                      <option value="{{ value }}" {% if group.icon == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                   </select>
                 </div>
-                <div class="col-5">
-                  <label class="form-label small text-secondary">{{ t('groups.icon', 'Icon') }}</label>
-                  <div class="input-group input-group-sm">
-                    <span class="input-group-text group-icon-preview" id="groupIconPreview{{ group.id }}"><i class="bi bi-{{ group.icon }}"></i></span>
-                    <select class="form-select group-icon-select" name="icon" data-preview-target="#groupIconPreview{{ group.id }}">
-                      {% if group.icon not in icon_values %}
-                        <option value="{{ group.icon }}" selected>{{ t('groups.current', 'Aktuell') }}: {{ group.icon }}</option>
-                      {% endif %}
-                      {% for value, label in group_icon_choices %}
-                        <option value="{{ value }}" {% if group.icon == value %}selected{% endif %}>{{ label }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-                <div class="col-2">
-                  <button class="btn btn-outline-primary btn-sm w-100" type="submit" title="{{ t('common.save', 'Speichern') }}"><i class="bi bi-save"></i></button>
-                </div>
-              </form>
-            </div>
-          </div>
-        {% endfor %}
+              </div>
+              <div class="small text-secondary text-nowrap align-self-center">{{ group.devices.count() }} {{ t('groups.assigned', 'Gerät(e) zugeordnet') }}</div>
+              <div class="d-flex justify-content-lg-end gap-1 group-actions">
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('devices', group=group.id) }}" title="{{ t('groups.show_devices', 'Geräte anzeigen') }}"><i class="bi bi-hdd-network"></i></a>
+                <button class="btn btn-outline-primary btn-sm" type="submit" title="{{ t('common.save', 'Speichern') }}"><i class="bi bi-save"></i></button>
+                <button class="btn btn-outline-danger btn-sm" form="deleteGroup{{ group.id }}" onclick="return confirm('{{ t('groups.delete_confirm', 'Gruppe löschen? Geräte bleiben erhalten.') }}');" type="submit" title="{{ t('common.delete', 'Löschen') }}"><i class="bi bi-trash"></i></button>
+              </div>
+            </form>
+            <form method="post" action="{{ url_for('group_delete', group_id=group.id) }}" id="deleteGroup{{ group.id }}" class="d-none"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+          {% endfor %}
+        </div>
       </div>
     {% else %}
       <div class="card app-card"><div class="card-body text-center text-secondary py-4">{{ t('groups.none', 'Keine Gruppen vorhanden.') }}</div></div>

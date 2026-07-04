@@ -1,11 +1,9 @@
-0.5.21-security-log-groups-cleanup
+0.5.23-release-notes-history-fix
 [de]
-- Versionsangaben und Docker-Image-Defaults auf 0.5.21 vereinheitlicht.
-- Sicherheitslog-Anzeige auf 10 sichtbare Zeilen mit Scrollbereich begrenzt.
-- Wöchentliche Auth-Logrotation mit Aufbewahrung der letzten Rotationen ergänzt.
-- Gruppenansicht kompakter gestaltet.
+- Deutsche Release-Historie korrigiert: Version 0.5.22 wird bei deutscher Spracheinstellung vollständig auf Deutsch angezeigt.
+- Fehlenden Eintrag für Version 0.5.21 in beiden Sprachansichten ergänzt.
+- Release-Historie bereinigt: Änderungen aus 0.5.21 und 0.5.22 sind jetzt getrennt nachvollziehbar.
 [en]
-- Unified version strings and Docker image defaults to 0.5.21.
-- Limited the security log display to 10 visible rows with a scrollable area.
-- Added weekly auth log rotation with retention for recent rotations.
-- Made the groups view more compact.
+- Corrected the German release history so version 0.5.22 is shown in German when German is selected.
+- Re-added the missing 0.5.21 release entry in both language views.
+- Cleaned up the release history so the 0.5.21 and 0.5.22 changes are separated clearly.
