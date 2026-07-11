@@ -14,7 +14,7 @@
 <nav class="navbar navbar-expand-lg navbar-blur sticky-top border-bottom">
   <div class="container-fluid px-3 px-lg-4">
     <a class="navbar-brand fw-semibold" href="{{ url_for('dashboard') }}">
-      <i class="bi bi-display me-2"></i>RustDesk AddressBook
+      <i class="bi bi-display me-2"></i><span class="brand-text">RustDesk AddressBook</span>
     </a>
     {% if current_user.is_authenticated %}
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="{{ t('nav.toggle', 'Navigation umschalten') }}">
@@ -30,7 +30,7 @@
         <li class="nav-item"><a class="nav-link" href="{{ url_for('help_page') }}"><i class="bi bi-question-circle me-1"></i>{{ t('nav.help', 'Anleitung') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}"><i class="bi bi-gear me-1"></i>{{ t('nav.settings', 'Einstellungen') }}</a></li>
       </ul>
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 app-navbar-actions">
         <a id="updateAvailableBadge" class="btn btn-warning btn-sm {% if not update_check_info.available %}d-none{% endif %}" href="{{ url_for('settings') }}#update-check-card" title="{{ t('settings.update.title', 'Update-Check') }}">
           <i class="bi bi-cloud-arrow-down me-1"></i>{{ t('nav.update_available', 'Update verfügbar') }}
         </a>
@@ -46,7 +46,7 @@
   </div>
 </nav>
 
-<main class="container-fluid px-3 px-lg-4 py-4">
+<main class="container-fluid px-3 px-lg-4 py-4 app-main">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="toast-stack">
@@ -92,7 +92,7 @@
   };
 </script>
 {% endif %}
-<footer class="container-fluid px-3 px-lg-4 pb-3 text-secondary small">RustDesk AddressBook <a class="text-secondary" href="{{ url_for('release_notes') }}" title="{{ t('release.title', 'Release-Änderungen anzeigen') }}">{{ app_version_short }}</a></footer>
+<footer class="container-fluid px-3 px-lg-4 pb-3 text-secondary small app-footer">RustDesk AddressBook <a class="text-secondary" href="{{ url_for('release_notes') }}" title="{{ t('release.title', 'Release-Änderungen anzeigen') }}">{{ app_version_short }}</a></footer>
 <script src="{{ url_for('static', filename='js/app.js', v=app_version) }}"></script>
 </body>
 </html>

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Server-DB Diagnose - RustDesk AddressBook{% endblock %}
 {% block content %}
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1">RustDesk Server-DB Diagnose</h1>
     <div class="text-secondary">Prüft, welche Tabellen und Felder in der eingebundenen <code>db_v2.sqlite3</code> vorhanden sind. Der Online-Status wird nicht mehr aus der DB gesetzt, sondern über hbbs Live.</div>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex flex-wrap gap-2 page-actions">
     <a class="btn btn-outline-secondary" href="{{ url_for('import_devices') }}"><i class="bi bi-arrow-left me-1"></i>Import / Export</a>
     <form method="post" action="{{ url_for('sync_rustdesk_live_status') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -23,7 +23,7 @@
   <div class="card-body">
     <h2 class="h5">Quelle</h2>
     <div class="table-responsive">
-      <table class="table table-sm mb-0">
+      <table class="table table-sm mb-0 key-value-table">
         <tbody>
           <tr><th style="width: 220px;">RUSTDESK_SERVER_DB</th><td><code>{{ configured or '-' }}</code></td></tr>
           {% if diagnostics %}
@@ -69,14 +69,14 @@
           <h2 class="h5">peer.status Diagnose</h2>
           {% if diagnostics.status_distribution %}
             <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
+              <table class="table table-sm align-middle mb-0 mobile-stack-table diagnose-status-table">
                 <thead><tr><th>Wert in peer.status</th><th>Anzahl</th><th>Interpretation</th></tr></thead>
                 <tbody>
                 {% for row in diagnostics.status_distribution %}
                   <tr>
-                    <td><code>{{ row.value }}</code></td>
-                    <td>{{ row.count }}</td>
-                    <td>
+                    <td data-label="Wert"><code>{{ row.value }}</code></td>
+                    <td data-label="Anzahl">{{ row.count }}</td>
+                    <td data-label="Interpretation">
                       {% if row.interpreted is sameas true %}<span class="badge text-bg-success">online</span>
                       {% elif row.interpreted is sameas false %}<span class="badge text-bg-secondary">offline</span>
                       {% else %}<span class="badge text-bg-warning">nicht nutzbar</span>{% endif %}
@@ -98,8 +98,8 @@
         <div class="card-body">
           <h2 class="h5">Beispiel-Zeilen</h2>
           {% if diagnostics.sample_rows %}
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
+            <div class="table-responsive diagnostic-table-scroll">
+              <table class="table table-sm align-middle mb-0 diagnostic-sample-table">
                 <thead><tr>{% for key in diagnostics.sample_rows[0].keys() %}<th>{{ key }}</th>{% endfor %}</tr></thead>
                 <tbody>
                 {% for row in diagnostics.sample_rows %}

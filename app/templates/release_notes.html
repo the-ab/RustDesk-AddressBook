@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ t('release.title', 'Release-Änderungen') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1">{{ t('release.title', 'Release-Änderungen') }}</h1>
     <div class="text-secondary">{{ t('release.subtitle', 'Änderungshistorie der stabilen 0.5.x-Linie und der vorherigen Aufbau-Versionen.') }}</div>
@@ -19,6 +19,7 @@
 
 {% if app_language == 'en' %}
 {% set releases = [
+  ('0.5.24', ['Reworked all Web UI pages for smartphones and tablets; wide tables become readable mobile cards, navigation stays horizontally usable, and forms/actions wrap cleanly.', 'Completed a full error audit: fixed file-picker JavaScript, restored saved device password retrieval through the eye button, passed update URL and auth-log rotation settings into Docker, and cleaned up CSV download headers.', 'Aligned the Web UI guide, README and Admin Guide with the actual feature set, including group deletion, imports, backup/restore, settings and security checks.']),
   ('0.5.23', ['Corrected the German release history so version 0.5.22 is shown in German when German is selected.', 'Re-added the missing 0.5.21 release entry in both language views.', 'Cleaned up the release history so the 0.5.21 and 0.5.22 changes are separated clearly.']),
   ('0.5.22', ['Optional empty device fields such as customer, location, tags and notes no longer show or save a visible "None" value; existing placeholder values are cleaned on save.', 'Changed the groups overview from compact cards to a slim list view.', 'Automatic hbbs online status checks now accept custom numeric intervals; the unit is selected separately as minutes or hours.', 'Expanded the security status checks with log rotation, update check, hbbs configuration and HTTPS information.', 'Reviewed the help/admin documentation again for current features and relevant instructions.']),
   ('0.5.21', ['Unified version strings and Docker image defaults.', 'Limited the security audit event display to a scrollable area with about 10 visible rows.', 'Added weekly auth.log rotation with configurable retention.', 'Made the groups overview more compact.']),
@@ -50,6 +51,7 @@
 ] %}
 {% else %}
 {% set releases = [
+  ('0.5.24', ['Alle WebUI-Seiten für Smartphones und Tablets überarbeitet; breite Tabellen werden mobil als lesbare Karten dargestellt, Navigationen bleiben horizontal bedienbar und Formulare/Aktionen brechen sauber um.', 'Vollständige Fehlerprüfung durchgeführt: Dateiauswahl-JavaScript korrigiert, Abruf gespeicherter Gerätepasswörter über das Auge wiederhergestellt, Docker-Weitergabe von Update-URL und Auth-Logrotation ergänzt sowie CSV-Download-Header bereinigt.', 'WebUI-Anleitung, README und Admin-Guide mit dem tatsächlichen Funktionsumfang abgeglichen; Gruppenlöschung, Import, Backup/Restore, Einstellungen und Sicherheitsprüfung präzisiert.']),
   ('0.5.23', ['Deutsche Release-Historie korrigiert: Version 0.5.22 wird bei deutscher Spracheinstellung vollständig auf Deutsch angezeigt.', 'Fehlenden Eintrag für Version 0.5.21 in beiden Sprachansichten ergänzt.', 'Release-Historie bereinigt: Änderungen aus 0.5.21 und 0.5.22 sind jetzt getrennt nachvollziehbar.']),
   ('0.5.22', ['Leere optionale Gerätefelder wie Kunde, Standort, Tags und Notizen zeigen oder speichern kein sichtbares „None“ mehr; vorhandene „None“-Platzhalter werden beim Speichern bereinigt.', 'Gruppenansicht von kompakten Karten auf eine schlanke Listenansicht umgestellt.', 'Automatische hbbs-Online-Statusabfrage erlaubt frei gesetzte Zahlenwerte; die Einheit wird separat auf Minuten oder Stunden gestellt.', 'Sicherheitsstatus erweitert: zusätzlich werden Logrotation, Update-Check, hbbs-Konfiguration und HTTPS-Hinweis geprüft und angezeigt.', 'Anleitung und Admin-Dokumentation wurden erneut auf aktuelle Funktionen und relevante Angaben geprüft.']),
   ('0.5.21', ['Versionsangaben und Docker-Image-Defaults vereinheitlicht.', 'Anzeige der Sicherheits-Audit-Ereignisse auf einen scrollbaren Bereich mit etwa 10 sichtbaren Zeilen begrenzt.', 'Wöchentliche auth.log-Rotation mit konfigurierbarer Aufbewahrung ergänzt.', 'Gruppenübersicht kompakter dargestellt.']),
@@ -98,7 +100,7 @@
   <div class="card-body">
     <h2 class="h5">{{ t('release.update_note', 'Update-Hinweis') }}</h2>
     <p class="text-secondary mb-2">{{ t('release.option_a', 'Variante A: Kopiere die neue Flat-Update-ZIP in updates/ und starte das Script ohne Parameter.') }}</p>
-    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates/rustdesk-addressbook-update-flat-v0523.zip
+    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates/rustdesk-addressbook-update-flat-v0524.zip
 ./scripts/update.sh</pre>
     <p class="text-secondary mb-2 mt-3">{{ t('release.option_b', 'Variante B: Starte nur das Script. Es prüft lokale Updates, danach online, zeigt Änderungen an und fragt nach Download/Installation.') }}</p>
     <pre class="codebox">./scripts/update.sh</pre>

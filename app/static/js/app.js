@@ -8,6 +8,7 @@
   });
 
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  const i18n = window.RAB_I18N || {};
 
   function activateSettingsTabFromHash() {
     const hash = window.location.hash;
@@ -38,7 +39,7 @@
       const icon = button.querySelector('i');
       if (!input) return;
 
-      if (input.dataset.passwordUrl && input.type === 'password' && !input.dataset.loaded) {
+      if (input.dataset.passwordUrl && input.type === 'password' && !input.dataset.loaded && !input.value) {
         button.disabled = true;
         try {
           const response = await fetch(input.dataset.passwordUrl, {
@@ -103,8 +104,6 @@
   const updateButton = document.getElementById('updateCheckButton');
   const updateResult = document.getElementById('updateCheckResult');
   const updateBadge = document.getElementById('updateAvailableBadge');
-  const i18n = window.RAB_I18N || {};
-
   const renderUpdateCheck = (data) => {
     if (updateBadge) {
       updateBadge.classList.toggle('d-none', !data.update_available);

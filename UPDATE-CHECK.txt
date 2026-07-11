@@ -1,9 +1,9 @@
-rustdesk-addressbook-update-flat-v0523.zip
+rustdesk-addressbook-update-flat-v0524.zip
 [de]
-- Deutsche Release-Historie korrigiert: Version 0.5.22 wird bei deutscher Spracheinstellung vollständig auf Deutsch angezeigt.
-- Fehlenden Eintrag für Version 0.5.21 in beiden Sprachansichten ergänzt.
-- Release-Historie bereinigt: Änderungen aus 0.5.21 und 0.5.22 sind jetzt getrennt nachvollziehbar.
+- Alle WebUI-Seiten für Smartphones und Tablets überarbeitet; breite Tabellen werden mobil als lesbare Karten dargestellt, Navigationen bleiben horizontal bedienbar und Formulare/Aktionen brechen sauber um.
+- Vollständige Fehlerprüfung durchgeführt: Dateiauswahl-JavaScript korrigiert, Abruf gespeicherter Gerätepasswörter über das Auge wiederhergestellt, Docker-Weitergabe von Update-URL und Auth-Logrotation ergänzt sowie CSV-Download-Header bereinigt.
+- WebUI-Anleitung, README und Admin-Guide mit dem tatsächlichen Funktionsumfang abgeglichen; unter anderem Gruppenlöschung, Importverhalten, Backup/Restore, Einstellungen und Sicherheitsprüfung präzisiert.
 [en]
-- Corrected the German release history so version 0.5.22 is shown in German when German is selected.
-- Re-added the missing 0.5.21 release entry in both language views.
-- Cleaned up the release history so the 0.5.21 and 0.5.22 changes are separated clearly.
+- Reworked all Web UI pages for smartphones and tablets; wide tables become readable mobile cards, navigation remains horizontally usable, and forms/actions wrap cleanly.
+- Completed a full error audit: fixed file-picker JavaScript, restored saved device password retrieval through the eye button, passed update URL and auth-log rotation settings into Docker, and cleaned up CSV download headers.
+- Aligned the Web UI guide, README and Admin Guide with the actual feature set, including group deletion, import behavior, backup/restore, settings and security checks.

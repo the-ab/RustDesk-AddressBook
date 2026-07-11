@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ t('security.title', 'Sicherheit') }} · RustDesk AddressBook{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+<div class="d-flex flex-column flex-sm-row flex-wrap justify-content-between align-items-sm-center mb-4 gap-2 page-header">
   <div>
     <h1 class="h3 mb-1"><i class="bi bi-shield-lock me-2"></i>{{ t('security.title', 'Sicherheit') }}</h1>
     <div class="text-secondary">{{ t('security.subtitle', 'Login-Auditlog, Brute-Force-Schutz und Sicherheitsprüfung.') }}</div>
@@ -17,7 +17,7 @@
         <div class="list-group list-group-flush">
           {% for item in report %}
           <div class="list-group-item">
-            <div class="d-flex justify-content-between align-items-start gap-3">
+            <div class="d-flex justify-content-between align-items-start gap-3 security-status-row">
               <div>
                 <div class="fw-semibold">{{ item.name }}</div>
                 <div class="small text-secondary">{{ item.detail }}</div>
@@ -37,9 +37,9 @@
       <div class="card-header bg-transparent fw-semibold">{{ t('security.fail2ban_title', 'Fail2ban / CrowdSec') }}</div>
       <div class="card-body">
         <p class="mb-2">{{ t('security.log_intro', 'Die App schreibt fehlgeschlagene Logins zusätzlich in eine Datei:') }}</p>
-        <pre class="small bg-body-tertiary border rounded p-3 mb-3"><code>{{ auth_log_file }}</code></pre>
+        <pre class="small bg-body-tertiary border rounded p-3 mb-3 security-code-block"><code>{{ auth_log_file }}</code></pre>
         <p class="mb-2">{{ t('security.fail_marker', 'Fehlschläge enthalten die Markierung') }} <code>RAB_AUTH_FAIL</code>. {{ t('security.fail_filter', 'Beispiel für einen fail2ban-Filter:') }}</p>
-<pre class="small bg-body-tertiary border rounded p-3"><code>[Definition]
+<pre class="small bg-body-tertiary border rounded p-3 security-code-block"><code>[Definition]
 failregex = ^.*RAB_AUTH_FAIL .*ip=&lt;HOST&gt; .*$
 ignoreregex =</code></pre>
         <div class="small text-secondary">{{ t('security.internal_lockout', 'Interne Sperre: {limit} Fehlversuche je IP oder Benutzer innerhalb {window} Sekunden.').format(limit=fail_limit, window=fail_window) }}</div>
@@ -50,7 +50,7 @@ ignoreregex =</code></pre>
     <div class="card shadow-sm">
       <div class="card-header bg-transparent fw-semibold">{{ t('security.auth_events', 'Letzte Login-/2FA-Ereignisse') }}</div>
       <div class="table-responsive security-log-scroll">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 mobile-stack-table security-events-table">
           <thead>
             <tr>
               <th>{{ t('security.table.time', 'Zeit') }}</th>
@@ -64,12 +64,12 @@ ignoreregex =</code></pre>
           <tbody>
           {% for ev in auth_events %}
             <tr>
-              <td class="small text-nowrap">{{ ev.created_at|datetime_de }}</td>
-              <td>{% if ev.success %}<span class="badge text-bg-success">OK</span>{% else %}<span class="badge text-bg-danger">FAIL</span>{% endif %}</td>
-              <td><code>{{ ev.event_type }}</code></td>
-              <td>{{ ev.username or '-' }}</td>
-              <td><code>{{ ev.ip_address or '-' }}</code></td>
-              <td class="small text-secondary">{{ ev.message or '' }}</td>
+              <td class="small text-nowrap" data-label="{{ t('security.table.time', 'Zeit') }}">{{ ev.created_at|datetime_de }}</td>
+              <td data-label="{{ t('security.table.status', 'Status') }}">{% if ev.success %}<span class="badge text-bg-success">OK</span>{% else %}<span class="badge text-bg-danger">FAIL</span>{% endif %}</td>
+              <td data-label="{{ t('security.table.event', 'Ereignis') }}"><code>{{ ev.event_type }}</code></td>
+              <td data-label="{{ t('security.table.user', 'Benutzer') }}">{{ ev.username or '-' }}</td>
+              <td data-label="{{ t('security.table.ip', 'IP') }}"><code>{{ ev.ip_address or '-' }}</code></td>
+              <td class="small text-secondary" data-label="{{ t('security.table.details', 'Details') }}">{{ ev.message or '' }}</td>
             </tr>
           {% else %}
             <tr><td colspan="6" class="text-secondary text-center py-4">{{ t('security.no_events', 'Noch keine Ereignisse vorhanden.') }}</td></tr>

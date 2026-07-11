@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}RustDesk Server Import - RustDesk AddressBook{% endblock %}
 {% block content %}
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1">RustDesk Server Import</h1>
     <div class="text-secondary">Geräte aus <code>db_v2.sqlite3</code> inklusive WAL/SHM importieren. Online-Status läuft über hbbs Live.</div>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex flex-wrap gap-2 page-actions">
     <a class="btn btn-outline-secondary" href="{{ url_for('import_devices') }}"><i class="bi bi-arrow-down-up me-1"></i>Import / Export</a>
     {% set db_mount = rustdesk_server_db_status() %}
     {% if db_mount.configured %}

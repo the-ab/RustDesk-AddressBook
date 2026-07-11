@@ -2,12 +2,12 @@
 {% block title %}{{ t('import.title', 'Import / Export') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
 {% set db_mount = rustdesk_server_db_status() %}
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1">{{ t('import.title', 'Import / Export') }}</h1>
     <div class="text-secondary">{{ t('import.subtitle', 'CSV-Import, CSV-Export, RustDesk-Server-Import, SSH-Snapshot-Import und optionaler direkter DB-Import an einer Stelle.') }}</div>
   </div>
-  <div class="d-flex flex-wrap gap-2">
+  <div class="d-flex flex-wrap gap-2 page-actions">
     {% if db_mount.configured %}
       <a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>{{ t('import.direct.diagnose', 'DB Diagnose') }}</a>
     {% endif %}
@@ -39,7 +39,7 @@
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <div class="mb-3">
                     <label class="form-label">{{ t('import.csv.file', 'CSV-Datei') }}</label>
-                    <input class="visually-hidden rab-file-input" id="csvFileInput" type="file" name="csv_file" accept=".csv,text/csv" required data-no-file-text="{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}" data-files-text="{{ t('common.files_selected', 'Dateien ausgewählt') }}"><div class="input-group"><label class="btn btn-outline-secondary" for="csvFileInput"><i class="bi bi-folder2-open me-1"></i>{{ t('common.choose_file', 'Datei auswählen') }}</label><span class="form-control rab-file-label" data-file-label-for="csvFileInput">{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}</span></div>
+                    <input class="visually-hidden rab-file-input" id="csvFileInput" type="file" name="csv_file" accept=".csv,text/csv" required data-no-file-text="{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}" data-files-text="{{ t('common.files_selected', 'Dateien ausgewählt') }}"><div class="input-group rab-file-picker"><label class="btn btn-outline-secondary" for="csvFileInput"><i class="bi bi-folder2-open me-1"></i>{{ t('common.choose_file', 'Datei auswählen') }}</label><span class="form-control rab-file-label" data-file-label-for="csvFileInput">{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}</span></div>
                   </div>
                   <button class="btn btn-primary" type="submit"><i class="bi bi-upload me-1"></i>{{ t('import.csv.button', 'CSV importieren') }}</button>
                 </form>
@@ -74,7 +74,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="mb-3">
                 <label class="form-label">{{ t('import.server.files', 'RustDesk Server-Dateien') }}</label>
-                <input class="visually-hidden rab-file-input" id="serverFilesInput" type="file" name="server_files" accept=".sqlite,.sqlite3,.db,.sqlite-wal,.sqlite3-wal,.db-wal,.sqlite-shm,.sqlite3-shm,.db-shm,.zip" multiple required data-no-file-text="{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}" data-files-text="{{ t('common.files_selected', 'Dateien ausgewählt') }}"><div class="input-group"><label class="btn btn-outline-secondary" for="serverFilesInput"><i class="bi bi-folder2-open me-1"></i>{{ t('common.choose_file', 'Datei auswählen') }}</label><span class="form-control rab-file-label" data-file-label-for="serverFilesInput">{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}</span></div>
+                <input class="visually-hidden rab-file-input" id="serverFilesInput" type="file" name="server_files" accept=".sqlite,.sqlite3,.db,.sqlite-wal,.sqlite3-wal,.db-wal,.sqlite-shm,.sqlite3-shm,.db-shm,.zip" multiple required data-no-file-text="{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}" data-files-text="{{ t('common.files_selected', 'Dateien ausgewählt') }}"><div class="input-group rab-file-picker"><label class="btn btn-outline-secondary" for="serverFilesInput"><i class="bi bi-folder2-open me-1"></i>{{ t('common.choose_file', 'Datei auswählen') }}</label><span class="form-control rab-file-label" data-file-label-for="serverFilesInput">{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}</span></div>
                 <div class="form-text">{{ t('import.server.files_help', 'Am besten als ZIP oder als Mehrfachauswahl hochladen: db_v2.sqlite3, db_v2.sqlite3-wal und optional db_v2.sqlite3-shm.') }}</div>
               </div>
               <div class="row g-3">

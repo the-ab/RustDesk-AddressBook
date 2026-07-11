@@ -1,51 +1,45 @@
 # RustDesk AddressBook Admin Guide
 
-Diese Anleitung beschreibt Installation, Update, Funktionen und die wichtigsten Kommandos für den Betrieb.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.24-mobile-ui-docs-audit`.
 
 ## 1. Installation
 
-Empfohlen ist das interaktive Installationsscript. Die Komplettversion entpackt immer in den Ordner `rustdesk-addressbook/`:
-
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0523.zip
-unzip rustdesk-addressbook-v0523.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
+unzip rustdesk-addressbook-v0524.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
 ```
 
-Das Script fragt ab:
+Das Script fragt folgende Werte ab und speichert sie in `.env`:
 
-- Zeitzone
-- Container-Name
-- Docker-Image-Name
-- Datenverzeichnis
-- Backup-Verzeichnis
+- Zeitzone, Container-Name und Docker-Image-Name
+- Daten- und Backup-Verzeichnis
 - HTTPS-Port und Bind-Adresse
-- ob HTTP zusätzlich aktiviert werden soll
-- HTTPS Common Name / SubjectAltNames
-- ob Reverse-Proxy-Header vertraut werden soll
-- Update-Download-Basis-URL, Standard: `https://dl.ab-xnet.de`
-- ob read-only Zugriff auf eine lokale RustDesk-Serverdatenbank aktiviert werden soll
-- Brute-Force-Sperrwerte
+- optionaler HTTP-Port über `docker-compose.override.yml`
+- Common Name und SubjectAltNames für das selbstsignierte Zertifikat
+- Vertrauen in Reverse-Proxy-Header
+- Download-Basis-URL für Updates
+- optionaler read-only Mount der RustDesk-Serverdatenbank
+- Brute-Force-Limit und Zeitfenster
+- Intervall und Aufbewahrung der Auth-Logrotation
 
-Die gesetzten Werte werden in `.env` gespeichert. Wenn `./scripts/install.sh` erneut ausgeführt wird, nutzt es die Werte aus `.env` als neue Default-Werte. Dadurch ist ein schnelles Neuaufsetzen oder Nachjustieren möglich.
-
-Standard nach Installation:
+Beim erneuten Aufruf dienen vorhandene `.env`-Werte als Defaults. Standardmäßig ist die WebUI erreichbar unter:
 
 ```text
 https://SERVER-IP:5443
 ```
 
-HTTP ist standardmäßig deaktiviert. Wenn HTTP im Installationsscript aktiviert wird, erzeugt das Script eine passende `docker-compose.override.yml`.
+HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein selbstsigniertes Zertifikat; die Browserwarnung ist dann normal.
 
 ### 1.1 Manuelle Installation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0523.zip
-unzip rustdesk-addressbook-v0523.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
+unzip rustdesk-addressbook-v0524.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -54,151 +48,116 @@ docker compose up -d --build
 
 ## 2. Update
 
-Es gibt zwei empfohlene Wege. In beiden Fällen wird am Ende nur das Update-Script ohne Zusatzparameter ausgeführt.
-
-### 2.1 Update-ZIP manuell in `updates/` ablegen
+### 2.1 Update-ZIP lokal ablegen
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates/rustdesk-addressbook-update-flat-v0523.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates/rustdesk-addressbook-update-flat-v0524.zip
 ./scripts/update.sh
 ```
 
-Das Script erkennt die höchste passende Version im Ordner `updates/` automatisch.
-
-### 2.2 Automatischer Online-Check und Download
+### 2.2 Online prüfen
 
 ```bash
 cd /opt/rustdesk-addressbook
 ./scripts/update.sh
 ```
 
-Wenn lokal keine neuere ZIP vorhanden ist, prüft das Script automatisch online unter `RAB_UPDATE_BASE_URL`. Wird eine neue Version gefunden, zeigt es die Release-Notizen an und fragt:
-
-1. ob die Update-ZIP heruntergeladen werden soll,
-2. ob das Update anschließend installiert werden soll.
-
-Die früheren Optionen `--check-online` und `--online` sind für den normalen Betrieb nicht mehr nötig. Der Standardaufruf erledigt die Prüfung automatisch.
-
-### 2.3 Download-Server mit `latest.txt` vorbereiten
-
-Minimale Variante:
-
-```text
-rustdesk-addressbook-update-flat-v0523.zip
-```
-
-Empfohlene Variante mit Änderungen für WebUI und Update-Script:
-
-```text
-rustdesk-addressbook-update-flat-v0523.zip
-- Update-Check nutzt latest.txt ohne latest.json-Prüfung.
-- Update-Script zeigt Änderungen vor Download und Installation.
-- Ja/Nein-Abfragen nutzen [J/n] und [j/N].
-```
-
-Alternativ kann neben der ZIP eine separate Notizdatei liegen:
-
-```text
-rustdesk-addressbook-update-flat-v0523.txt
-release-notes-v0523.txt
-releases/v0523.txt
-```
-
-
-In der WebUI gibt es zusätzlich unter **Einstellungen → Update-Check** eine Anzeige, ob online eine neue Version verfügbar ist und welche Änderungen diese Version enthält. Installiert wird weiterhin über `./scripts/update.sh`.
-
-Das Script erstellt vorher eine Sicherung neben dem Projektordner:
+Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Ist dort nichts Neueres vorhanden, liest es `RAB_UPDATE_BASE_URL/latest.txt`, zeigt die Release-Notizen und fragt vor Download und Installation. Vor der Installation wird eine Sicherung angelegt:
 
 ```text
 ../rustdesk-addressbook-preupdate-YYYYmmdd-HHMMSS/
 ```
 
-Gesichert werden:
+Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-compose.override.yml` und `updates/`. Nach dem Update Browser mit `Strg+F5` neu laden.
+
+### 2.3 latest.txt
 
 ```text
-data/
-backups/
-.env
-docker-compose.yml
-docker-compose.override.yml
-updates/
+rustdesk-addressbook-update-flat-v0524.zip
+[de]
+- Deutsche Änderung
+[en]
+- English change
 ```
 
-Danach im Browser `Strg + F5` drücken.
+Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0524.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`.
 
 ### 2.4 Manueller Fallback
-
-Nur falls das Script nicht nutzbar ist:
 
 ```bash
 cd /opt/rustdesk-addressbook
 docker compose down
 cp -a data ../rustdesk-addressbook-data-backup
 cp -a backups ../rustdesk-addressbook-backups-backup 2>/dev/null || true
-unzip -o updates/rustdesk-addressbook-update-flat-v0523.zip
+unzip -o updates/rustdesk-addressbook-update-flat-v0524.zip
 docker compose build --no-cache
 docker compose up -d --force-recreate --remove-orphans
 ```
 
 ## 3. Ersteinrichtung
 
-1. WebUI öffnen.
-2. Admin-Benutzer und Passwort erstellen.
-3. Unter **Einstellungen → 2FA** TOTP aktivieren.
-4. Recovery-Codes offline speichern.
-5. Unter **Einstellungen → Online-Status** hbbs konfigurieren.
+1. WebUI öffnen und Admin-Benutzer anlegen.
+2. Unter **Einstellungen → Darstellung & Sprache** Theme und Sprache wählen.
+3. Unter **Einstellungen → 2FA** TOTP aktivieren und Recovery-Codes offline sichern.
+4. Unter **Einstellungen → Online-Status** hbbs Host/Port konfigurieren.
+5. Ein verschlüsseltes `.rabfull`-Vollbackup erstellen.
 
-## 4. Geräteverwaltung
+## 4. Dashboard und Geräteansichten
+
+Das Dashboard zeigt Geräteanzahl, Favoriten, Online-Geräte, Favoritenliste, zuletzt geänderte Geräte, Schnellsuche und Gruppen. Dashboard und Geräte-Seite unterstützen:
+
+- Kartenansicht
+- kompakte Listenansicht
+- kleine Symbolansicht
+
+Die gewählte Ansicht wird in der Sitzung gespeichert. Auf Smartphones werden Listenzeilen als beschriftete Karten dargestellt.
+
+## 5. Geräteverwaltung
 
 Felder:
 
-- Name
-- RustDesk-ID
-- Passwort
-- Gruppe
-- Kunde
-- Standort
-- Gerätetyp / Betriebssystem
-- Tags
-- Notizen
-- Favorit
-- Online-Status
+- Name und RustDesk-ID, beide Pflicht
+- verschlüsseltes RustDesk-Passwort
+- Gruppe, Kunde, Standort
+- Gerätetyp/Betriebssystem
+- Tags und Notizen
+- Favorit und manueller Online-Status
 
-Verbindung erfolgt per `rustdesk://`-Link. Gespeicherte Passwörter werden nicht direkt im HTML-Link angezeigt.
+Funktionen:
 
-## 5. Gruppen
+- Anlegen, bearbeiten und löschen
+- Suche in Name, ID, Kunde, Standort, Gerätetyp, Tags und Notizen
+- Filter nach Gruppe, Favorit und Gerätetyp
+- Sortierung: Online zuerst, Name, Favoriten oder zuletzt geändert
+- `rustdesk://`-Direktlink; ein gespeichertes Passwort wird erst beim Klick entschlüsselt und in den RustDesk-Link eingefügt
+- Passwort-Auge im Bearbeitungsformular lädt das gespeicherte Passwort nur nach ausdrücklichem Klick
+- bleibt das Passwortfeld leer, bleibt das Passwort unverändert; über die Checkbox kann es gelöscht werden
+- optionale Werte `None`/`null` werden beim Speichern als leer bereinigt
 
-Gruppen haben Name, Farbe und Icon. Icons werden per Auswahlfeld mit Vorschau gesetzt. Bestehende Gruppen können bearbeitet werden.
+## 6. Gruppen
 
-## 6. hbbs Live-Status
+Gruppen besitzen Name, Farbe und Bootstrap-Icon. Sie können angelegt und direkt in der Liste bearbeitet werden. Beim Löschen einer Gruppe werden zugeordnete Geräte **nicht** gelöscht; nur deren Gruppenzuordnung wird entfernt.
 
-Einstellungen:
+## 7. Online-Status über hbbs
 
-```text
-Statusquelle: hbbs Live-Abfrage
-hbbs Host: RUSTDESK-SERVER-IP oder DNS
-hbbs Port: 21115
-Timeout: 3
-Batchgröße: 50
-```
-
-Test aus dem Container:
+Der Live-Status nutzt RustDesk `OnlineRequest/OnlineResponse`. Üblicher Port ist TCP `21115`.
 
 ```bash
 docker exec -it rustdesk-addressbook python - <<'PY'
 import socket
-host = "DEIN-RUSTDESK-SERVER"
-port = 21115
-s = socket.create_connection((host, port), timeout=3)
+socket.create_connection(("DEIN-RUSTDESK-SERVER", 21115), timeout=3).close()
 print("TCP Verbindung OK")
-s.close()
 PY
 ```
 
-## 7. Import / Export
+Konfigurierbar sind Quelle, Host, Port, Timeout, Batchgröße, Requester-ID sowie automatische Abfrage. Das Intervall kann frei als Minuten oder Stunden gesetzt werden. Die automatische Prüfung läuft nur, solange eine WebUI-Seite geöffnet ist. Scheitert eine Abfrage, bleiben vorhandene Online-Stati unverändert. Das letzte Ergebnis erscheint auf Dashboard, Geräte-Seite und in den Einstellungen.
 
-### CSV-Import
+Die hbbs-Nachrichten sind keine offiziell dokumentierte Web-API; nach RustDesk-Serverupdates erneut testen.
+
+## 8. Import / Export
+
+### 8.1 CSV-Import
 
 Unterstützte Spalten:
 
@@ -206,57 +165,39 @@ Unterstützte Spalten:
 name,rustdesk_id,password,customer,location,os,tags,notes,favorite,online,group
 ```
 
-### CSV-Export
+Auch deutsche Alternativnamen für zentrale Spalten werden erkannt. Der CSV-Import:
 
-- Export ohne Passwörter: empfohlen.
-- Export mit Passwörtern: nur in geschützter Umgebung verwenden.
+- erstellt immer neue Geräte
+- überspringt Zeilen ohne Name oder RustDesk-ID
+- erkennt Komma, Semikolon oder Tabulator
+- legt benannte Gruppen bei Bedarf automatisch an
+- verschlüsselt importierte Passwörter
 
-### RustDesk-DB Upload
+### 8.2 CSV-Export
 
-Akzeptiert:
+- **Ohne Passwörter:** Standard und empfohlen
+- **Mit Passwörtern:** entschlüsselt die Werte für die CSV; nur in einer geschützten Umgebung verwenden
 
-```text
-db_v2.sqlite3
-db_v2.sqlite3-wal
-db_v2.sqlite3-shm
-```
+### 8.3 RustDesk-DB per Upload
 
-Oder ZIP mit diesen Dateien.
+Akzeptiert `db_v2.sqlite3`, optional `db_v2.sqlite3-wal` und `db_v2.sqlite3-shm`, einzeln oder in einer ZIP. ZIP-Pfade werden sicher extrahiert. Der Import liest eine konsistente SQLite-Kopie, schreibt niemals in die RustDesk-DB und kann bestehende Geräte optional über die RustDesk-ID aktualisieren. Der Online-Status wird bewusst nicht aus der Server-DB übernommen.
 
-### Gemountete RustDesk-DB
-
-Diese Option kann direkt im Installationsscript aktiviert werden:
-
-```bash
-./scripts/install.sh
-```
-
-Bei der Frage
-
-```text
-Optionalen read-only Zugriff auf RustDesk db_v2.sqlite3 aktivieren?
-```
-
-mit `ja` antworten und das RustDesk-Datenverzeichnis angeben, zum Beispiel:
-
-```text
-/docker_data/rustdesk
-```
-
-Manuell entspricht das ungefähr:
+### 8.4 Gemountete RustDesk-DB
 
 ```yaml
-environment:
-  RUSTDESK_SERVER_DB: /rustdesk-server/db_v2.sqlite3
 volumes:
   - /docker_data/rustdesk:/rustdesk-server:ro
+environment:
+  RUSTDESK_SERVER_DB: /rustdesk-server/db_v2.sqlite3
 ```
 
-## 8. RustDesk SSH-Import
+Die Importseite zeigt nur bei konfiguriertem Mount den Direktimport und die Diagnose. Die Diagnose prüft Pfad, Hauptdatei, WAL/SHM, SQLite-Header, Integrität, Tabellen, Peer-Anzahl und Beispieldatensätze.
 
-Der SSH-Import ist empfohlen, wenn RustDesk-Server und AddressBook auf getrennten Servern laufen.
+## 9. RustDesk SSH-Import
 
-### 8.1 RustDesk-Server vorbereiten
+Empfohlen bei getrennten Servern. Das Adressbuch ruft einen konsistenten SQLite-Snapshot über einen auf ein Exportkommando beschränkten SSH-Key ab.
+
+### 9.1 RustDesk-Server vorbereiten
 
 ```bash
 apt update
@@ -264,33 +205,24 @@ apt install sqlite3 openssh-server acl
 adduser --disabled-password --gecos "" rab-import
 ```
 
-### 8.2 Export-Script erstellen
+### 9.2 Export-Script
 
 ```bash
 cat > /usr/local/sbin/rab-rustdesk-db-export <<'EOSCRIPT'
 #!/bin/bash
 set -euo pipefail
-
 DB="/docker_data/rustdesk/db_v2.sqlite3"
 TMP="$(mktemp /tmp/rustdesk-db-export.XXXXXX.sqlite3)"
-
-cleanup() {
-  rm -f "$TMP"
-}
+cleanup() { rm -f "$TMP"; }
 trap cleanup EXIT
-
-if [ ! -r "$DB" ]; then
-  echo "ERROR: RustDesk DB not readable: $DB" >&2
-  exit 1
-fi
-
+[ -r "$DB" ] || { echo "ERROR: RustDesk DB not readable: $DB" >&2; exit 1; }
 sqlite3 "$DB" ".backup '$TMP'"
 cat "$TMP"
 EOSCRIPT
 chmod 755 /usr/local/sbin/rab-rustdesk-db-export
 ```
 
-### 8.3 Rechte setzen
+### 9.3 Leserechte
 
 ```bash
 setfacl -m u:rab-import:rx /docker_data
@@ -300,115 +232,96 @@ setfacl -m u:rab-import:r /docker_data/rustdesk/db_v2.sqlite3-wal 2>/dev/null ||
 setfacl -m u:rab-import:r /docker_data/rustdesk/db_v2.sqlite3-shm 2>/dev/null || true
 ```
 
-### 8.4 SSH-Key erzeugen
+### 9.4 Key einschränken
 
-Auf dem AddressBook-Server:
-
-```bash
-cd /opt/rustdesk-addressbook
-mkdir -p data/ssh
-ssh-keygen -t ed25519 -f data/ssh/rustdesk_import_ed25519 -N ""
-chmod 600 data/ssh/rustdesk_import_ed25519
-cat data/ssh/rustdesk_import_ed25519.pub
-```
-
-### 8.5 Public Key einschränken
-
-Auf dem RustDesk-Server:
-
-```bash
-mkdir -p /home/rab-import/.ssh
-nano /home/rab-import/.ssh/authorized_keys
-```
-
-Zeile eintragen:
+In `authorized_keys`:
 
 ```text
 restrict,no-pty,no-agent-forwarding,no-X11-forwarding,no-port-forwarding,command="/usr/local/sbin/rab-rustdesk-db-export" ssh-ed25519 AAAA...
 ```
 
-Rechte:
+Privaten Key im Adressbuch ablegen:
 
 ```bash
-chown -R rab-import:rab-import /home/rab-import/.ssh
-chmod 700 /home/rab-import/.ssh
-chmod 600 /home/rab-import/.ssh/authorized_keys
+mkdir -p data/ssh
+cp rustdesk_import_ed25519 data/ssh/
+chmod 600 data/ssh/rustdesk_import_ed25519
 ```
 
-### 8.6 Manueller Test
+WebUI-Pfad: `/data/ssh/rustdesk_import_ed25519`. Der eingebaute Test prüft Verbindung, Laufzeit, Bytes, SQLite-Header, `integrity_check`, Peer-Tabelle und Peer-Anzahl. Erst danach den Import starten. Host, Port, Benutzer, Key-Pfad und Host-Key-Datei werden in den Einstellungen gespeichert.
 
-```bash
-ssh -T \
-  -i ./data/ssh/rustdesk_import_ed25519 \
-  -o IdentitiesOnly=yes \
-  -o BatchMode=yes \
-  rab-import@RUSTDESK-SERVER-IP \
-  > /tmp/rustdesk-db-snapshot.sqlite3
+## 10. Backup / Restore
 
-file /tmp/rustdesk-db-snapshot.sqlite3
-sqlite3 /tmp/rustdesk-db-snapshot.sqlite3 ".tables"
-sqlite3 /tmp/rustdesk-db-snapshot.sqlite3 "PRAGMA integrity_check;"
-sqlite3 /tmp/rustdesk-db-snapshot.sqlite3 "SELECT COUNT(*) FROM peer;"
-```
+Backup-Arten:
 
-Erwartet:
+- `.db`: unverschlüsselte SQLite-Sicherung
+- `.rabenc`: AES-256-GCM-verschlüsselte Datenbank; Passwort mindestens 12 Zeichen
+- `.rabfull`: verschlüsseltes Vollbackup; Passwort mindestens 16 Zeichen; enthält Datenbank, `config.json`, SSH-Keys, Zertifikate, Logs und Manifest
 
-```text
-peer
-ok
-ANZAHL
-```
-
-### 8.7 WebUI konfigurieren
-
-Unter **Import / Export → RustDesk SSH-Import**:
-
-```text
-SSH Host: RUSTDESK-SERVER-IP
-SSH Port: 22
-SSH Benutzer: rab-import
-Private-Key-Pfad: /data/ssh/rustdesk_import_ed25519
-Remote-Kommando: leer lassen, wenn forced command aktiv ist
-```
-
-Danach zuerst **SSH-Übertragung testen**, dann **Per SSH importieren**.
-
-## 9. Backups
-
-Backup in der WebUI:
-
-- Normales SQLite-Backup nur der Datenbank
-- Verschlüsseltes `.rabenc`-Backup nur der Datenbank
-- Verschlüsseltes `.rabfull`-Vollbackup mit:
-  - `data/addressbook.db`
-  - `data/config.json`
-  - `data/ssh/`
-  - `data/certs/`
-  - `data/logs/`
-- Restore vorhandener Backups
-- Restore per Upload
-- Löschen alter Backups
-
-Empfehlung: Für Serverumzug, Totalausfall oder externe Ablage immer `.rabfull` verwenden. Das Vollbackup enthält Schlüsselmaterial und wird deshalb ausschließlich verschlüsselt erzeugt. Nach Restore eines `.rabfull`-Backups den Container neu starten, damit `config.json` neu geladen wird.
-
-Hostseitige Sicherung:
-
-```bash
-cd /opt
-borg create /backup/rustdesk-addressbook::rab-$(date +%F-%H%M) rustdesk-addressbook/data rustdesk-addressbook/backups
-```
+Vorhandene Backups können heruntergeladen, wiederhergestellt oder gelöscht werden. Restore ist auch per Upload von `.db`, `.sqlite`, `.sqlite3`, `.rabenc` und `.rabfull` möglich. Vor jedem Restore erzeugt die App automatisch ein unverschlüsseltes Sicherheitsbackup des bisherigen Datenbankstands.
 
 Wichtig:
 
-```text
-data/addressbook.db
-data/config.json
-backups/
+- `.rabenc` enthält nur die Datenbank und benötigt die dazugehörige `data/config.json`, um Gerätepasswörter zu entschlüsseln.
+- `.rabfull` ist für Umzug/Totalausfall empfohlen.
+- Nach `.rabfull`-Restore Container neu starten, damit `config.json` und Schlüssel neu geladen werden.
+- Backup-Passwörter außerhalb des Servers aufbewahren.
+
+## 11. Einstellungen
+
+- **Darstellung & Sprache:** Light/Dark und Deutsch/Englisch
+- **Admin-Konto:** Benutzername und Passwort jeweils nach Prüfung des aktuellen Passworts ändern
+- **2FA:** Einrichtung vorbereiten, QR/Secret anzeigen, TOTP aktivieren, einmalige Recovery-Codes erzeugen, Codes erneuern oder 2FA mit Passwort plus TOTP/Recovery-Code deaktivieren
+- **Gerätetypen:** ein Wert pro Zeile als Vorauswahl im Geräteformular
+- **Online-Status:** hbbs-Parameter und automatisches Intervall
+- **Brute-Force-Sperre:** 2–50 Fehlversuche, Zeitfenster 1–1440 Minuten; Änderung erfordert Admin-Passwort
+- **Update-Check:** automatischer Check 1–168 Stunden; installiert keine Updates
+- **Sicherheitshinweise:** Verschlüsselungs- und Backup-Hinweise
+
+Auf Smartphone und Tablet werden die Kategorien als horizontal scrollbar bedienbare Navigation dargestellt.
+
+## 12. Sicherheit
+
+Die Sicherheitsseite zeigt bis zu 250 Login-/2FA-Ereignisse in einem auf ungefähr 10 sichtbare Zeilen begrenzten Scrollbereich und bietet den Download von `auth.log`.
+
+Der Sicherheitsstatus prüft:
+
+- 2FA-Abdeckung und vorhandene Recovery-Codes
+- HMAC-Signaturen sensibler Benutzer-Sicherheitsfelder
+- HttpOnly-/Secure-Cookie und HSTS
+- Proxy-Header-Konfiguration
+- Auth-Log und Dateirechte
+- `config.json` und SQLite-Dateirechte
+- unverschlüsselte/verschlüsselte Backups
+- interne Brute-Force-Sperre
+- Auth-Logrotation
+- Update-Check, hbbs-Konfiguration und HTTPS-Endpunkt
+
+Die SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter sind feldweise mit Fernet verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert. Datenbank plus `config.json` gelten zusammen als sensibles Schlüsselmaterial.
+
+### 12.1 Auth-Logrotation
+
+```env
+AUTH_LOG_ROTATE_DAYS=7
+AUTH_LOG_ROTATE_KEEP=8
 ```
 
-## 10. HTTPS
+Diese Werte werden über Compose in den Container weitergereicht. Fehlversuche enthalten `RAB_AUTH_FAIL`.
 
-Selbstsigniertes Zertifikat wird automatisch erstellt. Eigene Zertifikate:
+### 12.2 fail2ban
+
+```bash
+cp contrib/fail2ban/filter.d/rustdesk-addressbook.conf /etc/fail2ban/filter.d/
+cp contrib/fail2ban/jail.d/rustdesk-addressbook.local.example /etc/fail2ban/jail.d/rustdesk-addressbook.local
+systemctl restart fail2ban
+fail2ban-client status rustdesk-addressbook
+```
+
+`TRUST_PROXY_HEADERS=true` nur hinter einem vertrauenswürdigen Reverse Proxy setzen.
+
+## 13. HTTPS
+
+Eigene Zertifikate:
 
 ```bash
 mkdir -p data/certs
@@ -418,125 +331,37 @@ chmod 600 data/certs/addressbook.key
 docker compose up -d --force-recreate
 ```
 
-## 11. Sicherheit
+Für öffentlichen Zugriff zusätzlich `SESSION_COOKIE_SECURE=true`, `APP_HSTS=true`, 2FA und restriktive Firewall-/Proxy-Regeln verwenden.
 
-### 2FA
+## 14. Mobile Bedienung
 
-Unter **Einstellungen → 2FA** aktivieren. Recovery-Codes offline sichern.
+Alle Seiten sind für 320 px Smartphonebreite, größere Smartphones, Tablets und Desktop ausgelegt. Tabellen für Geräte, Backups, Sicherheitsereignisse und Diagnose wechseln mobil zu beschrifteten Karten. Lange Pfade, URLs, IDs und Logtexte brechen um. Kategorienavigation in Einstellungen, Import und Anleitung kann horizontal gescrollt werden. Das Hauptmenü wird über den mobilen Navbar-Schalter geöffnet.
 
-### Brute-Force-Sperre
-
-Unter **Einstellungen → Brute-Force-Sperre** konfigurierbar:
-
-- Fehlversuche
-- Zeitraum
-
-### Auth-Log
+## 15. Fehlerdiagnose
 
 ```bash
-tail -f /opt/rustdesk-addressbook/data/logs/auth.log
-```
-
-Fehlversuche enthalten:
-
-```text
-RAB_AUTH_FAIL
-```
-
-Das Auth-Log wird app-intern rotiert. Standard: wöchentlich, die letzten 8 Rotationen werden behalten. Konfigurierbar über `.env`:
-
-```env
-AUTH_LOG_ROTATE_DAYS=7
-AUTH_LOG_ROTATE_KEEP=8
-```
-
-## 12. fail2ban
-
-```bash
-cp contrib/fail2ban/filter.d/rustdesk-addressbook.conf /etc/fail2ban/filter.d/
-cp contrib/fail2ban/jail.d/rustdesk-addressbook.local.example /etc/fail2ban/jail.d/rustdesk-addressbook.local
-systemctl restart fail2ban
-fail2ban-client status rustdesk-addressbook
-```
-
-Wenn die App hinter einem Reverse Proxy läuft, `TRUST_PROXY_HEADERS=true` nur dann setzen, wenn der Proxy vertrauenswürdig ist.
-
-## 13. Fehlerdiagnose
-
-Containerlogs:
-
-```bash
+cd /opt/rustdesk-addressbook
+docker compose ps
 docker compose logs -f --tail=200
-```
-
-Datenbankintegrität:
-
-```bash
 sqlite3 data/addressbook.db "PRAGMA integrity_check;"
-```
-
-Version:
-
-```bash
 docker exec -it rustdesk-addressbook grep -n "APP_VERSION" /app/app/config.py
-```
-
-SSH-Key im Container:
-
-```bash
 docker exec -it rustdesk-addressbook ls -l /data/ssh/rustdesk_import_ed25519
+docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```
 
-hbbs-Port:
+Bei Problemen:
 
-```bash
-docker exec -it rustdesk-addressbook python - <<'PY'
-import socket
-socket.create_connection(("DEIN-RUSTDESK-SERVER", 21115), timeout=3).close()
-print("OK")
-PY
-```
+- **Update:** ZIP-Struktur prüfen; Flat-Update muss Dateien direkt im Archivwurzelverzeichnis enthalten.
+- **SSH:** zuerst WebUI-Test ausführen und Bytes, Header, Integrität und Peer-Anzahl prüfen.
+- **hbbs:** TCP-Port `21115` aus dem Container testen.
+- **RustDesk-DB:** Diagnose aufrufen und WAL/SHM sowie Peer-Tabelle prüfen.
+- **Login-Sperre:** `reset_security_lockout.py` nur mit Serverzugriff ausführen.
+- **Browserdarstellung nach Update:** `Strg+F5` oder Cache leeren.
 
-## Sprache und Einstellungen
+## 16. Sprache
 
-Ab Version 0.5.19 kann die WebUI zwischen Deutsch und Englisch umgeschaltet werden.
-Die Auswahl befindet sich unter **Einstellungen → Darstellung & Sprache**.
-
-Der Einstellungsbereich ist in eine linke Navigation und einen rechten Detailbereich aufgeteilt.
-Dadurch sind Admin-Konto, 2FA, Online-Status, Update-Check und weitere Optionen schneller erreichbar.
-
-Hinweis: Die Kernoberfläche, Anleitung und Release-Ansicht sind zweisprachig. Technische Logs, importierte Inhalte und gespeicherte historische Meldungen bleiben unverändert.
-
-
-
-## Zweisprachige Release-Notizen
-
-Für die WebUI und das Update-Script kann `latest.txt` Sprachbereiche enthalten:
-
-```text
-rustdesk-addressbook-update-flat-v0523.zip
-[de]
-- Deutsche Änderung
-[en]
-- English change
-```
-
-Alternativ unterstützt die App sprachspezifische Dateien neben der ZIP:
-
-```text
-rustdesk-addressbook-update-flat-v0523.en.txt
-rustdesk-addressbook-update-flat-v0523.de.txt
-release-notes-v0523.en.txt
-release-notes-v0523.de.txt
-```
-
-Das Shell-Script nutzt standardmäßig Deutsch. Für englische Ausgabe kann es so gestartet werden:
+Kernoberfläche, Anleitung und Release-Historie sind Deutsch/Englisch. Technische Logs, importierte Daten und bereits gespeicherte historische Meldungen werden nicht verändert. Für englische Shell-Release-Notizen:
 
 ```bash
 RAB_UPDATE_LANG=en ./scripts/update.sh
 ```
-
-
-## WebUI-Anleitung
-
-Die WebUI-Seite **Anleitung** enthält eine ausführliche, strukturierte Anleitung mit linker Sprungnavigation. Sie beschreibt alle zentralen Bereiche: Installation, Update, Ersteinrichtung, Geräte, Gruppen, Online-Status, Import/Export, SSH-Import, Backup/Restore, Einstellungen, Update-Check, Sicherheit, fail2ban/CrowdSec und Fehlerdiagnose.

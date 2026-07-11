@@ -2,7 +2,7 @@
 {% block title %}{{ t('groups.title', 'Gruppen') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
 {% set icon_values = group_icon_choices | map(attribute=0) | list %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1">{{ t('groups.title', 'Gruppen') }}</h1>
     <div class="text-secondary">{{ t('groups.subtitle', 'Gruppen für Kunden, Standorte oder Gerätetypen. Icon und Farbe können direkt ausgewählt werden.') }}</div>
@@ -60,20 +60,20 @@
           {% for group in groups %}
             <form method="post" action="{{ url_for('group_edit', group_id=group.id) }}" class="group-list-row px-3 py-2 border-bottom">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <div class="group-list-name min-w-0">
+              <div class="group-list-name min-w-0 group-field" data-label="{{ t('groups.name', 'Name') }}">
                 <div class="d-flex align-items-center gap-2 min-w-0">
                   <span class="badge text-bg-{{ group.color }} flex-shrink-0"><i class="bi bi-{{ group.icon }}"></i></span>
                   <input class="form-control form-control-sm" name="name" value="{{ group.name }}" required>
                 </div>
               </div>
-              <div>
+              <div class="group-field" data-label="{{ t('groups.color', 'Farbe') }}">
                 <select class="form-select form-select-sm" name="color">
                   {% for value, label in group_color_choices %}
                     <option value="{{ value }}" {% if group.color == value %}selected{% endif %}>{{ label }}</option>
                   {% endfor %}
                 </select>
               </div>
-              <div>
+              <div class="group-field" data-label="{{ t('groups.icon', 'Icon') }}">
                 <div class="input-group input-group-sm">
                   <span class="input-group-text group-icon-preview" id="groupIconPreview{{ group.id }}"><i class="bi bi-{{ group.icon }}"></i></span>
                   <select class="form-select group-icon-select" name="icon" data-preview-target="#groupIconPreview{{ group.id }}">
@@ -86,8 +86,8 @@
                   </select>
                 </div>
               </div>
-              <div class="small text-secondary text-nowrap align-self-center">{{ group.devices.count() }} {{ t('groups.assigned', 'Gerät(e) zugeordnet') }}</div>
-              <div class="d-flex justify-content-lg-end gap-1 group-actions">
+              <div class="small text-secondary text-nowrap align-self-center group-field" data-label="{{ t('groups.assigned', 'Gerät(e) zugeordnet') }}">{{ group.devices.count() }} {{ t('groups.assigned', 'Gerät(e) zugeordnet') }}</div>
+              <div class="d-flex justify-content-lg-end gap-1 group-actions group-field" data-label="{{ t('common.actions', 'Aktionen') }}">
                 <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('devices', group=group.id) }}" title="{{ t('groups.show_devices', 'Geräte anzeigen') }}"><i class="bi bi-hdd-network"></i></a>
                 <button class="btn btn-outline-primary btn-sm" type="submit" title="{{ t('common.save', 'Speichern') }}"><i class="bi bi-save"></i></button>
                 <button class="btn btn-outline-danger btn-sm" form="deleteGroup{{ group.id }}" onclick="return confirm('{{ t('groups.delete_confirm', 'Gruppe löschen? Geräte bleiben erhalten.') }}');" type="submit" title="{{ t('common.delete', 'Löschen') }}"><i class="bi bi-trash"></i></button>

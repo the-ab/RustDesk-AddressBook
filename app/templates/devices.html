@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ t('devices.title', 'Geräte') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1">{{ t('devices.title', 'Geräte') }}</h1>
     <div class="text-secondary">{{ t('devices.subtitle', 'Suchen, filtern, Online-Status live abfragen und direkt per RustDesk verbinden.') }}</div>
   </div>
-  <div class="d-flex flex-wrap align-items-center gap-2">
+  <div class="d-flex flex-wrap align-items-center gap-2 page-actions">
     <div class="btn-group" role="group" aria-label="{{ t('views.label', 'Ansicht') }}">
       <a class="btn btn-sm {% if device_view == 'cards' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('devices', q=q, group=selected_group, os=selected_os, fav=fav, sort=selected_sort, view='cards') }}" title="{{ t('views.cards', 'Karten') }}"><i class="bi bi-grid-3x3-gap"></i></a>
       <a class="btn btn-sm {% if device_view == 'list' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('devices', q=q, group=selected_group, os=selected_os, fav=fav, sort=selected_sort, view='list') }}" title="{{ t('views.list', 'Liste') }}"><i class="bi bi-list-ul"></i></a>

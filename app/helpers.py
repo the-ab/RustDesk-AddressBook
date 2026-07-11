@@ -3,7 +3,7 @@ import secrets
 from io import StringIO
 from urllib.parse import quote
 
-from flask import abort, request, session, url_for
+from flask import abort, request, session
 
 
 def csrf_token() -> str:

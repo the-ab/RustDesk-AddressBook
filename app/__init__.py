@@ -8,6 +8,7 @@ import json
 import os
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 import secrets
 import shutil
@@ -318,6 +319,7 @@ TRANSLATIONS = {
         "device_form.rustdesk_id": "RustDesk ID",
         "device_form.rustdesk_password": "RustDesk password",
         "device_form.password_placeholder_saved": "Saved password remains unchanged",
+        "device_form.password_toggle": "Show or hide password",
         "device_form.password_placeholder_optional": "Optional",
         "device_form.password_help": "Remains unchanged when the field is empty. The password is stored encrypted in SQLite.",
         "device_form.clear_password": "Delete saved password",
@@ -629,8 +631,14 @@ def _migrate_schema() -> None:
         current_app.config["_SECURITY_SIGNATURE_INITIALIZE_MISSING"] = security_signature_created
         # Clean legacy placeholder values that older templates could save when optional
         # device fields were rendered as Python None.
-        for col in ("customer", "location", "tags", "notes"):
-            conn.exec_driver_sql(f"UPDATE devices SET {col}=NULL WHERE lower(trim(COALESCE({col}, ''))) IN ('none', 'null')")
+        legacy_cleanup_queries = (
+            "UPDATE devices SET customer=NULL WHERE lower(trim(COALESCE(customer, ''))) IN ('none', 'null')",
+            "UPDATE devices SET location=NULL WHERE lower(trim(COALESCE(location, ''))) IN ('none', 'null')",
+            "UPDATE devices SET tags=NULL WHERE lower(trim(COALESCE(tags, ''))) IN ('none', 'null')",
+            "UPDATE devices SET notes=NULL WHERE lower(trim(COALESCE(notes, ''))) IN ('none', 'null')",
+        )
+        for cleanup_query in legacy_cleanup_queries:
+            conn.exec_driver_sql(cleanup_query)
 
 
 def _security_signature_payload(user: User) -> str:
@@ -1547,7 +1555,7 @@ def register_routes(app: Flask) -> None:
         filename = f"rustdesk-addressbook-{suffix}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.csv"
         return Response(
             output.getvalue(),
-            mimetype="text/csv; charset=utf-8",
+            content_type="text/csv; charset=utf-8",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
 
@@ -2509,7 +2517,8 @@ def _read_rustdesk_peer_rows(db_path: Path) -> list[sqlite3.Row]:
                 raise ValueError("Die RustDesk-Tabelle 'peer' enthält keine Spalte 'id'.")
 
             wanted = [c for c in ["id", "note", "info", "status", "created_at", "user"] if c in columns]
-            return con.execute(f"SELECT {', '.join(wanted)} FROM peer ORDER BY id COLLATE NOCASE").fetchall()
+            # Column names are selected exclusively from the fixed whitelist above.
+            return con.execute(f"SELECT {', '.join(wanted)} FROM peer ORDER BY id COLLATE NOCASE").fetchall()  # nosec B608
 
 
 def _sync_rustdesk_status_from_sqlite(db_path: Path) -> dict[str, int]:
@@ -2564,7 +2573,8 @@ def _inspect_rustdesk_sqlite(db_path: Path) -> dict:
             sample_rows = []
             wanted = [c for c in ["id", "status", "note", "info", "created_at", "user"] if c in columns]
             if wanted:
-                for row in con.execute(f"SELECT {', '.join(wanted)} FROM peer ORDER BY id COLLATE NOCASE LIMIT 10").fetchall():
+                # Column names are selected exclusively from the fixed whitelist above.
+                for row in con.execute(f"SELECT {', '.join(wanted)} FROM peer ORDER BY id COLLATE NOCASE LIMIT 10").fetchall():  # nosec B608
                     item = {}
                     for key in row.keys():
                         value = _safe_text(row[key])
@@ -3211,8 +3221,15 @@ def _version_number(value: str) -> int:
 
 
 def _fetch_text_url(url: str, timeout: float = 5.0) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": f"RustDesk-AddressBook/{_short_app_version(current_app.config.get('APP_VERSION', 'dev'))}"})
-    with urllib.request.urlopen(req, timeout=timeout) as response:
+    parsed = urllib.parse.urlparse(str(url or "").strip())
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("Update-URL muss eine vollständige HTTP- oder HTTPS-Adresse sein.")
+    req = urllib.request.Request(parsed.geturl(), headers={"User-Agent": f"RustDesk-AddressBook/{_short_app_version(current_app.config.get('APP_VERSION', 'dev'))}"})
+    # Only HTTP(S) URLs with a host are accepted above.
+    with urllib.request.urlopen(req, timeout=timeout) as response:  # nosec B310
+        final_url = urllib.parse.urlparse(response.geturl())
+        if final_url.scheme not in {"http", "https"} or not final_url.netloc:
+            raise ValueError("Update-Server hat auf eine unzulässige Adresse umgeleitet.")
         data = response.read(256 * 1024)
     return data.decode("utf-8", errors="replace")
 

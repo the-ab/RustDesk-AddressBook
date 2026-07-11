@@ -2,12 +2,12 @@
 {% block title %}{{ t('help.title', 'Anleitung') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
 {% if app_language == 'en' %}
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1"><i class="bi bi-question-circle me-2"></i>Help / Admin guide</h1>
     <div class="text-secondary">Installation, updates, imports, backups, security and troubleshooting.</div>
   </div>
-  <div class="d-flex gap-2 flex-wrap">
+  <div class="d-flex gap-2 flex-wrap page-actions">
     <a class="btn btn-outline-secondary" href="#ssh-import"><i class="bi bi-terminal me-1"></i>SSH import</a>
     <a class="btn btn-outline-secondary" href="#security"><i class="bi bi-shield-lock me-1"></i>Security</a>
     <a class="btn btn-primary" href="#quickstart"><i class="bi bi-rocket-takeoff me-1"></i>Start</a>
@@ -16,7 +16,7 @@
 
 <div class="row g-4">
   <div class="col-12 col-xl-3">
-    <div class="card app-card position-sticky" style="top: 5rem;">
+    <div class="card app-card help-toc">
       <div class="card-header fw-semibold">Contents</div>
       <div class="list-group list-group-flush small">
         <a class="list-group-item list-group-item-action" href="#overview">Overview</a>
@@ -40,7 +40,7 @@
   <div class="col-12 col-xl-9">
     <section id="overview" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Overview</h2>
-      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It does not replace RustDesk Server Pro, but provides central device management, groups, search, RustDesk links, import/export, backups, 2FA and live online status via hbbs.</p>
+      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It does not replace RustDesk Server Pro, but provides central device management, groups, search, RustDesk links, import/export, backups, 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems.</p>
       <div class="row g-3">
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-pc-display-horizontal me-2"></i><strong>Device management</strong><br><span class="text-secondary small">Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-broadcast-pin me-2"></i><strong>Live status</strong><br><span class="text-secondary small">Online/offline checks using the RustDesk hbbs OnlineRequest/OnlineResponse flow.</span></div></div>
@@ -53,8 +53,8 @@
       <h2 class="h4">Installation and update</h2>
       <h3 class="h6 mt-3">Fresh installation</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0523.zip
-unzip rustdesk-addressbook-v0523.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
+unzip rustdesk-addressbook-v0524.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -62,7 +62,7 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>The values are written to <code>.env</code>. When you run <code>./scripts/install.sh</code> again, the existing <code>.env</code> values are used as defaults.</p>
       <h3 class="h6 mt-3">Manual update with ZIP in <code>updates/</code></h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates/rustdesk-addressbook-update-flat-v0523.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates/rustdesk-addressbook-update-flat-v0524.zip
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatic online update check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -94,18 +94,18 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates
         <li><strong>List view</strong>: compact rows for many devices.</li>
         <li><strong>Small icon view</strong>: very compact overview.</li>
       </ul>
-      <p>The selected view is stored in the session and used on Dashboard and Devices.</p>
+      <p>The selected view is stored in the session and used on Dashboard and Devices. On small screens, list tables are transformed into labelled cards instead of forcing the entire page to scroll sideways.</p>
     </div></section>
 
     <section id="devices" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Devices</h2>
       <ul>
-        <li><strong>Connect</strong>: opens <code>rustdesk://ID</code>. If a password is stored, it is decrypted server-side only on click.</li>
-        <li><strong>Eye icon</strong>: shows the saved device password only on explicit request.</li>
-        <li><strong>Favorite</strong>: marks important devices for dashboard and sorting.</li>
-        <li><strong>Online</strong>: can be set manually or refreshed using hbbs live status.</li>
-        <li><strong>Sort</strong>: online devices are shown first by default.</li>
-        <li><strong>Search/filter</strong>: supports name, ID, customer, location, OS/device type, tags and notes.</li>
+        <li>Devices can be created, edited and deleted. Name and RustDesk ID are mandatory.</li>
+        <li><strong>Connect</strong>: opens a <code>rustdesk://</code> link. A stored password is decrypted only when the link is requested.</li>
+        <li><strong>Eye icon</strong>: fetches a saved password only after an explicit click. Leaving the field empty keeps it unchanged; the checkbox removes it.</li>
+        <li><strong>Favorite / Online</strong>: can be toggled manually; online state can also be refreshed using hbbs.</li>
+        <li><strong>Search/filter</strong>: name, ID, customer, location, OS/device type, tags and notes; filters for group, favourite and device type.</li>
+        <li><strong>Sort</strong>: online first, name, favourites or last changed.</li>
       </ul>
     </div></section>
 
@@ -145,14 +145,18 @@ PY</code></pre>
       <p>The Import / Export page is grouped by categories on the left and details on the right.</p>
       <h3 class="h6">CSV import/export</h3>
 <pre class="codebox"><code>name,rustdesk_id,password,customer,location,os,tags,notes,favorite,online,group</code></pre>
-      <ul><li>Export without passwords is recommended for normal documentation.</li><li>Export with passwords should only be used in trusted environments.</li></ul>
+      <ul>
+        <li>CSV import always creates new devices, skips rows without name or RustDesk ID, detects comma/semicolon/tab delimiters and creates named groups when needed.</li>
+        <li>Export without passwords is recommended. Export with passwords writes decrypted values and should only be used in trusted environments.</li>
+      </ul>
       <h3 class="h6">RustDesk server DB upload</h3>
       <p>Upload a single SQLite DB or a ZIP containing:</p>
 <pre class="codebox"><code>db_v2.sqlite3
 db_v2.sqlite3-wal
 db_v2.sqlite3-shm</code></pre>
+      <p>The import uses a consistent read-only snapshot. Existing devices can optionally be updated by RustDesk ID; online state is never copied from the server DB.</p>
       <h3 class="h6">Mounted DB import</h3>
-      <p>Expert option for read-only mounts. The UI shows whether <code>RUSTDESK_SERVER_DB</code> is configured, missing or usable.</p>
+      <p>Expert option for read-only mounts. The UI shows whether <code>RUSTDESK_SERVER_DB</code> is configured, missing or usable. The diagnostics check the main file, WAL/SHM, SQLite header and integrity, tables, peer count and sample records.</p>
 <pre class="codebox"><code>volumes:
   - /docker_data/rustdesk:/rustdesk-server:ro
 
@@ -201,16 +205,18 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="backup" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Backup / restore</h2>
       <ul>
-        <li><strong>DB backup</strong>: quick SQLite database copy.</li>
-        <li><strong>Encrypted DB backup</strong>: encrypted database backup.</li>
-        <li><strong>Encrypted full backup <code>.rabfull</code></strong>: recommended for migration and disaster recovery. Includes <code>addressbook.db</code>, <code>config.json</code>, <code>data/ssh/</code>, <code>data/certs/</code>, <code>data/logs/</code> and a manifest.</li>
+        <li><strong>DB backup</strong>: unencrypted SQLite copy.</li>
+        <li><strong>Encrypted DB backup <code>.rabenc</code></strong>: database only; requires the matching <code>config.json</code> for stored device passwords.</li>
+        <li><strong>Encrypted full backup <code>.rabfull</code></strong>: recommended for migration and disaster recovery. Includes database, <code>config.json</code>, SSH keys, certificates, logs and a manifest.</li>
+        <li>Existing backups can be downloaded, restored or deleted. Restore also accepts uploaded <code>.db</code>, SQLite, <code>.rabenc</code> and <code>.rabfull</code> files.</li>
+        <li>Before every restore, the previous database state is saved automatically as a safety backup.</li>
       </ul>
-      <div class="alert alert-warning mb-0">Store the full-backup password outside the server. After restoring a full backup, restart the container so the restored <code>config.json</code> is reloaded.</div>
+      <div class="alert alert-warning mb-0">Passwords require at least 12 characters for <code>.rabenc</code> and 16 for <code>.rabfull</code>. Store them outside the server. After restoring a full backup, restart the container so the restored <code>config.json</code> is reloaded.</div>
     </div></section>
 
     <section id="settings" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Settings</h2>
-      <p>The settings page uses a left navigation and a detail area.</p>
+      <p>The settings page uses a category navigation and a detail area. On small screens, the categories are horizontally scrollable.</p>
       <ul>
         <li><strong>Display & language</strong>: light/dark mode and German/English UI language.</li>
         <li><strong>Admin account</strong>: change admin username and password.</li>
@@ -218,19 +224,20 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li><strong>Device types</strong>: customize OS/device type presets.</li>
         <li><strong>Online status</strong>: hbbs host, port, timeout, batch size and automatic checks.</li>
         <li><strong>Brute-force lockout</strong>: failed attempts and time window.</li>
-        <li><strong>Update check</strong>: automatic online checks and interval.</li>
+        <li><strong>Update check</strong>: automatic online checks from 1 to 168 hours; it reports updates but does not install them.</li>
+        <li><strong>Security notes</strong>: encryption, backup and key-material guidance.</li>
       </ul>
     </div></section>
 
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update check and release notes</h2>
       <p>The Web UI checks <code>latest.txt</code> below <code>RAB_UPDATE_BASE_URL</code>. If an update is available, a badge appears next to Admin/Logout and links to Settings → Update check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0523.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0524.zip
 [de]
 - Deutsche Änderung 1
 [en]
 - English change 1</code></pre>
-      <p>If no language sections exist, all lines below the ZIP filename are shown as release notes.</p>
+      <p>If no language sections exist, all lines below the ZIP filename are shown as release notes. The Web UI only reports an update; installation is performed with <code>./scripts/update.sh</code>.</p>
     </div></section>
 
     <section id="security" class="card app-card mb-4"><div class="card-body">
@@ -239,7 +246,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li>Use HTTPS. Reverse proxy TLS is recommended for public access.</li>
         <li>Enable 2FA and store recovery codes offline.</li>
         <li>Use encrypted full backups for anything containing <code>config.json</code>, SSH keys or TLS keys.</li>
-        <li>Check the Security page for 2FA, logs, permissions, secure cookies, HSTS and backup status.</li>
+        <li>The Security page checks 2FA and recovery codes, HMAC signatures, cookie/HSTS/proxy settings, logs and permissions, runtime secrets, database and backups, lockout/rotation, update check, hbbs and HTTPS.</li>
         <li>Do not run the address book on the RustDesk server if you want stronger separation.</li>
       </ul>
     </div></section>
@@ -250,7 +257,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
 <pre class="codebox"><code>data/logs/auth.log</code></pre>
       <p>Failed authentication lines contain:</p>
 <pre class="codebox"><code>RAB_AUTH_FAIL</code></pre>
-      <p>Example files are included under <code>contrib/fail2ban/</code>.</p>
+      <p>Example files are included under <code>contrib/fail2ban/</code>. The application rotates <code>auth.log</code> itself; defaults are every 7 days with 8 rotated files.</p>
     </div></section>
 
     <section id="troubleshooting" class="card app-card mb-4"><div class="card-body">
@@ -270,12 +277,12 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
 </div>
 
 {% else %}
-<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1"><i class="bi bi-question-circle me-2"></i>Anleitung</h1>
     <div class="text-secondary">Funktionen, Einrichtung, Wartung, Sicherheit und Fehlerdiagnose des RustDesk AddressBook.</div>
   </div>
-  <div class="d-flex gap-2 flex-wrap">
+  <div class="d-flex gap-2 flex-wrap page-actions">
     <a class="btn btn-outline-secondary" href="#ssh-import"><i class="bi bi-terminal me-1"></i>SSH-Import</a>
     <a class="btn btn-outline-secondary" href="#security"><i class="bi bi-shield-lock me-1"></i>Sicherheit</a>
     <a class="btn btn-primary" href="#quickstart"><i class="bi bi-rocket-takeoff me-1"></i>Start</a>
@@ -284,7 +291,7 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
 
 <div class="row g-4">
   <div class="col-12 col-xl-3">
-    <div class="card app-card position-sticky" style="top: 5rem;">
+    <div class="card app-card help-toc">
       <div class="card-header fw-semibold">Inhalt</div>
       <div class="list-group list-group-flush small">
         <a class="list-group-item list-group-item-action" href="#overview">Überblick</a>
@@ -308,7 +315,7 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
   <div class="col-12 col-xl-9">
     <section id="overview" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Überblick</h2>
-      <p>RustDesk AddressBook ist ein eigenes Web-Adressbuch für selbstgehostete RustDesk-Installationen. Es ersetzt nicht RustDesk Server Pro, bietet aber zentrale Geräteverwaltung, Gruppen, Suche, direkte RustDesk-Links, Import/Export, Backups, 2FA und Live-Online-Status über hbbs.</p>
+      <p>RustDesk AddressBook ist ein eigenes Web-Adressbuch für selbstgehostete RustDesk-Installationen. Es ersetzt nicht RustDesk Server Pro, bietet aber zentrale Geräteverwaltung, Gruppen, Suche, direkte RustDesk-Links, Import/Export, Backups, 2FA und Live-Online-Status über hbbs. Alle Seiten sind für Smartphone, Tablet und Desktop responsiv aufgebaut.</p>
       <div class="row g-3">
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-pc-display-horizontal me-2"></i><strong>Geräteverwaltung</strong><br><span class="text-secondary small">Name, RustDesk-ID, Passwort, Gruppe, Kunde, Standort, Gerätetyp, Tags und Notizen.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-broadcast-pin me-2"></i><strong>Live-Status</strong><br><span class="text-secondary small">Online/Offline-Abfrage über RustDesk hbbs OnlineRequest/OnlineResponse.</span></div></div>
@@ -321,8 +328,8 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
       <h2 class="h4">Installation und Update</h2>
       <h3 class="h6 mt-3">Neuinstallation mit Installationsscript</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0523.zip
-unzip rustdesk-addressbook-v0523.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
+unzip rustdesk-addressbook-v0524.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -330,7 +337,7 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>Die gesetzten Werte werden in <code>.env</code> gespeichert. Beim erneuten Aufruf werden diese Werte als Default vorgeschlagen.</p>
       <h3 class="h6 mt-3">Update-ZIP manuell ablegen</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates/rustdesk-addressbook-update-flat-v0523.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates/rustdesk-addressbook-update-flat-v0524.zip
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatischer Online-Check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -363,18 +370,18 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates
         <li><strong>Listenansicht</strong>: kompakte Zeilen für viele Geräte.</li>
         <li><strong>Kleine Symbole</strong>: sehr kompakte Übersicht.</li>
       </ul>
-      <p>Die gewählte Ansicht wird in der Session gespeichert und auf Dashboard und Geräte-Seite verwendet.</p>
+      <p>Die gewählte Ansicht wird in der Session gespeichert und auf Dashboard und Geräte-Seite verwendet. Auf kleinen Displays werden Listen-Tabellen als beschriftete Karten dargestellt, statt die gesamte Seite seitlich zu verbreitern.</p>
     </div></section>
 
     <section id="devices" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Geräte</h2>
       <ul>
-        <li><strong>Verbinden</strong>: öffnet <code>rustdesk://ID</code>. Wenn ein Passwort hinterlegt ist, wird es erst beim Klick serverseitig entschlüsselt.</li>
-        <li><strong>Auge-Symbol</strong>: zeigt ein gespeichertes Gerätepasswort nur auf Anfrage an.</li>
-        <li><strong>Favorit</strong>: markiert wichtige Geräte für Dashboard und Sortierung.</li>
-        <li><strong>Online</strong>: kann manuell gesetzt oder per hbbs Live-Abfrage aktualisiert werden.</li>
-        <li><strong>Sortierung</strong>: Online-Geräte stehen standardmäßig oben.</li>
-        <li><strong>Suche/Filter</strong>: durchsucht Name, ID, Kunde, Standort, Gerätetyp, Tags und Notizen.</li>
+        <li>Geräte können angelegt, bearbeitet und gelöscht werden. Name und RustDesk-ID sind Pflichtfelder.</li>
+        <li><strong>Verbinden</strong>: öffnet einen <code>rustdesk://</code>-Link. Ein gespeichertes Passwort wird erst bei diesem Aufruf entschlüsselt.</li>
+        <li><strong>Auge-Symbol</strong>: lädt das gespeicherte Passwort nur nach ausdrücklichem Klick. Ein leeres Feld lässt es unverändert; die Checkbox löscht es.</li>
+        <li><strong>Favorit / Online</strong>: manuell umschaltbar; Online kann zusätzlich per hbbs aktualisiert werden.</li>
+        <li><strong>Suche/Filter</strong>: Name, ID, Kunde, Standort, Gerätetyp, Tags und Notizen; Filter nach Gruppe, Favorit und Gerätetyp.</li>
+        <li><strong>Sortierung</strong>: Online zuerst, Name, Favoriten oder zuletzt geändert.</li>
       </ul>
     </div></section>
 
@@ -384,7 +391,7 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0523.zip -O updates
       <ul>
         <li>Icons werden per Dropdown mit Vorschau gewählt.</li>
         <li>Bestehende Gruppen können bearbeitet werden.</li>
-        <li>Gruppen mit Geräten können nicht gelöscht werden, solange Geräte zugeordnet sind.</li>
+        <li>Beim Löschen einer Gruppe wird nur die Zuordnung entfernt; die Geräte selbst bleiben erhalten.</li>
       </ul>
     </div></section>
 
@@ -414,14 +421,18 @@ PY</code></pre>
       <p>Die Seite <strong>Import / Export</strong> nutzt links Kategorien und rechts den jeweiligen Detailbereich.</p>
       <h3 class="h6">CSV-Import / Export</h3>
 <pre class="codebox"><code>name,rustdesk_id,password,customer,location,os,tags,notes,favorite,online,group</code></pre>
-      <ul><li><strong>Export ohne Passwörter</strong>: empfohlen für normale Dokumentation.</li><li><strong>Export mit Passwörtern</strong>: nur in gesicherten Umgebungen verwenden.</li></ul>
+      <ul>
+        <li>Der CSV-Import erstellt immer neue Geräte, überspringt Zeilen ohne Name oder RustDesk-ID, erkennt Komma/Semikolon/Tabulator und legt benannte Gruppen bei Bedarf an.</li>
+        <li><strong>Export ohne Passwörter</strong> ist empfohlen. <strong>Export mit Passwörtern</strong> schreibt entschlüsselte Werte und sollte nur geschützt verwendet werden.</li>
+      </ul>
       <h3 class="h6">RustDesk-Serverdatenbank per Upload</h3>
       <p>Akzeptiert einzelne SQLite-Dateien oder ZIP-Dateien mit:</p>
 <pre class="codebox"><code>db_v2.sqlite3
 db_v2.sqlite3-wal
 db_v2.sqlite3-shm</code></pre>
+      <p>Der Import liest einen konsistenten Snapshot. Bestehende Geräte können optional über die RustDesk-ID aktualisiert werden; der Online-Status wird nicht aus der Server-DB übernommen.</p>
       <h3 class="h6">Import aus gemounteter DB</h3>
-      <p>Expertenoption, wenn die RustDesk-DB read-only in den Container eingebunden ist. Die WebUI zeigt, ob <code>RUSTDESK_SERVER_DB</code> aktiviert, nicht gefunden oder nicht konfiguriert ist.</p>
+      <p>Expertenoption für einen read-only Mount. Die WebUI zeigt den Status; die Diagnose prüft Hauptdatei, WAL/SHM, SQLite-Header und Integrität, Tabellen, Peer-Anzahl und Beispieldatensätze.</p>
 <pre class="codebox"><code>volumes:
   - /docker_data/rustdesk:/rustdesk-server:ro
 
@@ -470,16 +481,18 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="backup" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Backup / Restore</h2>
       <ul>
-        <li><strong>DB-Backup</strong>: schnelle Kopie der SQLite-Datenbank.</li>
-        <li><strong>Verschlüsseltes DB-Backup</strong>: verschlüsselte Sicherung der Datenbank.</li>
-        <li><strong>Verschlüsseltes Vollbackup <code>.rabfull</code></strong>: empfohlen für Umzug und Totalausfall. Enthält <code>addressbook.db</code>, <code>config.json</code>, <code>data/ssh/</code>, <code>data/certs/</code>, <code>data/logs/</code> und Manifest.</li>
+        <li><strong>DB-Backup</strong>: unverschlüsselte SQLite-Kopie.</li>
+        <li><strong>Verschlüsseltes DB-Backup <code>.rabenc</code></strong>: nur Datenbank; für Gerätepasswörter wird weiterhin die passende <code>config.json</code> benötigt.</li>
+        <li><strong>Verschlüsseltes Vollbackup <code>.rabfull</code></strong>: empfohlen für Umzug und Totalausfall; enthält Datenbank, <code>config.json</code>, SSH-Keys, Zertifikate, Logs und Manifest.</li>
+        <li>Vorhandene Backups können heruntergeladen, wiederhergestellt oder gelöscht werden. Restore per Upload akzeptiert DB-/SQLite-, <code>.rabenc</code>- und <code>.rabfull</code>-Dateien.</li>
+        <li>Vor jedem Restore wird der bisherige Datenbankstand automatisch als Sicherheitsbackup gespeichert.</li>
       </ul>
-      <div class="alert alert-warning mb-0">Das Vollbackup-Passwort getrennt vom Server speichern. Nach Restore eines Vollbackups den Container neu starten, damit die wiederhergestellte <code>config.json</code> geladen wird.</div>
+      <div class="alert alert-warning mb-0">Mindestens 12 Zeichen für <code>.rabenc</code> und 16 für <code>.rabfull</code>. Passwörter getrennt speichern. Nach einem Vollbackup-Restore den Container neu starten, damit <code>config.json</code> neu geladen wird.</div>
     </div></section>
 
     <section id="settings" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Einstellungen</h2>
-      <p>Die Einstellungen sind in linker Navigation und rechten Detailbereich aufgeteilt.</p>
+      <p>Die Einstellungen sind in Kategorienavigation und Detailbereich aufgeteilt. Auf kleinen Displays kann die Kategorienavigation horizontal gescrollt werden.</p>
       <ul>
         <li><strong>Darstellung & Sprache</strong>: heller/dunkler Modus und Deutsch/Englisch.</li>
         <li><strong>Admin-Konto</strong>: Admin-Benutzername und Passwort ändern.</li>
@@ -487,19 +500,20 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li><strong>Gerätetypen</strong>: Betriebssystem-/Gerätetyp-Vorauswahl anpassen.</li>
         <li><strong>Online-Status</strong>: hbbs Host, Port, Timeout, Batchgröße und automatische Checks.</li>
         <li><strong>Brute-Force-Sperre</strong>: Fehlversuche und Zeitfenster.</li>
-        <li><strong>Update-Check</strong>: automatische Online-Prüfung und Intervall.</li>
+        <li><strong>Update-Check</strong>: automatischer Check von 1 bis 168 Stunden; meldet Updates, installiert sie aber nicht.</li>
+        <li><strong>Sicherheitshinweise</strong>: Verschlüsselungs-, Backup- und Schlüsselmaterial-Hinweise.</li>
       </ul>
     </div></section>
 
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update-Check und Release-Notizen</h2>
       <p>Die WebUI prüft <code>latest.txt</code> unterhalb von <code>RAB_UPDATE_BASE_URL</code>. Wenn ein Update verfügbar ist, erscheint oben rechts ein Badge neben Admin/Logout und verlinkt zum Update-Check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0523.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0524.zip
 [de]
 - Deutsche Änderung 1
 [en]
 - English change 1</code></pre>
-      <p>Ohne Sprachbereiche werden alle Zeilen unterhalb des ZIP-Namens als Release-Notizen angezeigt.</p>
+      <p>Ohne Sprachbereiche werden alle Zeilen unterhalb des ZIP-Namens als Release-Notizen angezeigt. Die WebUI meldet Updates nur; installiert wird über <code>./scripts/update.sh</code>.</p>
     </div></section>
 
     <section id="security" class="card app-card mb-4"><div class="card-body">
@@ -508,7 +522,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li>HTTPS verwenden. Für öffentlichen Zugriff ist ein Reverse Proxy mit TLS empfehlenswert.</li>
         <li>2FA aktivieren und Recovery-Codes offline speichern.</li>
         <li>Backups mit <code>config.json</code>, SSH-Keys oder TLS-Keys nur verschlüsselt speichern.</li>
-        <li>Die Seite <strong>Sicherheit</strong> prüft 2FA, Logs, Berechtigungen, Secure Cookies, HSTS und Backup-Status.</li>
+        <li>Die Seite <strong>Sicherheit</strong> prüft 2FA/Recovery-Codes, HMAC-Signaturen, Cookies/HSTS/Proxy, Logs und Rechte, Runtime-Secrets, Datenbank/Backups, Sperre/Rotation, Update-Check, hbbs und HTTPS.</li>
         <li>Für stärkere Trennung das Adressbuch nicht direkt auf dem RustDesk-Server betreiben.</li>
       </ul>
     </div></section>
@@ -519,7 +533,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
 <pre class="codebox"><code>data/logs/auth.log</code></pre>
       <p>Fehlgeschlagene Authentifizierungen enthalten:</p>
 <pre class="codebox"><code>RAB_AUTH_FAIL</code></pre>
-      <p>Beispieldateien liegen unter <code>contrib/fail2ban/</code>.</p>
+      <p>Beispieldateien liegen unter <code>contrib/fail2ban/</code>. Die App rotiert <code>auth.log</code> selbst; Standard sind 7 Tage und 8 aufbewahrte Rotationen.</p>
     </div></section>
 
     <section id="troubleshooting" class="card app-card mb-4"><div class="card-body">

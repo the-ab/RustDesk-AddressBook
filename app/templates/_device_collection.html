@@ -2,7 +2,7 @@
   {% if device_view == 'list' %}
     <div class="card app-card overflow-hidden">
       <div class="table-responsive">
-        <table class="table align-middle mb-0 device-list-table">
+        <table class="table align-middle mb-0 device-list-table mobile-stack-table">
           <thead>
             <tr>
               <th>{{ t('common.status', 'Status') }}</th>
@@ -16,12 +16,12 @@
           <tbody>
           {% for device in device_items %}
             <tr>
-              <td>{% if device.online %}<span class="badge text-bg-success">Online</span>{% else %}<span class="badge text-bg-secondary">Offline</span>{% endif %}</td>
-              <td><div class="fw-semibold text-truncate">{{ device.name }}</div><div class="text-secondary small">{{ device.customer or '' }}{% if device.customer and device.location %} · {% endif %}{{ device.location or '' }}</div></td>
-              <td><code>{{ device.rustdesk_id }}</code></td>
-              <td>{% if device.group %}<span class="badge text-bg-{{ device.group.color }}">{{ device.group.name }}</span>{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
-              <td>{% if device.os %}<i class="bi {{ os_icon_class(device.os) }} me-1"></i>{{ device.os }}{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
-              <td class="text-end"><div class="btn-group btn-group-sm"><a class="btn btn-primary" href="{{ url_for('device_connect', device_id=device.id) }}"><i class="bi bi-plug"></i></a><a class="btn btn-outline-secondary" href="{{ url_for('device_edit', device_id=device.id) }}"><i class="bi bi-pencil"></i></a></div></td>
+              <td data-label="{{ t('common.status', 'Status') }}">{% if device.online %}<span class="badge text-bg-success">Online</span>{% else %}<span class="badge text-bg-secondary">Offline</span>{% endif %}</td>
+              <td data-label="{{ t('device_form.name', 'Name') }}"><div class="fw-semibold text-truncate">{{ device.name }}</div><div class="text-secondary small">{{ device.customer or '' }}{% if device.customer and device.location %} · {% endif %}{{ device.location or '' }}</div></td>
+              <td data-label="RustDesk ID"><code>{{ device.rustdesk_id }}</code></td>
+              <td data-label="{{ t('common.group', 'Gruppe') }}">{% if device.group %}<span class="badge text-bg-{{ device.group.color }}">{{ device.group.name }}</span>{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
+              <td data-label="{{ t('devices.device_type', 'Gerätetyp') }}">{% if device.os %}<i class="bi {{ os_icon_class(device.os) }} me-1"></i>{{ device.os }}{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
+              <td class="text-end mobile-actions-cell" data-label="{{ t('common.actions', 'Aktionen') }}"><div class="btn-group btn-group-sm"><a class="btn btn-primary" href="{{ url_for('device_connect', device_id=device.id) }}" title="{{ t('common.connect', 'Verbinden') }}" aria-label="{{ t('common.connect', 'Verbinden') }}"><i class="bi bi-plug"></i></a><a class="btn btn-outline-secondary" href="{{ url_for('device_edit', device_id=device.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}" aria-label="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a></div></td>
             </tr>
           {% endfor %}
           </tbody>
