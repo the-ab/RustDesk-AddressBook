@@ -1,9 +1,9 @@
-0.5.24-mobile-ui-docs-audit
+0.5.26-user-preferences-import-blocklist
 [de]
-- Alle WebUI-Seiten für Smartphones und Tablets überarbeitet; breite Tabellen werden mobil als lesbare Karten dargestellt, Navigationen bleiben horizontal bedienbar und Formulare/Aktionen brechen sauber um.
-- Vollständige Fehlerprüfung durchgeführt: Dateiauswahl-JavaScript korrigiert, Abruf gespeicherter Gerätepasswörter über das Auge wiederhergestellt, Docker-Weitergabe von Update-URL und Auth-Logrotation ergänzt sowie CSV-Download-Header bereinigt.
-- WebUI-Anleitung, README und Admin-Guide mit dem tatsächlichen Funktionsumfang abgeglichen; unter anderem Gruppenlöschung, Importverhalten, Backup/Restore, Einstellungen und Sicherheitsprüfung präzisiert.
+- Darstellung und Sprache werden pro Benutzerkonto gespeichert; lokale und OIDC-Benutzer können ihre Ansicht unter Mein Konto unabhängig voneinander anpassen.
+- Beim Löschen eines Geräts wird seine RustDesk-ID automatisch in eine persistente Import-Blockliste aufgenommen.
+- CSV-, Server-DB-, SSH- und direkte DB-Importe überspringen gesperrte IDs; Administratoren können die Blockliste verwalten und IDs wieder freigeben.
 [en]
-- Reworked all Web UI pages for smartphones and tablets; wide tables become readable mobile cards, navigation remains horizontally usable, and forms/actions wrap cleanly.
-- Completed a full error audit: fixed file-picker JavaScript, restored saved device password retrieval through the eye button, passed update URL and auth-log rotation settings into Docker, and cleaned up CSV download headers.
-- Aligned the Web UI guide, README and Admin Guide with the actual feature set, including group deletion, import behavior, backup/restore, settings and security checks.
+- Display mode and UI language are stored per user account; local and OIDC users can customize their own view under My account independently.
+- Deleting a device automatically adds its RustDesk ID to a persistent import blocklist.
+- CSV, server DB, SSH and direct DB imports skip blocked IDs; administrators can manage the blocklist and unblock IDs.

@@ -1,13 +1,13 @@
 # RustDesk AddressBook Admin Guide
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.24-mobile-ui-docs-audit`.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.26-user-preferences-import-blocklist`.
 
 ## 1. Installation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
-unzip rustdesk-addressbook-v0524.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
+unzip rustdesk-addressbook-v0526.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -38,8 +38,8 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
-unzip rustdesk-addressbook-v0524.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
+unzip rustdesk-addressbook-v0526.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -52,7 +52,7 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates/rustdesk-addressbook-update-flat-v0524.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates/rustdesk-addressbook-update-flat-v0526.zip
 ./scripts/update.sh
 ```
 
@@ -74,14 +74,14 @@ Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-comp
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0524.zip
+rustdesk-addressbook-update-flat-v0526.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0524.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`.
+Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0526.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`.
 
 ### 2.4 Manueller Fallback
 
@@ -90,18 +90,22 @@ cd /opt/rustdesk-addressbook
 docker compose down
 cp -a data ../rustdesk-addressbook-data-backup
 cp -a backups ../rustdesk-addressbook-backups-backup 2>/dev/null || true
-unzip -o updates/rustdesk-addressbook-update-flat-v0524.zip
+unzip -o updates/rustdesk-addressbook-update-flat-v0526.zip
 docker compose build --no-cache
 docker compose up -d --force-recreate --remove-orphans
 ```
 
 ## 3. Ersteinrichtung
 
-1. WebUI öffnen und Admin-Benutzer anlegen.
-2. Unter **Einstellungen → Darstellung & Sprache** Theme und Sprache wählen.
-3. Unter **Einstellungen → 2FA** TOTP aktivieren und Recovery-Codes offline sichern.
+1. WebUI öffnen und den ersten lokalen Administrator anlegen.
+2. Unter **Konto** TOTP aktivieren und Recovery-Codes offline sichern.
+3. Unter **Mein Konto → Darstellung & Sprache** Theme und Sprache individuell für das eigene Konto wählen.
 4. Unter **Einstellungen → Online-Status** hbbs Host/Port konfigurieren.
-5. Ein verschlüsseltes `.rabfull`-Vollbackup erstellen.
+5. Weitere lokale oder OIDC-Benutzer unter **Benutzer** anlegen und Gruppen zuweisen.
+6. OIDC optional unter **Einstellungen → OpenID Connect** konfigurieren.
+7. Ein verschlüsseltes `.rabfull`-Vollbackup erstellen.
+
+Bei einem Update von 0.5.24 oder älter wird das vorhandene Benutzerkonto automatisch als aktiver lokaler Administrator übernommen. Mindestens ein aktiver lokaler Administrator muss als Notfallzugang bestehen bleiben.
 
 ## 4. Dashboard und Geräteansichten
 
@@ -137,7 +141,42 @@ Funktionen:
 
 ## 6. Gruppen
 
-Gruppen besitzen Name, Farbe und Bootstrap-Icon. Sie können angelegt und direkt in der Liste bearbeitet werden. Beim Löschen einer Gruppe werden zugeordnete Geräte **nicht** gelöscht; nur deren Gruppenzuordnung wird entfernt.
+Gruppen besitzen Name, Farbe und Bootstrap-Icon. Sie können angelegt und direkt in der Liste bearbeitet werden. Beim Löschen einer Gruppe werden zugeordnete Geräte **nicht** gelöscht; nur deren Gruppenzuordnung wird entfernt. Die Gruppe wird dabei ebenfalls aus allen Benutzerzuweisungen entfernt.
+
+### 6.1 Benutzer und Rollen
+
+Unter **Benutzer** verwalten Administratoren lokale und OIDC-Konten:
+
+- **Administrator:** sieht alle Geräte und Gruppen, einschließlich ungruppierter Geräte, und besitzt Zugriff auf alle Verwaltungsbereiche.
+- **Benutzer:** sieht ausschließlich Geräte aus den ihm zugewiesenen Gruppen. Er darf diese Geräte suchen, anzeigen, verbinden und gespeicherte Gerätepasswörter nach ausdrücklichem Klick abrufen.
+- Normale Benutzer dürfen keine Geräte, Gruppen oder Benutzer anlegen, bearbeiten oder löschen. Import/Export, Backups, Sicherheit, Einstellungen, Statusänderungen und Update-Funktionen sind serverseitig gesperrt.
+- Geräte ohne Gruppe sind ausschließlich für Administratoren sichtbar.
+- Ein Benutzer kann mehreren Gruppen zugeordnet werden; eine Gruppe kann mehreren Benutzern zugeordnet werden.
+- Konten können deaktiviert werden. Deaktivierte Benutzer können sich nicht anmelden; aktive Sitzungen werden beim nächsten geschützten Aufruf beendet.
+- Der aktuell angemeldete Administrator kann sich nicht selbst löschen, deaktivieren oder zur Benutzerrolle herabstufen. Der letzte aktive lokale Administrator ist zusätzlich geschützt.
+
+Jeder Benutzer kann unter **Mein Konto** seine Darstellung und Sprache unabhängig von anderen Konten festlegen. Lokale Benutzer verwalten dort zusätzlich Passwort und TOTP-2FA. Für OIDC-Benutzer werden Passwort und MFA beim Identitätsanbieter verwaltet; Darstellung und Sprache bleiben trotzdem lokal pro Konto einstellbar.
+
+### 6.2 OpenID Connect / OIDC
+
+OIDC wird unter **Einstellungen → OpenID Connect** eingerichtet. Unterstützt werden Discovery und der Authorization-Code-Flow mit PKCE. Benötigt werden:
+
+- Issuer-URL des Identitätsanbieters
+- Client-ID und Client-Secret
+- die in der WebUI angezeigte Redirect-URI, die exakt beim Provider hinterlegt werden muss
+- Scopes, mindestens `openid`; üblich sind `openid profile email`
+- Claim für den Benutzernamen, standardmäßig `preferred_username`
+
+Das Client-Secret wird mit dem Schlüssel aus `data/config.json` verschlüsselt in der Datenbank gespeichert. Die eindeutige Bindung eines OIDC-Kontos erfolgt über Issuer und `sub`, nicht nur über den sichtbaren Benutzernamen.
+
+Optionen:
+
+- **Automatische Benutzeranlage:** Beim ersten erfolgreichen Login wird ein Benutzerkonto mit Rolle **Benutzer** angelegt. Es besitzt zunächst keine Gruppen und sieht deshalb keine Geräte, bis ein Administrator Gruppen zuweist.
+- **Erlaubte E-Mail-Domains:** Kommagetrennte Positivliste für alle OIDC-Anmeldungen. Ist sie gesetzt, muss der Provider eine E-Mail-Adresse aus einer erlaubten Domain liefern; andernfalls wird die Anmeldung abgewiesen.
+- **Vorab angelegtes OIDC-Konto:** Ein Administrator kann ein OIDC-Konto bereits vor dem ersten Login anlegen. Der Benutzername muss zum konfigurierten Claim passen; beim ersten Login wird das Konto sicher an Issuer und `sub` gebunden.
+- **Unsicheres HTTP zulassen:** Nur für ausdrücklich isolierte Testumgebungen. Produktiv HTTPS verwenden.
+
+Hinter einem TLS-Reverse-Proxy muss `TRUST_PROXY_HEADERS=true` nur dann gesetzt werden, wenn ausschließlich der vertrauenswürdige Proxy die Anwendung erreicht. Dadurch kann die externe HTTPS-Redirect-URI korrekt erzeugt werden. Die lokale Anmeldung bleibt als Notfallzugang verfügbar; mindestens ein aktiver lokaler Administrator kann nicht entfernt werden.
 
 ## 7. Online-Status über hbbs
 
@@ -192,6 +231,19 @@ environment:
 ```
 
 Die Importseite zeigt nur bei konfiguriertem Mount den Direktimport und die Diagnose. Die Diagnose prüft Pfad, Hauptdatei, WAL/SHM, SQLite-Header, Integrität, Tabellen, Peer-Anzahl und Beispieldatensätze.
+
+### 8.5 Import-Blockliste
+
+Beim Löschen eines Geräts wird dessen RustDesk-ID automatisch dauerhaft in der Tabelle `import_blocklist` gespeichert. Dadurch erscheint ein noch in der RustDesk-Serverdatenbank vorhandenes Gerät beim nächsten Import nicht erneut.
+
+Die Blockliste wird bei allen Geräteimporten geprüft:
+
+- CSV-Import
+- Upload der RustDesk-Serverdatenbank
+- direkter Import aus einer gemounteten Datenbank
+- SSH-Snapshot-Import
+
+Unter **Import / Export → Import-Blockliste** können Administratoren Einträge ansehen, manuell ergänzen und wieder freigeben. Nach dem Freigeben kann die ID beim nächsten Import wieder angelegt werden. Die Blockliste liegt in `data/addressbook.db` und ist deshalb in Datenbank- und Vollbackups enthalten.
 
 ## 9. RustDesk SSH-Import
 
@@ -269,14 +321,17 @@ Wichtig:
 
 ## 11. Einstellungen
 
-- **Darstellung & Sprache:** Light/Dark und Deutsch/Englisch
-- **Admin-Konto:** Benutzername und Passwort jeweils nach Prüfung des aktuellen Passworts ändern
-- **2FA:** Einrichtung vorbereiten, QR/Secret anzeigen, TOTP aktivieren, einmalige Recovery-Codes erzeugen, Codes erneuern oder 2FA mit Passwort plus TOTP/Recovery-Code deaktivieren
+Die Einstellungen sind nur für Administratoren verfügbar:
+
+- **Darstellung & Sprache:** wird pro Benutzer unter **Mein Konto** gespeichert; der Bereich in den Administratoreinstellungen ändert ebenfalls nur das aktuell angemeldete Administratorkonto
+- **OpenID Connect:** Provider, Issuer, Client-Zugangsdaten, Scopes, Username-Claim, Auto-Provisioning und erlaubte Domains
 - **Gerätetypen:** ein Wert pro Zeile als Vorauswahl im Geräteformular
 - **Online-Status:** hbbs-Parameter und automatisches Intervall
 - **Brute-Force-Sperre:** 2–50 Fehlversuche, Zeitfenster 1–1440 Minuten; Änderung erfordert Admin-Passwort
 - **Update-Check:** automatischer Check 1–168 Stunden; installiert keine Updates
 - **Sicherheitshinweise:** Verschlüsselungs- und Backup-Hinweise
+
+Das eigene lokale Passwort und TOTP werden unabhängig von der Administratorrolle unter **Konto** verwaltet. OIDC-Konten zeigen dort Provider, E-Mail und Rollen-/Gruppeninformationen; Passwort und MFA bleiben beim Provider.
 
 Auf Smartphone und Tablet werden die Kategorien als horizontal scrollbar bedienbare Navigation dargestellt.
 
@@ -286,7 +341,9 @@ Die Sicherheitsseite zeigt bis zu 250 Login-/2FA-Ereignisse in einem auf ungefä
 
 Der Sicherheitsstatus prüft:
 
-- 2FA-Abdeckung und vorhandene Recovery-Codes
+- aktive Administratoren, lokale Notfall-Administratoren und OIDC-Konten
+- lokale 2FA-Abdeckung und vorhandene Recovery-Codes; OIDC-MFA wird beim Provider verwaltet und kann lokal nicht verifiziert werden
+- OIDC-Aktivierung, Issuer, Client-ID, verschlüsseltes Client-Secret und Auto-Provisioning
 - HMAC-Signaturen sensibler Benutzer-Sicherheitsfelder
 - HttpOnly-/Secure-Cookie und HSTS
 - Proxy-Header-Konfiguration
@@ -297,7 +354,7 @@ Der Sicherheitsstatus prüft:
 - Auth-Logrotation
 - Update-Check, hbbs-Konfiguration und HTTPS-Endpunkt
 
-Die SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter sind feldweise mit Fernet verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert. Datenbank plus `config.json` gelten zusammen als sensibles Schlüsselmaterial.
+Die SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter und das OIDC-Client-Secret sind feldweise mit Fernet verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert. Rollen- und Gruppenzugriffe werden in den Backend-Routen geprüft. Datenbank plus `config.json` gelten zusammen als sensibles Schlüsselmaterial.
 
 ### 12.1 Auth-Logrotation
 
@@ -335,7 +392,7 @@ Für öffentlichen Zugriff zusätzlich `SESSION_COOKIE_SECURE=true`, `APP_HSTS=t
 
 ## 14. Mobile Bedienung
 
-Alle Seiten sind für 320 px Smartphonebreite, größere Smartphones, Tablets und Desktop ausgelegt. Tabellen für Geräte, Backups, Sicherheitsereignisse und Diagnose wechseln mobil zu beschrifteten Karten. Lange Pfade, URLs, IDs und Logtexte brechen um. Kategorienavigation in Einstellungen, Import und Anleitung kann horizontal gescrollt werden. Das Hauptmenü wird über den mobilen Navbar-Schalter geöffnet.
+Alle Seiten sind für 320 px Smartphonebreite, größere Smartphones, Tablets und Desktop ausgelegt. Tabellen für Geräte, Benutzer, Backups, Sicherheitsereignisse und Diagnose wechseln mobil zu beschrifteten Karten. Lange Pfade, URLs, IDs und Logtexte brechen um. Kategorienavigation in Einstellungen, Import und Anleitung kann horizontal gescrollt werden. Das Hauptmenü wird über den mobilen Navbar-Schalter geöffnet. Normale Benutzer sehen dort nur Dashboard, Geräte, Konto und Anleitung.
 
 ## 15. Fehlerdiagnose
 

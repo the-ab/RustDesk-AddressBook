@@ -12,12 +12,12 @@
         </div>
         <div class="text-secondary small mt-1"><code>{{ device.rustdesk_id }}</code></div>
       </div>
-      <form method="post" action="{{ url_for('device_toggle_favorite', device_id=device.id) }}">
+      {% if is_admin %}<form method="post" action="{{ url_for('device_toggle_favorite', device_id=device.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-sm btn-link star-btn" title="{{ t('device.card.favorite_toggle', 'Favorit umschalten') }}">
           {% if device.favorite %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
         </button>
-      </form>
+      </form>{% endif %}
     </div>
 
     <div class="small text-secondary mb-3">
@@ -41,7 +41,8 @@
       <a class="btn btn-primary btn-sm" href="{{ url_for('device_connect', device_id=device.id) }}">
         <i class="bi bi-plug me-1"></i>{{ t('device.card.connect', 'Verbinden') }}
       </a>
-      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('device_edit', device_id=device.id) }}">
+      <button class="btn btn-outline-primary btn-sm device-password-action" type="button" data-password-url="{{ url_for('device_password', device_id=device.id) }}" data-device-name="{{ device.name }}"><i class="bi bi-key me-1"></i>{{ t('device.card.password', 'Passwort') }}</button>
+      {% if is_admin %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('device_edit', device_id=device.id) }}">
         <i class="bi bi-pencil me-1"></i>{{ t('device.card.edit', 'Bearbeiten') }}
       </a>
       <form method="post" action="{{ url_for('device_toggle_online', device_id=device.id) }}">
@@ -49,7 +50,7 @@
         <button class="btn btn-outline-secondary btn-sm" type="submit" title="{{ t('device.card.manual_status', 'Manuellen Status umschalten') }}">
           {% if device.online %}<i class="bi bi-toggle-on me-1"></i>Online{% else %}<i class="bi bi-toggle-off me-1"></i>Offline{% endif %}
         </button>
-      </form>
+      </form>{% endif %}
     </div>
   </div>
 </div>

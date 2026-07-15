@@ -6,21 +6,25 @@
     <div class="card-body p-4">
       <div class="mb-4">
         <div class="app-logo mb-3"><i class="bi bi-display"></i></div>
-        <h1 class="h4 mb-1">Anmelden</h1>
+        <h1 class="h4 mb-1">{{ t('login.title', 'Anmelden') }}</h1>
         <p class="text-secondary mb-0">RustDesk AddressBook</p>
       </div>
       <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
-          <label class="form-label">Benutzername</label>
+          <label class="form-label">{{ t('login.username', 'Benutzername') }}</label>
           <input class="form-control" name="username" autocomplete="username" required autofocus>
         </div>
         <div class="mb-4">
-          <label class="form-label">Passwort</label>
+          <label class="form-label">{{ t('login.password', 'Passwort') }}</label>
           <input class="form-control" type="password" name="password" autocomplete="current-password" required>
         </div>
-        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-box-arrow-in-right me-1"></i>Anmelden</button>
+        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-box-arrow-in-right me-1"></i>{{ t('login.local', 'Lokal anmelden') }}</button>
       </form>
+      {% if oidc_settings.enabled and oidc_settings.configured %}
+      <div class="position-relative my-4"><hr><span class="position-absolute top-50 start-50 translate-middle bg-body px-3 text-secondary small">{{ t('login.or', 'oder') }}</span></div>
+      <a class="btn btn-outline-primary w-100" href="{{ url_for('oidc_login', next=request.args.get('next')) }}"><i class="bi bi-key me-1"></i>{{ t('login.oidc', 'Mit {provider} anmelden').format(provider=oidc_settings.provider_name) }}</a>
+      {% endif %}
     </div>
   </div>
 </div>

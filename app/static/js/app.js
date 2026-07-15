@@ -73,6 +73,47 @@
     target.innerHTML = `<i class="bi bi-${value}"></i>`;
   }
 
+  const passwordModalElement = document.getElementById('devicePasswordModal');
+  const passwordValue = document.getElementById('devicePasswordValue');
+  const passwordTitle = document.getElementById('devicePasswordTitle');
+  document.querySelectorAll('.device-password-action').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const url = button.dataset.passwordUrl;
+      if (!url || !passwordModalElement || !passwordValue) return;
+      button.disabled = true;
+      passwordValue.value = '';
+      try {
+        const response = await fetch(url, {method: 'POST', headers: {'X-CSRF-Token': csrfToken, 'Accept': 'application/json'}});
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        passwordValue.value = data.password || '';
+        if (passwordTitle) passwordTitle.textContent = button.dataset.deviceName || 'RustDesk';
+        bootstrap.Modal.getOrCreateInstance(passwordModalElement).show();
+      } catch (error) {
+        window.alert(i18n.passwordLoadFailed || 'Passwort konnte nicht geladen werden.');
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+
+  document.getElementById('devicePasswordCopy')?.addEventListener('click', async () => {
+    if (!passwordValue) return;
+    try {
+      await navigator.clipboard.writeText(passwordValue.value || '');
+    } catch (error) {
+      passwordValue.select();
+      document.execCommand('copy');
+    }
+  });
+
+  document.querySelectorAll('[data-copy-value]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const value = button.dataset.copyValue || '';
+      try { await navigator.clipboard.writeText(value); } catch (error) { /* browser may deny clipboard */ }
+    });
+  });
+
   document.querySelectorAll('.group-icon-select').forEach((select) => {
     updateGroupIconPreview(select);
     select.addEventListener('change', () => updateGroupIconPreview(select));

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ t('users.title', 'Benutzerverwaltung') }} - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
+  <div>
+    <h1 class="h3 mb-1">{{ t('users.title', 'Benutzerverwaltung') }}</h1>
+    <div class="text-secondary">{{ t('users.subtitle', 'Lokale und OIDC-Benutzer, Rollen und sichtbare Gerätegruppen verwalten.') }}</div>
+  </div>
+  <a class="btn btn-outline-primary" href="{{ url_for('oidc_settings_page') }}"><i class="bi bi-key me-1"></i>{{ t('users.oidc_settings', 'OIDC konfigurieren') }}</a>
+</div>
+
+<div class="alert alert-info">
+  <strong>{{ t('users.permission_title', 'Berechtigungsmodell') }}:</strong>
+  {{ t('users.permission_help', 'Normale Benutzer können Geräte ausschließlich ansehen, Passwörter abrufen und RustDesk-Verbindungen starten. Sichtbar sind nur Geräte aus zugewiesenen Gruppen; Geräte ohne Gruppe bleiben ausschließlich für Administratoren sichtbar.') }}
+</div>
+
+<div class="card app-card mb-4">
+  <div class="card-body">
+    <h2 class="h5 mb-3">{{ t('users.create', 'Benutzer anlegen') }}</h2>
+    <form method="post" class="row g-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="col-12 col-md-6 col-xl-3"><label class="form-label">{{ t('users.username', 'Benutzername') }}</label><input class="form-control" name="username" minlength="3" maxlength="80" required></div>
+      <div class="col-12 col-md-6 col-xl-3"><label class="form-label">{{ t('users.provider', 'Anmeldung') }}</label><select class="form-select" name="auth_provider" data-user-provider><option value="local">{{ t('users.provider_local', 'Lokal') }}</option><option value="oidc">OIDC</option></select></div>
+      <div class="col-12 col-md-6 col-xl-3"><label class="form-label">{{ t('users.role', 'Rolle') }}</label><select class="form-select" name="role"><option value="user">{{ t('users.role_user', 'Benutzer') }}</option><option value="admin">{{ t('users.role_admin', 'Administrator') }}</option></select></div>
+      <div class="col-12 col-md-6 col-xl-3 d-flex align-items-end"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="active" value="1" id="newUserActive" checked><label class="form-check-label" for="newUserActive">{{ t('users.active', 'Aktiv') }}</label></div></div>
+      <div class="col-12 col-md-6 local-password-field"><label class="form-label">{{ t('users.password', 'Passwort') }}</label><input class="form-control" type="password" name="password" minlength="8" autocomplete="new-password"><div class="form-text">{{ t('users.password_local_help', 'Nur für lokale Benutzer erforderlich, mindestens 8 Zeichen.') }}</div></div>
+      <div class="col-12 col-md-6 local-password-field"><label class="form-label">{{ t('users.password_repeat', 'Passwort wiederholen') }}</label><input class="form-control" type="password" name="password2" minlength="8" autocomplete="new-password"></div>
+      <div class="col-12">
+        <label class="form-label">{{ t('users.assigned_groups', 'Zugewiesene Gruppen') }}</label>
+        <div class="row g-2">
+          {% for group in groups %}
+          <div class="col-12 col-sm-6 col-lg-4 col-xl-3"><label class="form-check border rounded p-2 h-100"><input class="form-check-input ms-0 me-2" type="checkbox" name="group_ids" value="{{ group.id }}"><span><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</span></label></div>
+          {% else %}<div class="text-secondary small">{{ t('users.no_groups', 'Noch keine Gruppen vorhanden.') }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="col-12"><button class="btn btn-primary" type="submit"><i class="bi bi-person-plus me-1"></i>{{ t('users.create_button', 'Benutzer anlegen') }}</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card app-card overflow-hidden">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0 mobile-stack-table">
+      <thead><tr><th>{{ t('users.username', 'Benutzername') }}</th><th>{{ t('users.role', 'Rolle') }}</th><th>{{ t('users.provider', 'Anmeldung') }}</th><th>{{ t('users.assigned_groups', 'Zugewiesene Gruppen') }}</th><th>{{ t('users.last_login', 'Letzte Anmeldung') }}</th><th class="text-end">{{ t('common.actions', 'Aktionen') }}</th></tr></thead>
+      <tbody>
+      {% for user in users %}
+        <tr>
+          <td data-label="{{ t('users.username', 'Benutzername') }}"><div class="fw-semibold">{{ user.username }}</div>{% if user.display_name or user.email %}<div class="small text-secondary">{{ user.display_name or '' }}{% if user.display_name and user.email %} · {% endif %}{{ user.email or '' }}</div>{% endif %}{% if not user.active %}<span class="badge text-bg-danger mt-1">{{ t('users.disabled', 'Deaktiviert') }}</span>{% endif %}</td>
+          <td data-label="{{ t('users.role', 'Rolle') }}"><span class="badge text-bg-{% if user.is_admin %}primary{% else %}secondary{% endif %}">{% if user.is_admin %}{{ t('users.role_admin', 'Administrator') }}{% else %}{{ t('users.role_user', 'Benutzer') }}{% endif %}</span></td>
+          <td data-label="{{ t('users.provider', 'Anmeldung') }}"><span class="badge text-bg-light border">{{ user.auth_provider|upper }}</span>{% if user.auth_provider == 'oidc' and not user.oidc_subject %}<div class="small text-warning mt-1">{{ t('users.oidc_pending', 'Noch nicht mit OIDC verknüpft') }}</div>{% endif %}</td>
+          <td data-label="{{ t('users.assigned_groups', 'Zugewiesene Gruppen') }}">{% if user.is_admin %}<span class="text-secondary small">{{ t('users.all_devices', 'Alle Geräte') }}</span>{% elif user.groups %}{% for group in user.groups %}<span class="badge text-bg-{{ group.color }} me-1 mb-1">{{ group.name }}</span>{% endfor %}{% else %}<span class="text-secondary small">{{ t('users.no_access', 'Keine Geräte sichtbar') }}</span>{% endif %}</td>
+          <td data-label="{{ t('users.last_login', 'Letzte Anmeldung') }}">{{ user.last_login_at|datetime_de if user.last_login_at else '-' }}</td>
+          <td class="text-end mobile-actions-cell" data-label="{{ t('common.actions', 'Aktionen') }}"><div class="btn-group btn-group-sm"><a class="btn btn-outline-secondary" href="{{ url_for('user_edit', user_id=user.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a><form method="post" action="{{ url_for('user_delete', user_id=user.id) }}" onsubmit="return confirm('{{ t('users.delete_confirm', 'Benutzer wirklich löschen?') }}')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger" type="submit" {% if user.id == current_user.id %}disabled{% endif %} title="{{ t('common.delete', 'Löschen') }}"><i class="bi bi-trash"></i></button></form></div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const provider = document.querySelector('[data-user-provider]');
+  const update = () => document.querySelectorAll('.local-password-field').forEach(el => el.classList.toggle('d-none', provider && provider.value !== 'local'));
+  if (provider) { provider.addEventListener('change', update); update(); }
+});
+</script>
+{% endblock %}

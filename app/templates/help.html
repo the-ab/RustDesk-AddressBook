@@ -25,6 +25,7 @@
         <a class="list-group-item list-group-item-action" href="#dashboard">Dashboard & views</a>
         <a class="list-group-item list-group-item-action" href="#devices">Devices</a>
         <a class="list-group-item list-group-item-action" href="#groups">Groups</a>
+        <a class="list-group-item list-group-item-action" href="#users-oidc">Users & OIDC</a>
         <a class="list-group-item list-group-item-action" href="#status">Online status</a>
         <a class="list-group-item list-group-item-action" href="#import-export">Import / Export</a>
         <a class="list-group-item list-group-item-action" href="#ssh-import">RustDesk SSH import</a>
@@ -40,12 +41,12 @@
   <div class="col-12 col-xl-9">
     <section id="overview" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Overview</h2>
-      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It does not replace RustDesk Server Pro, but provides central device management, groups, search, RustDesk links, import/export, backups, 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems.</p>
+      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It provides central device management, local and OpenID Connect login, role- and group-based visibility, RustDesk links, import/export, backups, local 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems.</p>
       <div class="row g-3">
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-pc-display-horizontal me-2"></i><strong>Device management</strong><br><span class="text-secondary small">Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-broadcast-pin me-2"></i><strong>Live status</strong><br><span class="text-secondary small">Online/offline checks using the RustDesk hbbs OnlineRequest/OnlineResponse flow.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-arrow-down-up me-2"></i><strong>Import / Export</strong><br><span class="text-secondary small">CSV, RustDesk server DB upload, mounted DB import and SSH snapshot import.</span></div></div>
-        <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-shield-lock me-2"></i><strong>Security</strong><br><span class="text-secondary small">Admin login, 2FA, recovery codes, audit log, brute-force lockout and encrypted backups.</span></div></div>
+        <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-shield-lock me-2"></i><strong>Security</strong><br><span class="text-secondary small">Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force lockout and encrypted backups.</span></div></div>
       </div>
     </div></section>
 
@@ -53,8 +54,8 @@
       <h2 class="h4">Installation and update</h2>
       <h3 class="h6 mt-3">Fresh installation</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
-unzip rustdesk-addressbook-v0524.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
+unzip rustdesk-addressbook-v0526.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -62,7 +63,7 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>The values are written to <code>.env</code>. When you run <code>./scripts/install.sh</code> again, the existing <code>.env</code> values are used as defaults.</p>
       <h3 class="h6 mt-3">Manual update with ZIP in <code>updates/</code></h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates/rustdesk-addressbook-update-flat-v0524.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates/rustdesk-addressbook-update-flat-v0526.zip
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatic online update check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -77,10 +78,11 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
       <h2 class="h4">First setup</h2>
       <ol>
         <li>Open the Web UI.</li>
-        <li>Create the admin username and password.</li>
-        <li>Configure appearance and language under <strong>Settings → Display & language</strong>.</li>
-        <li>Enable 2FA under <strong>Settings → 2FA / Authenticator</strong> and save recovery codes offline.</li>
-        <li>Configure hbbs host/port under <strong>Settings → Online status</strong>.</li>
+        <li>Create the first local administrator.</li>
+        <li>Enable TOTP under <strong>Account</strong> and store recovery codes offline.</li>
+        <li>Configure appearance, language and hbbs under <strong>Settings</strong>.</li>
+        <li>Create local or OIDC users under <strong>Users</strong> and assign groups.</li>
+        <li>Optionally configure the identity provider under <strong>Settings → OpenID Connect</strong>.</li>
         <li>Create an encrypted full backup after the base setup.</li>
       </ol>
       <div class="alert alert-warning mb-0">The <code>data/</code> directory contains the database, config, logs, SSH keys and certificates. Use encrypted <code>.rabfull</code> full backups for complete disaster recovery.</div>
@@ -88,7 +90,7 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
 
     <section id="dashboard" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Dashboard and device views</h2>
-      <p>The dashboard shows device counters, online devices, favorites and recently changed devices. The <strong>Live status hbbs</strong> button can refresh all online states.</p>
+      <p>The dashboard shows counters, online devices, favorites and recently changed devices within the current user's visibility. Administrators can refresh all online states with <strong>Live status hbbs</strong>; regular users receive a read-only dashboard for their assigned groups.</p>
       <ul>
         <li><strong>Card view</strong>: current detailed layout.</li>
         <li><strong>List view</strong>: compact rows for many devices.</li>
@@ -100,10 +102,10 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
     <section id="devices" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Devices</h2>
       <ul>
-        <li>Devices can be created, edited and deleted. Name and RustDesk ID are mandatory.</li>
+        <li>Administrators can create, edit and delete devices. Regular users cannot change device data. Deleting a device automatically blocks its RustDesk ID for future imports.</li>
         <li><strong>Connect</strong>: opens a <code>rustdesk://</code> link. A stored password is decrypted only when the link is requested.</li>
-        <li><strong>Eye icon</strong>: fetches a saved password only after an explicit click. Leaving the field empty keeps it unchanged; the checkbox removes it.</li>
-        <li><strong>Favorite / Online</strong>: can be toggled manually; online state can also be refreshed using hbbs.</li>
+        <li><strong>Eye icon</strong>: all authorized users can explicitly fetch the password of a visible device. Only administrators see the edit form, where an empty field keeps it unchanged and the checkbox removes it.</li>
+        <li><strong>Favorite / Online</strong>: administrators can toggle these values and refresh online state using hbbs.</li>
         <li><strong>Search/filter</strong>: name, ID, customer, location, OS/device type, tags and notes; filters for group, favourite and device type.</li>
         <li><strong>Sort</strong>: online first, name, favourites or last changed.</li>
       </ul>
@@ -115,8 +117,20 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
       <ul>
         <li>Icons are selected from a dropdown with preview.</li>
         <li>Existing groups can be edited.</li>
-        <li>Deleting a group removes only the group assignment; the devices themselves remain available.</li>
+        <li>Deleting a group removes its device and user assignments; the devices themselves remain available to administrators as ungrouped devices.</li>
       </ul>
+    </div></section>
+
+    <section id="users-oidc" class="card app-card mb-4"><div class="card-body">
+      <h2 class="h4">Users, roles and OpenID Connect</h2>
+      <ul>
+        <li><strong>Administrator</strong>: full access to all devices, ungrouped devices, groups, users, imports, backups, security, settings and updates.</li>
+        <li><strong>User</strong>: read-only access to Dashboard, Devices, Account and Help. Only devices in assigned groups are visible; connect and explicit password retrieval remain available. Every user can set their own theme and UI language under Account.</li>
+        <li>Disabled accounts cannot sign in. The current administrator and the last active local administrator are protected from accidental removal, deactivation or demotion.</li>
+        <li>OIDC uses provider discovery and Authorization Code with PKCE. The client secret is encrypted; the account binding uses issuer and <code>sub</code>.</li>
+        <li>Auto-provisioned OIDC users start with role User and no groups. Optional allowed email domains can restrict all OIDC sign-ins; the provider must then supply an email claim from an allowed domain.</li>
+      </ul>
+      <p>Copy the displayed redirect URI to the OIDC provider exactly. Behind a trusted TLS reverse proxy, enable <code>TRUST_PROXY_HEADERS=true</code> so the external HTTPS URL is generated correctly. Keep at least one active local administrator as an emergency login.</p>
     </div></section>
 
     <section id="status" class="card app-card mb-4"><div class="card-body">
@@ -155,6 +169,8 @@ PY</code></pre>
 db_v2.sqlite3-wal
 db_v2.sqlite3-shm</code></pre>
       <p>The import uses a consistent read-only snapshot. Existing devices can optionally be updated by RustDesk ID; online state is never copied from the server DB.</p>
+      <h3 class="h6">Import blocklist</h3>
+      <p>Deleting a device automatically adds its RustDesk ID to the persistent blocklist. CSV, server DB upload, mounted DB and SSH imports skip blocked IDs. Administrators can add entries manually or unblock them under <strong>Import / Export → Import blocklist</strong>.</p>
       <h3 class="h6">Mounted DB import</h3>
       <p>Expert option for read-only mounts. The UI shows whether <code>RUSTDESK_SERVER_DB</code> is configured, missing or usable. The diagnostics check the main file, WAL/SHM, SQLite header and integrity, tables, peer count and sample records.</p>
 <pre class="codebox"><code>volumes:
@@ -218,9 +234,9 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
       <h2 class="h4">Settings</h2>
       <p>The settings page uses a category navigation and a detail area. On small screens, the categories are horizontally scrollable.</p>
       <ul>
-        <li><strong>Display & language</strong>: light/dark mode and German/English UI language.</li>
-        <li><strong>Admin account</strong>: change admin username and password.</li>
-        <li><strong>2FA</strong>: enable TOTP, manage recovery codes and disable 2FA with password plus OTP/recovery code.</li>
+        <li><strong>Display & language</strong>: stored per user account. The Account page is available to local and OIDC users; changing it never changes another user’s view.</li>
+        <li><strong>OpenID Connect</strong>: issuer, client credentials, scopes, username claim, auto-provisioning and allowed domains.</li>
+        <li><strong>Account</strong>: local users change their own password and TOTP outside the admin settings; OIDC users are managed by the provider.</li>
         <li><strong>Device types</strong>: customize OS/device type presets.</li>
         <li><strong>Online status</strong>: hbbs host, port, timeout, batch size and automatic checks.</li>
         <li><strong>Brute-force lockout</strong>: failed attempts and time window.</li>
@@ -232,7 +248,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update check and release notes</h2>
       <p>The Web UI checks <code>latest.txt</code> below <code>RAB_UPDATE_BASE_URL</code>. If an update is available, a badge appears next to Admin/Logout and links to Settings → Update check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0524.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0526.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -244,9 +260,10 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
       <h2 class="h4">Security</h2>
       <ul>
         <li>Use HTTPS. Reverse proxy TLS is recommended for public access.</li>
-        <li>Enable 2FA and store recovery codes offline.</li>
-        <li>Use encrypted full backups for anything containing <code>config.json</code>, SSH keys or TLS keys.</li>
-        <li>The Security page checks 2FA and recovery codes, HMAC signatures, cookie/HSTS/proxy settings, logs and permissions, runtime secrets, database and backups, lockout/rotation, update check, hbbs and HTTPS.</li>
+        <li>Enable local 2FA and store recovery codes offline; enforce MFA at the identity provider for OIDC users.</li>
+        <li>Keep at least one active local emergency administrator and assign groups according to least privilege.</li>
+        <li>Use encrypted full backups for anything containing <code>config.json</code>, OIDC secrets, SSH keys or TLS keys.</li>
+        <li>The Security page checks administrators, OIDC state, local 2FA/recovery codes, HMAC signatures, cookie/HSTS/proxy settings, logs and permissions, runtime secrets, database and backups, lockout/rotation, update check, hbbs and HTTPS.</li>
         <li>Do not run the address book on the RustDesk server if you want stronger separation.</li>
       </ul>
     </div></section>
@@ -300,6 +317,7 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
         <a class="list-group-item list-group-item-action" href="#dashboard">Dashboard & Ansichten</a>
         <a class="list-group-item list-group-item-action" href="#devices">Geräte</a>
         <a class="list-group-item list-group-item-action" href="#groups">Gruppen</a>
+        <a class="list-group-item list-group-item-action" href="#users-oidc">Benutzer & OIDC</a>
         <a class="list-group-item list-group-item-action" href="#status">Online-Status</a>
         <a class="list-group-item list-group-item-action" href="#import-export">Import / Export</a>
         <a class="list-group-item list-group-item-action" href="#ssh-import">RustDesk SSH-Import</a>
@@ -315,12 +333,12 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
   <div class="col-12 col-xl-9">
     <section id="overview" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Überblick</h2>
-      <p>RustDesk AddressBook ist ein eigenes Web-Adressbuch für selbstgehostete RustDesk-Installationen. Es ersetzt nicht RustDesk Server Pro, bietet aber zentrale Geräteverwaltung, Gruppen, Suche, direkte RustDesk-Links, Import/Export, Backups, 2FA und Live-Online-Status über hbbs. Alle Seiten sind für Smartphone, Tablet und Desktop responsiv aufgebaut.</p>
+      <p>RustDesk AddressBook ist ein eigenes Web-Adressbuch für selbstgehostete RustDesk-Installationen. Es bietet zentrale Geräteverwaltung, lokale und OpenID-Connect-Anmeldung, rollen- und gruppenbasierte Sichtbarkeit, direkte RustDesk-Links, Import/Export, Backups, lokale 2FA und Live-Online-Status über hbbs. Alle Seiten sind für Smartphone, Tablet und Desktop responsiv aufgebaut.</p>
       <div class="row g-3">
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-pc-display-horizontal me-2"></i><strong>Geräteverwaltung</strong><br><span class="text-secondary small">Name, RustDesk-ID, Passwort, Gruppe, Kunde, Standort, Gerätetyp, Tags und Notizen.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-broadcast-pin me-2"></i><strong>Live-Status</strong><br><span class="text-secondary small">Online/Offline-Abfrage über RustDesk hbbs OnlineRequest/OnlineResponse.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-arrow-down-up me-2"></i><strong>Import / Export</strong><br><span class="text-secondary small">CSV, RustDesk-Serverdatenbank, gemountete DB und SSH-Snapshot-Import.</span></div></div>
-        <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-shield-lock me-2"></i><strong>Sicherheit</strong><br><span class="text-secondary small">Admin-Login, 2FA, Recovery-Codes, Auditlog, Brute-Force-Sperre und verschlüsselte Backups.</span></div></div>
+        <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-shield-lock me-2"></i><strong>Sicherheit</strong><br><span class="text-secondary small">Admin/User-Rollen, Gruppenzuweisungen, lokale 2FA, OIDC, Auditlog, Brute-Force-Sperre und verschlüsselte Backups.</span></div></div>
       </div>
     </div></section>
 
@@ -328,8 +346,8 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
       <h2 class="h4">Installation und Update</h2>
       <h3 class="h6 mt-3">Neuinstallation mit Installationsscript</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0524.zip
-unzip rustdesk-addressbook-v0524.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
+unzip rustdesk-addressbook-v0526.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -337,7 +355,7 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>Die gesetzten Werte werden in <code>.env</code> gespeichert. Beim erneuten Aufruf werden diese Werte als Default vorgeschlagen.</p>
       <h3 class="h6 mt-3">Update-ZIP manuell ablegen</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates/rustdesk-addressbook-update-flat-v0524.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates/rustdesk-addressbook-update-flat-v0526.zip
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatischer Online-Check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -352,11 +370,11 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
       <h2 class="h4">Ersteinrichtung</h2>
       <ol>
         <li>WebUI öffnen.</li>
-        <li>Admin-Benutzername und Passwort erstellen.</li>
-        <li>Unter <strong>Einstellungen → Darstellung & Sprache</strong> Theme und Sprache wählen.</li>
-        <li>Unter <strong>Einstellungen → 2FA</strong> optional TOTP aktivieren.</li>
-        <li>Recovery-Codes offline speichern.</li>
-        <li>Unter <strong>Einstellungen → Online-Status</strong> hbbs-Host und Port konfigurieren.</li>
+        <li>Den ersten lokalen Administrator anlegen.</li>
+        <li>Unter <strong>Konto</strong> TOTP aktivieren und Recovery-Codes offline speichern.</li>
+        <li>Darstellung, Sprache und hbbs unter <strong>Einstellungen</strong> konfigurieren.</li>
+        <li>Lokale oder OIDC-Benutzer unter <strong>Benutzer</strong> anlegen und Gruppen zuweisen.</li>
+        <li>Optional den Identitätsanbieter unter <strong>Einstellungen → OpenID Connect</strong> konfigurieren.</li>
         <li>Danach ein verschlüsseltes Vollbackup erstellen.</li>
       </ol>
       <div class="alert alert-warning mb-0">Sichere regelmäßig <code>data/</code> oder erstelle ein verschlüsseltes <code>.rabfull</code>-Vollbackup. Darin liegen Datenbank, Schlüsselmaterial, Logs, SSH-Keys und Zertifikate.</div>
@@ -364,7 +382,7 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
 
     <section id="dashboard" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Dashboard und Geräteansichten</h2>
-      <p>Das Dashboard zeigt Zähler, Online-Geräte, Favoriten und zuletzt geänderte Geräte. Der Button <strong>Live-Status hbbs</strong> aktualisiert die Online-Zustände.</p>
+      <p>Das Dashboard zeigt Zähler, Online-Geräte, Favoriten und zuletzt geänderte Geräte innerhalb der Sichtbarkeit des aktuellen Benutzers. Administratoren können die Zustände über <strong>Live-Status hbbs</strong> aktualisieren; normale Benutzer erhalten eine schreibgeschützte Ansicht ihrer zugewiesenen Gruppen.</p>
       <ul>
         <li><strong>Kartenansicht</strong>: aktuelle detaillierte Darstellung.</li>
         <li><strong>Listenansicht</strong>: kompakte Zeilen für viele Geräte.</li>
@@ -376,10 +394,10 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
     <section id="devices" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Geräte</h2>
       <ul>
-        <li>Geräte können angelegt, bearbeitet und gelöscht werden. Name und RustDesk-ID sind Pflichtfelder.</li>
+        <li>Administratoren können Geräte anlegen, bearbeiten und löschen. Normale Benutzer dürfen Gerätedaten nicht verändern. Beim Löschen wird die RustDesk-ID automatisch für zukünftige Importe gesperrt.</li>
         <li><strong>Verbinden</strong>: öffnet einen <code>rustdesk://</code>-Link. Ein gespeichertes Passwort wird erst bei diesem Aufruf entschlüsselt.</li>
-        <li><strong>Auge-Symbol</strong>: lädt das gespeicherte Passwort nur nach ausdrücklichem Klick. Ein leeres Feld lässt es unverändert; die Checkbox löscht es.</li>
-        <li><strong>Favorit / Online</strong>: manuell umschaltbar; Online kann zusätzlich per hbbs aktualisiert werden.</li>
+        <li><strong>Auge-Symbol</strong>: alle berechtigten Benutzer können das Passwort eines sichtbaren Geräts ausdrücklich abrufen. Nur Administratoren sehen das Bearbeitungsformular; dort bleibt ein leeres Feld unverändert und die Checkbox löscht das Passwort.</li>
+        <li><strong>Favorit / Online</strong>: nur Administratoren können diese Werte ändern und den Status per hbbs aktualisieren.</li>
         <li><strong>Suche/Filter</strong>: Name, ID, Kunde, Standort, Gerätetyp, Tags und Notizen; Filter nach Gruppe, Favorit und Gerätetyp.</li>
         <li><strong>Sortierung</strong>: Online zuerst, Name, Favoriten oder zuletzt geändert.</li>
       </ul>
@@ -391,8 +409,20 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0524.zip -O updates
       <ul>
         <li>Icons werden per Dropdown mit Vorschau gewählt.</li>
         <li>Bestehende Gruppen können bearbeitet werden.</li>
-        <li>Beim Löschen einer Gruppe wird nur die Zuordnung entfernt; die Geräte selbst bleiben erhalten.</li>
+        <li>Beim Löschen einer Gruppe werden Geräte- und Benutzerzuweisungen entfernt; die Geräte selbst bleiben für Administratoren als ungruppierte Geräte erhalten.</li>
       </ul>
+    </div></section>
+
+    <section id="users-oidc" class="card app-card mb-4"><div class="card-body">
+      <h2 class="h4">Benutzer, Rollen und OpenID Connect</h2>
+      <ul>
+        <li><strong>Administrator</strong>: vollständiger Zugriff auf alle Geräte, ungruppierte Geräte, Gruppen, Benutzer, Import, Backups, Sicherheit, Einstellungen und Updates.</li>
+        <li><strong>Benutzer</strong>: schreibgeschützter Zugriff auf Dashboard, Geräte, Konto und Anleitung. Sichtbar sind nur Geräte aus zugewiesenen Gruppen; Verbinden und ausdrücklicher Passwortabruf bleiben möglich. Jeder Benutzer kann unter Konto seine eigene Darstellung und Sprache festlegen.</li>
+        <li>Deaktivierte Konten können sich nicht anmelden. Der aktuelle Administrator und der letzte aktive lokale Administrator sind gegen versehentliches Löschen, Deaktivieren oder Herabstufen geschützt.</li>
+        <li>OIDC nutzt Provider-Discovery und Authorization Code mit PKCE. Das Client-Secret wird verschlüsselt; die Kontobindung erfolgt über Issuer und <code>sub</code>.</li>
+        <li>Automatisch angelegte OIDC-Benutzer starten mit Rolle Benutzer und ohne Gruppen. Erlaubte E-Mail-Domains können alle OIDC-Anmeldungen einschränken; der Provider muss dann eine E-Mail-Adresse aus einer erlaubten Domain liefern.</li>
+      </ul>
+      <p>Die angezeigte Redirect-URI muss exakt beim OIDC-Provider eingetragen werden. Hinter einem vertrauenswürdigen TLS-Reverse-Proxy sorgt <code>TRUST_PROXY_HEADERS=true</code> für die korrekte externe HTTPS-URL. Mindestens einen aktiven lokalen Administrator als Notfallzugang behalten.</p>
     </div></section>
 
     <section id="status" class="card app-card mb-4"><div class="card-body">
@@ -431,6 +461,8 @@ PY</code></pre>
 db_v2.sqlite3-wal
 db_v2.sqlite3-shm</code></pre>
       <p>Der Import liest einen konsistenten Snapshot. Bestehende Geräte können optional über die RustDesk-ID aktualisiert werden; der Online-Status wird nicht aus der Server-DB übernommen.</p>
+      <h3 class="h6">Import-Blockliste</h3>
+      <p>Beim Löschen eines Geräts wird seine RustDesk-ID automatisch in die persistente Blockliste aufgenommen. CSV-, Server-DB-, gemountete DB- und SSH-Importe überspringen gesperrte IDs. Administratoren können Einträge unter <strong>Import / Export → Import-Blockliste</strong> manuell ergänzen oder wieder freigeben.</p>
       <h3 class="h6">Import aus gemounteter DB</h3>
       <p>Expertenoption für einen read-only Mount. Die WebUI zeigt den Status; die Diagnose prüft Hauptdatei, WAL/SHM, SQLite-Header und Integrität, Tabellen, Peer-Anzahl und Beispieldatensätze.</p>
 <pre class="codebox"><code>volumes:
@@ -494,9 +526,9 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
       <h2 class="h4">Einstellungen</h2>
       <p>Die Einstellungen sind in Kategorienavigation und Detailbereich aufgeteilt. Auf kleinen Displays kann die Kategorienavigation horizontal gescrollt werden.</p>
       <ul>
-        <li><strong>Darstellung & Sprache</strong>: heller/dunkler Modus und Deutsch/Englisch.</li>
-        <li><strong>Admin-Konto</strong>: Admin-Benutzername und Passwort ändern.</li>
-        <li><strong>2FA</strong>: TOTP aktivieren, Recovery-Codes verwalten und 2FA mit Passwort plus OTP/Recovery-Code deaktivieren.</li>
+        <li><strong>Darstellung & Sprache</strong>: wird pro Benutzerkonto gespeichert. Die Kontoseite steht lokalen und OIDC-Benutzern zur Verfügung; Änderungen wirken niemals auf andere Benutzer.</li>
+        <li><strong>OpenID Connect</strong>: Issuer, Client-Zugangsdaten, Scopes, Benutzername-Claim, Auto-Provisioning und erlaubte Domains.</li>
+        <li><strong>Konto</strong>: lokale Benutzer ändern ihr eigenes Passwort und TOTP außerhalb der Admin-Einstellungen; OIDC-Benutzer werden beim Provider verwaltet.</li>
         <li><strong>Gerätetypen</strong>: Betriebssystem-/Gerätetyp-Vorauswahl anpassen.</li>
         <li><strong>Online-Status</strong>: hbbs Host, Port, Timeout, Batchgröße und automatische Checks.</li>
         <li><strong>Brute-Force-Sperre</strong>: Fehlversuche und Zeitfenster.</li>
@@ -508,7 +540,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update-Check und Release-Notizen</h2>
       <p>Die WebUI prüft <code>latest.txt</code> unterhalb von <code>RAB_UPDATE_BASE_URL</code>. Wenn ein Update verfügbar ist, erscheint oben rechts ein Badge neben Admin/Logout und verlinkt zum Update-Check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0524.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0526.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -520,9 +552,10 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
       <h2 class="h4">Sicherheit</h2>
       <ul>
         <li>HTTPS verwenden. Für öffentlichen Zugriff ist ein Reverse Proxy mit TLS empfehlenswert.</li>
-        <li>2FA aktivieren und Recovery-Codes offline speichern.</li>
-        <li>Backups mit <code>config.json</code>, SSH-Keys oder TLS-Keys nur verschlüsselt speichern.</li>
-        <li>Die Seite <strong>Sicherheit</strong> prüft 2FA/Recovery-Codes, HMAC-Signaturen, Cookies/HSTS/Proxy, Logs und Rechte, Runtime-Secrets, Datenbank/Backups, Sperre/Rotation, Update-Check, hbbs und HTTPS.</li>
+        <li>Lokale 2FA aktivieren und Recovery-Codes offline speichern; für OIDC-Benutzer MFA beim Identitätsanbieter erzwingen.</li>
+        <li>Mindestens einen aktiven lokalen Notfall-Administrator behalten und Gruppen nach dem Minimalprinzip zuweisen.</li>
+        <li>Backups mit <code>config.json</code>, OIDC-Secret, SSH-Keys oder TLS-Keys nur verschlüsselt speichern.</li>
+        <li>Die Seite <strong>Sicherheit</strong> prüft Administratoren, OIDC-Status, lokale 2FA/Recovery-Codes, HMAC-Signaturen, Cookies/HSTS/Proxy, Logs und Rechte, Runtime-Secrets, Datenbank/Backups, Sperre/Rotation, Update-Check, hbbs und HTTPS.</li>
         <li>Für stärkere Trennung das Adressbuch nicht direkt auf dem RustDesk-Server betreiben.</li>
       </ul>
     </div></section>

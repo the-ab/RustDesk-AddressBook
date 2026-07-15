@@ -12,6 +12,7 @@
       <a class="btn btn-sm {% if device_view == 'list' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('devices', q=q, group=selected_group, os=selected_os, fav=fav, sort=selected_sort, view='list') }}" title="{{ t('views.list', 'Liste') }}"><i class="bi bi-list-ul"></i></a>
       <a class="btn btn-sm {% if device_view == 'icons' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('devices', q=q, group=selected_group, os=selected_os, fav=fav, sort=selected_sort, view='icons') }}" title="{{ t('views.icons', 'Kleine Symbole') }}"><i class="bi bi-grid"></i></a>
     </div>
+    {% if is_admin %}
     <form method="post" action="{{ url_for('sync_rustdesk_live_status') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-outline-success" type="submit" {% if not status_settings.hbbs_host %}title="{{ t('devices.hbbs_missing_title', 'hbbs Host unter Einstellungen eintragen') }}"{% endif %}>
@@ -29,10 +30,11 @@
       {% endif %}
     </div>
     <a class="btn btn-primary" href="{{ url_for('device_new') }}"><i class="bi bi-plus-lg me-1"></i>{{ t('devices.add_device', 'Gerät anlegen') }}</a>
+    {% endif %}
   </div>
 </div>
 
-{% if not status_settings.hbbs_host %}
+{% if is_admin and not status_settings.hbbs_host %}
   <div class="alert alert-info">{{ t('devices.hbbs_missing', 'Für den automatischen Online-Status trage unter Einstellungen → Online-Status deinen hbbs-Host ein und nutze anschließend Live-Status hbbs. Server-DB-Import und Diagnose findest du unter Import / Export.') }}</div>
 {% endif %}
 
@@ -54,6 +56,6 @@
   {% set device_items = devices %}
   {% include "_device_collection.html" %}
 {% else %}
-  <div class="empty-state">{{ t('devices.no_results', 'Keine Geräte gefunden.') }}<div class="mt-3"><a class="btn btn-primary" href="{{ url_for('device_new') }}">{{ t('devices.first_device', 'Erstes Gerät anlegen') }}</a></div></div>
+  <div class="empty-state">{{ t('devices.no_results', 'Keine Geräte gefunden.') }}{% if is_admin %}<div class="mt-3"><a class="btn btn-primary" href="{{ url_for('device_new') }}">{{ t('devices.first_device', 'Erstes Gerät anlegen') }}</a></div>{% endif %}</div>
 {% endif %}
 {% endblock %}

@@ -6,3 +6,7 @@ gunicorn>=22,<25
 
 pyotp>=2.9,<3
 qrcode[pil]>=7.4,<9
+
+Authlib>=1.6,<2
+
+requests>=2.31,<3

@@ -21,7 +21,7 @@
               <td data-label="RustDesk ID"><code>{{ device.rustdesk_id }}</code></td>
               <td data-label="{{ t('common.group', 'Gruppe') }}">{% if device.group %}<span class="badge text-bg-{{ device.group.color }}">{{ device.group.name }}</span>{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
               <td data-label="{{ t('devices.device_type', 'Gerätetyp') }}">{% if device.os %}<i class="bi {{ os_icon_class(device.os) }} me-1"></i>{{ device.os }}{% else %}<span class="text-secondary small">-</span>{% endif %}</td>
-              <td class="text-end mobile-actions-cell" data-label="{{ t('common.actions', 'Aktionen') }}"><div class="btn-group btn-group-sm"><a class="btn btn-primary" href="{{ url_for('device_connect', device_id=device.id) }}" title="{{ t('common.connect', 'Verbinden') }}" aria-label="{{ t('common.connect', 'Verbinden') }}"><i class="bi bi-plug"></i></a><a class="btn btn-outline-secondary" href="{{ url_for('device_edit', device_id=device.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}" aria-label="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a></div></td>
+              <td class="text-end mobile-actions-cell" data-label="{{ t('common.actions', 'Aktionen') }}"><div class="btn-group btn-group-sm"><a class="btn btn-primary" href="{{ url_for('device_connect', device_id=device.id) }}" title="{{ t('common.connect', 'Verbinden') }}" aria-label="{{ t('common.connect', 'Verbinden') }}"><i class="bi bi-plug"></i></a><button class="btn btn-outline-primary device-password-action" type="button" data-password-url="{{ url_for('device_password', device_id=device.id) }}" data-device-name="{{ device.name }}" title="{{ t('device.card.password', 'Passwort') }}" aria-label="{{ t('device.card.password', 'Passwort') }}"><i class="bi bi-key"></i></button>{% if is_admin %}<a class="btn btn-outline-secondary" href="{{ url_for('device_edit', device_id=device.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}" aria-label="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a>{% endif %}</div></td>
             </tr>
           {% endfor %}
           </tbody>
@@ -37,7 +37,8 @@
             <i class="bi {{ os_icon_class(device.os) if device.os else 'bi-pc-display-horizontal' }}"></i>
             <span>{{ device.name }}</span>
           </a>
-          <a class="device-icon-edit" href="{{ url_for('device_edit', device_id=device.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a>
+          <button class="device-icon-password device-password-action" type="button" data-password-url="{{ url_for('device_password', device_id=device.id) }}" data-device-name="{{ device.name }}" title="{{ t('device.card.password', 'Passwort') }}"><i class="bi bi-key"></i></button>
+          {% if is_admin %}<a class="device-icon-edit" href="{{ url_for('device_edit', device_id=device.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a>{% endif %}
         </div>
       {% endfor %}
     </div>

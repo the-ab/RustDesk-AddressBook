@@ -23,19 +23,23 @@
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item"><a class="nav-link" href="{{ url_for('devices') }}"><i class="bi bi-pc-display-horizontal me-1"></i>{{ t('nav.devices', 'Geräte') }}</a></li>
+        {% if is_admin %}
         <li class="nav-item"><a class="nav-link" href="{{ url_for('groups') }}"><i class="bi bi-collection me-1"></i>{{ t('nav.groups', 'Gruppen') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('users') }}"><i class="bi bi-people me-1"></i>{{ t('nav.users', 'Benutzer') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('import_devices') }}"><i class="bi bi-arrow-down-up me-1"></i>{{ t('nav.import_export', 'Import / Export') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('backup') }}"><i class="bi bi-database-down me-1"></i>{{ t('nav.backup', 'Backup') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('security') }}"><i class="bi bi-shield-lock me-1"></i>{{ t('nav.security', 'Sicherheit') }}</a></li>
+        {% endif %}
         <li class="nav-item"><a class="nav-link" href="{{ url_for('help_page') }}"><i class="bi bi-question-circle me-1"></i>{{ t('nav.help', 'Anleitung') }}</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}"><i class="bi bi-gear me-1"></i>{{ t('nav.settings', 'Einstellungen') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('account') }}"><i class="bi bi-person-gear me-1"></i>{{ t('nav.account', 'Mein Konto') }}</a></li>
+        {% if is_admin %}<li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}"><i class="bi bi-gear me-1"></i>{{ t('nav.settings', 'Einstellungen') }}</a></li>{% endif %}
       </ul>
       <div class="d-flex align-items-center gap-2 app-navbar-actions">
-        <a id="updateAvailableBadge" class="btn btn-warning btn-sm {% if not update_check_info.available %}d-none{% endif %}" href="{{ url_for('settings') }}#update-check-card" title="{{ t('settings.update.title', 'Update-Check') }}">
+        {% if is_admin %}<a id="updateAvailableBadge" class="btn btn-warning btn-sm {% if not update_check_info.available %}d-none{% endif %}" href="{{ url_for('settings') }}#update-check-card" title="{{ t('settings.update.title', 'Update-Check') }}">
           <i class="bi bi-cloud-arrow-down me-1"></i>{{ t('nav.update_available', 'Update verfügbar') }}
-        </a>
+        </a>{% endif %}
         <span class="badge rounded-pill text-bg-secondary d-none d-xl-inline">{{ app_language|upper }}</span>
-        <span class="text-secondary small d-none d-lg-inline"><i class="bi bi-person-circle me-1"></i>{{ current_user.username }}</span>
+        <a class="text-secondary small d-none d-lg-inline text-decoration-none" href="{{ url_for('account') }}"><i class="bi bi-person-circle me-1"></i>{{ current_user.username }} <span class="badge text-bg-{% if is_admin %}primary{% else %}secondary{% endif %}">{% if is_admin %}Admin{% else %}User{% endif %}</span></a>
         <form method="post" action="{{ url_for('logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="btn btn-outline-secondary btn-sm" type="submit">{{ t('nav.logout', 'Logout') }}</button>
@@ -63,16 +67,21 @@
   {% block content %}{% endblock %}
 </main>
 
+{% if current_user.is_authenticated %}
+<div class="modal fade" id="devicePasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title h5" id="devicePasswordTitle">{{ t('device.password.title', 'RustDesk-Passwort') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('common.close', 'Schließen') }}"></button></div><div class="modal-body"><label class="form-label">{{ t('device.password.value', 'Gespeichertes Passwort') }}</label><div class="input-group"><input class="form-control font-monospace" id="devicePasswordValue" type="text" readonly><button class="btn btn-outline-secondary" id="devicePasswordCopy" type="button"><i class="bi bi-copy me-1"></i>{{ t('common.copy', 'Kopieren') }}</button></div><div class="form-text">{{ t('device.password.help', 'Das Passwort wird nur für Geräte angezeigt, auf die dein Benutzer zugreifen darf.') }}</div></div></div></div>
+</div>
+{% endif %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% if current_user.is_authenticated %}
 <script>
   window.RAB_AUTO_STATUS = {
-    enabled: {{ "true" if auto_status_settings.enabled else "false" }},
+    enabled: {{ "true" if is_admin and auto_status_settings.enabled else "false" }},
     intervalSeconds: {{ auto_status_settings.interval_seconds }},
     endpoint: {{ url_for("api_status_auto_check")|tojson }}
   };
   window.RAB_UPDATE_CHECK = {
-    enabled: {{ "true" if update_auto_check_settings.enabled else "false" }},
+    enabled: {{ "true" if is_admin and update_auto_check_settings.enabled else "false" }},
     stale: {{ "true" if update_check_info.stale else "false" }},
     intervalSeconds: {{ update_auto_check_settings.interval_seconds }},
     endpoint: {{ url_for("api_update_check")|tojson }},
@@ -88,7 +97,8 @@
     checking: {{ t('settings.update.checking', 'Prüfe...')|tojson }},
     updateFailed: {{ t('settings.update.failed', 'Update-Check fehlgeschlagen')|tojson }},
     noFileSelected: {{ t('common.no_file_selected', 'Keine Datei ausgewählt')|tojson }},
-    filesSelected: {{ t('common.files_selected', 'Dateien ausgewählt')|tojson }}
+    filesSelected: {{ t('common.files_selected', 'Dateien ausgewählt')|tojson }},
+    passwordLoadFailed: {{ t('device.password.load_failed', 'Passwort konnte nicht geladen werden.')|tojson }}
   };
 </script>
 {% endif %}

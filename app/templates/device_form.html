@@ -27,7 +27,7 @@
       </div>
       <div class="mt-4 d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>{{ t('device_form.save', 'Gerät speichern') }}</button></div>
     </form>
-    {% if device %}<form method="post" action="{{ url_for('device_delete', device_id=device.id) }}" id="deleteForm" class="mt-3"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger" form="deleteForm" type="submit" onclick="return confirm('{{ t('device_form.delete_confirm', 'Dieses Gerät wirklich löschen?') }}')"><i class="bi bi-trash me-1"></i>{{ t('common.delete', 'Löschen') }}</button></form>{% endif %}
+    {% if device %}<form method="post" action="{{ url_for('device_delete', device_id=device.id) }}" id="deleteForm" class="mt-3"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger" form="deleteForm" type="submit" onclick="return confirm('{{ t('device_form.delete_confirm', 'Dieses Gerät wirklich löschen? Die RustDesk-ID wird automatisch für zukünftige Importe gesperrt.') }}')"><i class="bi bi-trash me-1"></i>{{ t('common.delete', 'Löschen') }}</button></form>{% endif %}
   </div>
 </div>
 {% endblock %}

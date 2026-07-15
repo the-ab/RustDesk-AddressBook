@@ -41,7 +41,7 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
 
 
 class Config:
-    APP_VERSION = "0.5.24-mobile-ui-docs-audit"
+    APP_VERSION = "0.5.26-user-preferences-import-blocklist"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)

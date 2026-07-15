@@ -857,3 +857,6 @@ pre.bg-body-tertiary {
     width: min(180px, 100%);
   }
 }
+
+.device-icon-password { position:absolute; left:.35rem; bottom:.35rem; border:0; background:transparent; color:var(--bs-primary); padding:.2rem .35rem; border-radius:.35rem; }
+.device-icon-password:hover { background:var(--bs-tertiary-bg); }

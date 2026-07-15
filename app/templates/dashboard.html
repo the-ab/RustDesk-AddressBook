@@ -12,6 +12,7 @@
       <a class="btn btn-sm {% if device_view == 'list' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('dashboard', view='list') }}" title="{{ t('views.list', 'Liste') }}"><i class="bi bi-list-ul"></i></a>
       <a class="btn btn-sm {% if device_view == 'icons' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('dashboard', view='icons') }}" title="{{ t('views.icons', 'Kleine Symbole') }}"><i class="bi bi-grid"></i></a>
     </div>
+    {% if is_admin %}
     <form method="post" action="{{ url_for('sync_rustdesk_live_status') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-outline-success" type="submit" {% if not status_settings.hbbs_host %}title="{{ t('devices.hbbs_missing_title', 'hbbs Host unter Einstellungen eintragen') }}"{% endif %}>
@@ -29,6 +30,7 @@
       {% endif %}
     </div>
     <a class="btn btn-primary" href="{{ url_for('device_new') }}"><i class="bi bi-plus-lg me-1"></i>{{ t('dashboard.add_device', 'Gerät anlegen') }}</a>
+    {% endif %}
   </div>
 </div>
 

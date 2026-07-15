@@ -1,5 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{{ t('import.title', 'Import / Export') }} - RustDesk AddressBook{% endblock %}
+{% block title %}{{ t('import.title', 'Import / Export') }} - RustDesk AddressBook<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const hash = window.location.hash;
+  if (!hash) return;
+  const trigger = document.querySelector('[data-bs-target="' + hash + '"]');
+  if (trigger && window.bootstrap) bootstrap.Tab.getOrCreateInstance(trigger).show();
+});
+</script>
+{% endblock %}
 {% block content %}
 {% set db_mount = rustdesk_server_db_status() %}
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
@@ -22,6 +30,7 @@
         <button class="list-group-item list-group-item-action" id="server-tab" data-bs-toggle="pill" data-bs-target="#server" type="button" role="tab"><i class="bi bi-database-up me-2"></i>{{ t('import.menu.server', 'Server-DB Upload') }}</button>
         <button class="list-group-item list-group-item-action" id="ssh-tab" data-bs-toggle="pill" data-bs-target="#ssh" type="button" role="tab"><i class="bi bi-terminal me-2"></i>{{ t('import.menu.ssh', 'SSH Import') }}</button>
         <button class="list-group-item list-group-item-action" id="direct-tab" data-bs-toggle="pill" data-bs-target="#direct" type="button" role="tab"><i class="bi bi-database-down me-2"></i>{{ t('import.menu.direct', 'Direkter DB-Import') }}</button>
+        <button class="list-group-item list-group-item-action" id="blocklist-tab" data-bs-toggle="pill" data-bs-target="#blocklist" type="button" role="tab"><i class="bi bi-slash-circle me-2"></i>{{ t('import.menu.blocklist', 'Import-Blockliste') }} <span class="badge text-bg-secondary ms-1">{{ blocklist_entries|length }}</span></button>
         <button class="list-group-item list-group-item-action" id="notes-tab" data-bs-toggle="pill" data-bs-target="#notes" type="button" role="tab"><i class="bi bi-info-circle me-2"></i>{{ t('import.menu.notes', 'Hinweise') }}</button>
       </div>
     </div>
@@ -120,7 +129,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
                 {% if ssh_result.elapsed_ms is defined %}<dt class="col-sm-4">{{ t('common.duration', 'Dauer') }}</dt><dd class="col-sm-8">{{ ssh_result.elapsed_ms }} ms</dd>{% endif %}
                 {% if ssh_result.peer_count is defined %}<dt class="col-sm-4">{{ t('import.ssh.peers', 'Peers') }}</dt><dd class="col-sm-8">{{ ssh_result.peer_count }}</dd>{% endif %}
                 {% if ssh_result.integrity is defined %}<dt class="col-sm-4">{{ t('common.integrity', 'Integrität') }}</dt><dd class="col-sm-8"><code>{{ ssh_result.integrity }}</code></dd>{% endif %}
-                {% if ssh_result.created is defined %}<dt class="col-sm-4">{{ t('common.import', 'Import') }}</dt><dd class="col-sm-8">{{ ssh_result.created }} {{ t('common.created', 'neu') }}, {{ ssh_result.updated }} {{ t('common.updated', 'aktualisiert') }}, {{ ssh_result.skipped }} {{ t('common.skipped', 'übersprungen') }}</dd>{% endif %}
+                {% if ssh_result.created is defined %}<dt class="col-sm-4">{{ t('common.import', 'Import') }}</dt><dd class="col-sm-8">{{ ssh_result.created }} {{ t('common.created', 'neu') }}, {{ ssh_result.updated }} {{ t('common.updated', 'aktualisiert') }}, {{ ssh_result.skipped }} {{ t('common.skipped', 'übersprungen') }}, {{ ssh_result.blocked|default(0) }} {{ t('import.blocklist.blocked_short', 'blockiert') }}</dd>{% endif %}
                 {% if ssh_result.stderr %}<dt class="col-sm-4">{{ t('import.ssh.stderr', 'SSH stderr') }}</dt><dd class="col-sm-8"><code>{{ ssh_result.stderr }}</code></dd>{% endif %}
               </dl>
             {% endif %}
@@ -143,10 +152,51 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
         </div>
       </div>
 
+      <div class="tab-pane fade" id="blocklist" role="tabpanel" aria-labelledby="blocklist-tab" tabindex="0">
+        <div class="card app-card mb-4">
+          <div class="card-body">
+            <h2 class="h5 mb-1"><i class="bi bi-slash-circle me-1"></i>{{ t('import.blocklist.title', 'Import-Blockliste') }}</h2>
+            <p class="text-secondary mb-3">{{ t('import.blocklist.help', 'Beim Löschen eines Geräts wird seine RustDesk-ID automatisch eingetragen. CSV-, Server-DB-, SSH- und direkte DB-Importe überspringen diese IDs, damit gelöschte Geräte nicht erneut erscheinen.') }}</p>
+            <form method="post" action="{{ url_for('import_blocklist_add') }}" class="row g-3 align-items-end">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="col-12 col-md-4"><label class="form-label">RustDesk-ID</label><input class="form-control" name="rustdesk_id" maxlength="80" required></div>
+              <div class="col-12 col-md-4"><label class="form-label">{{ t('import.blocklist.device_name', 'Gerätename optional') }}</label><input class="form-control" name="device_name" maxlength="180"></div>
+              <div class="col-12 col-md-4"><label class="form-label">{{ t('import.blocklist.reason', 'Grund optional') }}</label><input class="form-control" name="reason" maxlength="255"></div>
+              <div class="col-12"><button class="btn btn-primary" type="submit"><i class="bi bi-plus-circle me-1"></i>{{ t('import.blocklist.add', 'ID sperren') }}</button></div>
+            </form>
+          </div>
+        </div>
+        <div class="card app-card">
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h3 class="h5 mb-0">{{ t('import.blocklist.entries', 'Gesperrte RustDesk-IDs') }}</h3><span class="badge text-bg-secondary">{{ blocklist_entries|length }}</span></div>
+            {% if blocklist_entries %}
+            <div class="table-responsive"><table class="table align-middle mobile-stack-table mb-0">
+              <thead><tr><th>RustDesk-ID</th><th>{{ t('common.device', 'Gerät') }}</th><th>{{ t('import.blocklist.reason_label', 'Grund') }}</th><th>{{ t('import.blocklist.created', 'Eingetragen') }}</th><th class="text-end">{{ t('common.actions', 'Aktionen') }}</th></tr></thead>
+              <tbody>{% for entry in blocklist_entries %}<tr>
+                <td data-label="RustDesk-ID"><code>{{ entry.rustdesk_id }}</code></td>
+                <td data-label="{{ t('common.device', 'Gerät') }}">{{ entry.device_name or '-' }}</td>
+                <td data-label="{{ t('import.blocklist.reason_label', 'Grund') }}">{{ entry.reason or '-' }}</td>
+                <td data-label="{{ t('import.blocklist.created', 'Eingetragen') }}"><span class="small">{{ entry.created_at.strftime('%d.%m.%Y %H:%M') if entry.created_at else '-' }}{% if entry.created_by %}<br>{{ entry.created_by }}{% endif %}</span></td>
+                <td data-label="{{ t('common.actions', 'Aktionen') }}" class="text-end"><form method="post" action="{{ url_for('import_blocklist_remove', entry_id=entry.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('{{ t('import.blocklist.remove_confirm', 'Diese ID aus der Blockliste entfernen? Sie kann danach wieder importiert werden.') }}')"><i class="bi bi-unlock me-1"></i>{{ t('import.blocklist.remove', 'Freigeben') }}</button></form></td>
+              </tr>{% endfor %}</tbody>
+            </table></div>
+            {% else %}<div class="text-secondary">{{ t('import.blocklist.empty', 'Die Import-Blockliste ist leer.') }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
       <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab" tabindex="0">
         <div class="card app-card"><div class="card-body"><h2 class="h5">{{ t('import.notes.title', 'Hinweise') }}</h2><ul class="text-secondary mb-0"><li>{{ t('import.notes.status', 'Der Online-Status wird nicht mehr aus peer.status übernommen. Nutze dafür Live-Status hbbs.') }}</li><li>{{ t('import.notes.db', 'Die Server-DB bleibt für Geräteimport, WAL/SHM-Snapshot und Diagnose erhalten.') }}</li><li>{{ t('import.notes.passwords', 'Unbeaufsichtigte Gerätepasswörter liegen normalerweise nicht in der freien Serverdatenbank und bleiben deshalb leer.') }}</li></ul></div></div>
       </div>
     </div>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const hash = window.location.hash;
+  if (!hash) return;
+  const trigger = document.querySelector('[data-bs-target="' + hash + '"]');
+  if (trigger && window.bootstrap) bootstrap.Tab.getOrCreateInstance(trigger).show();
+});
+</script>
 {% endblock %}

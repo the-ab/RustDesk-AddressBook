@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ t('account.title', 'Mein Konto') }} - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <h1 class="h3 mb-1">{{ t('account.title', 'Mein Konto') }}</h1>
+  <div class="text-secondary">{{ current_user.username }} · {% if current_user.is_admin %}{{ t('users.role_admin', 'Administrator') }}{% else %}{{ t('users.role_user', 'Benutzer') }}{% endif %} · {{ current_user.auth_provider|upper }}</div>
+</div>
+
+<div class="card app-card mb-4">
+  <div class="card-body">
+    <h2 class="h5 mb-1">{{ t('account.preferences_title', 'Darstellung & Sprache') }}</h2>
+    <p class="text-secondary small mb-3">{{ t('account.preferences_help', 'Diese Einstellungen gelten nur für dein eigenes Benutzerkonto und verändern die Ansicht anderer Benutzer nicht.') }}</p>
+    <form method="post" class="row g-3 align-items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="preferences">
+      <div class="col-12 col-md-5">
+        <label class="form-label">{{ t('settings.display.theme', 'Farbschema') }}</label>
+        <select class="form-select" name="theme_mode">{% for value, label in theme_choices %}<option value="{{ value }}" {% if current_user.preferred_theme == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12 col-md-5">
+        <label class="form-label">{{ t('settings.display.language', 'Sprache') }}</label>
+        <select class="form-select" name="language">{% for value, label in language_choices %}<option value="{{ value }}" {% if current_user.preferred_language == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12 col-md-2 d-grid"><button class="btn btn-primary" type="submit">{{ t('common.save', 'Speichern') }}</button></div>
+    </form>
+  </div>
+</div>
+
+{% if current_user.auth_provider == 'oidc' %}
+<div class="card app-card">
+  <div class="card-body">
+    <h2 class="h5">{{ t('account.oidc_title', 'OIDC-Konto') }}</h2>
+    <p class="mb-2">{{ t('account.oidc_help', 'Passwort und Mehrfaktor-Authentifizierung werden durch den verbundenen OpenID-Connect-Provider verwaltet.') }}</p>
+    <dl class="row mb-0 small">
+      <dt class="col-sm-4">{{ t('users.provider', 'Anmeldung') }}</dt><dd class="col-sm-8">OIDC</dd>
+      <dt class="col-sm-4">{{ t('users.role', 'Rolle') }}</dt><dd class="col-sm-8">{% if current_user.is_admin %}{{ t('users.role_admin', 'Administrator') }}{% else %}{{ t('users.role_user', 'Benutzer') }}{% endif %}</dd>
+      <dt class="col-sm-4">{{ t('users.display_name', 'Anzeigename') }}</dt><dd class="col-sm-8">{{ current_user.display_name or '-' }}</dd>
+      <dt class="col-sm-4">E-Mail</dt><dd class="col-sm-8">{{ current_user.email or '-' }}</dd>
+      <dt class="col-sm-4">{{ t('users.assigned_groups', 'Zugewiesene Gruppen') }}</dt>
+      <dd class="col-sm-8">{% if current_user.is_admin %}{{ t('users.all_devices', 'Alle Geräte') }}{% elif current_user.groups %}{% for group in current_user.groups %}<span class="badge text-bg-{{ group.color }} me-1 mb-1">{{ group.name }}</span>{% endfor %}{% else %}{{ t('users.no_access', 'Keine Geräte sichtbar') }}{% endif %}</dd>
+    </dl>
+  </div>
+</div>
+{% else %}
+<div class="row g-4">
+  <div class="col-12 col-xl-6">
+    <div class="card app-card h-100"><div class="card-body">
+      <h2 class="h5 mb-3">{{ t('account.password_title', 'Passwort ändern') }}</h2>
+      <form method="post" class="row g-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="password">
+        <div class="col-12"><label class="form-label">{{ t('settings.admin.current_password', 'Aktuelles Passwort') }}</label><input class="form-control" type="password" name="current_password" required autocomplete="current-password"></div>
+        <div class="col-12"><label class="form-label">{{ t('users.new_password', 'Neues Passwort') }}</label><input class="form-control" type="password" name="new_password" minlength="8" required autocomplete="new-password"></div>
+        <div class="col-12"><label class="form-label">{{ t('users.password_repeat', 'Passwort wiederholen') }}</label><input class="form-control" type="password" name="new_password2" minlength="8" required autocomplete="new-password"></div>
+        <div class="col-12"><button class="btn btn-primary" type="submit">{{ t('account.password_save', 'Passwort ändern') }}</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card app-card h-100"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <div><h2 class="h5 mb-1">{{ t('account.twofa_title', 'Zwei-Faktor-Authentifizierung') }}</h2><div class="text-secondary small">TOTP / Authenticator</div></div>
+        <span class="badge text-bg-{% if current_user.totp_enabled %}success{% else %}secondary{% endif %}">{% if current_user.totp_enabled %}{{ t('common.active', 'Aktiv') }}{% else %}{{ t('common.inactive', 'Inaktiv') }}{% endif %}</span>
+      </div>
+
+      {% if new_recovery_codes %}
+      <div class="alert alert-warning mt-3">
+        <strong>{{ t('account.recovery_once', 'Diese Wiederherstellungscodes werden nur einmal angezeigt:') }}</strong>
+        <div class="row mt-2">{% for code in new_recovery_codes %}<div class="col-6"><code>{{ code }}</code></div>{% endfor %}</div>
+      </div>
+      {% endif %}
+
+      {% if current_user.totp_enabled %}
+      <p class="small text-secondary mt-3">{{ t('account.recovery_count', 'Verbleibende Wiederherstellungscodes') }}: {{ recovery_code_count }}</p>
+      <form method="post" class="row g-2 mb-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="totp_recovery_regenerate">
+        <div class="col-12"><input class="form-control" type="password" name="current_password" placeholder="{{ t('settings.admin.current_password', 'Aktuelles Passwort') }}" required autocomplete="current-password"></div>
+        <div class="col-12"><input class="form-control" name="totp_code" placeholder="TOTP / Recovery-Code" required autocomplete="one-time-code"></div>
+        <div class="col-12"><button class="btn btn-outline-primary" type="submit">{{ t('account.regenerate', 'Recovery-Codes neu erstellen') }}</button></div>
+      </form>
+      <form method="post" class="row g-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="totp_disable">
+        <div class="col-12"><input class="form-control" type="password" name="current_password" placeholder="{{ t('settings.admin.current_password', 'Aktuelles Passwort') }}" required autocomplete="current-password"></div>
+        <div class="col-12"><input class="form-control" name="totp_code" placeholder="TOTP / Recovery-Code" required autocomplete="one-time-code"></div>
+        <div class="col-12"><button class="btn btn-outline-danger" type="submit">{{ t('account.disable_twofa', '2FA deaktivieren') }}</button></div>
+      </form>
+
+      {% elif totp_secret %}
+      <div class="text-center mt-3">
+        {% if totp_qr_data_uri %}<img src="{{ totp_qr_data_uri }}" class="img-fluid" style="max-width:220px" alt="TOTP QR-Code">{% endif %}
+        <div class="small text-break"><code>{{ totp_secret }}</code></div>
+      </div>
+      <form method="post" class="row g-2 mt-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="totp_enable">
+        <div class="col-12"><input class="form-control" type="password" name="current_password" placeholder="{{ t('settings.admin.current_password', 'Aktuelles Passwort') }}" required autocomplete="current-password"></div>
+        <div class="col-12"><input class="form-control" name="totp_code" inputmode="numeric" placeholder="123456" required autocomplete="one-time-code"></div>
+        <div class="col-12"><button class="btn btn-primary" type="submit">{{ t('account.enable_twofa', '2FA aktivieren') }}</button></div>
+      </form>
+      <form method="post" class="mt-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="totp_cancel">
+        <button class="btn btn-outline-secondary" type="submit">{{ t('common.cancel', 'Abbrechen') }}</button>
+      </form>
+
+      {% else %}
+      <form method="post" class="mt-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="totp_prepare">
+        <label class="form-label">{{ t('settings.admin.current_password', 'Aktuelles Passwort') }}</label>
+        <input class="form-control mb-3" type="password" name="current_password" required autocomplete="current-password">
+        <button class="btn btn-primary" type="submit">{{ t('account.setup_twofa', '2FA einrichten') }}</button>
+      </form>
+      {% endif %}
+    </div></div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

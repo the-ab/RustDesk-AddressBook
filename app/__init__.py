@@ -20,6 +20,7 @@ import tarfile
 import zipfile
 from collections import Counter
 from contextlib import contextmanager
+from functools import wraps
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -30,6 +31,7 @@ from flask import (
     abort,
     jsonify,
     current_app,
+    has_request_context,
     flash,
     redirect,
     render_template,
@@ -44,15 +46,16 @@ import qrcode
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from sqlalchemy import or_
+from sqlalchemy import false, or_
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from .config import Config
 from .crypto import decrypt_value, encrypt_value
-from .extensions import db, login_manager
+from .extensions import db, login_manager, oauth
 from .helpers import csrf_token, normalize_bool, parse_csv_upload, rustdesk_link, validate_csrf
-from .models import AuthEvent, Device, Group, Setting, User, utcnow
+from .models import AuthEvent, Device, Group, ImportBlocklistEntry, Setting, User, utcnow
 from .rustdesk_live import RustDeskLiveStatusError, query_hbbs_online_status
 
 
@@ -329,7 +332,7 @@ TRANSLATIONS = {
         "device_form.favorite": "Favorite",
         "device_form.online_manual": "Manual online status",
         "device_form.save": "Save device",
-        "device_form.delete_confirm": "Really delete this device?",
+        "device_form.delete_confirm": "Really delete this device? Its RustDesk ID will be blocked automatically for future imports.",
         "backup.title": "Backup",
         "backup.subtitle": "Back up the database, create encrypted full backups, download and restore.",
         "backup.create": "Create backup",
@@ -567,6 +570,119 @@ TRANSLATIONS["en"].update({
 })
 
 
+TRANSLATIONS["en"].update({
+    "nav.users": "Users",
+    "nav.account": "My account",
+    "login.title": "Sign in",
+    "login.username": "Username",
+    "login.password": "Password",
+    "login.local": "Sign in locally",
+    "login.or": "or",
+    "login.oidc": "Sign in with {provider}",
+    "users.title": "User management",
+    "users.subtitle": "Manage local and OIDC users, roles and visible device groups.",
+    "users.oidc_settings": "Configure OIDC",
+    "users.permission_title": "Permission model",
+    "users.permission_help": "Regular users can only view devices, retrieve passwords and start RustDesk connections. They only see devices in assigned groups; ungrouped devices are visible to administrators only.",
+    "users.create": "Create user",
+    "users.username": "Username",
+    "users.provider": "Authentication",
+    "users.provider_local": "Local",
+    "users.role": "Role",
+    "users.role_user": "User",
+    "users.role_admin": "Administrator",
+    "users.active": "Active",
+    "users.password": "Password",
+    "users.password_local_help": "Required for local users only, at least 8 characters.",
+    "users.password_repeat": "Repeat password",
+    "users.assigned_groups": "Assigned groups",
+    "users.no_groups": "No groups exist yet.",
+    "users.create_button": "Create user",
+    "users.last_login": "Last login",
+    "users.disabled": "Disabled",
+    "users.oidc_pending": "Not linked to OIDC yet",
+    "users.all_devices": "All devices",
+    "users.no_access": "No devices visible",
+    "users.delete_confirm": "Really delete this user?",
+    "users.edit": "Edit user",
+    "users.new_password": "New password",
+    "users.new_password_help": "Leave empty to keep the current password. A password is required when switching from OIDC to local authentication.",
+    "users.admin_groups_help": "Group assignments do not restrict administrators; they always see all devices.",
+    "oidc.title": "OpenID Connect",
+    "oidc.subtitle": "Configure centralized sign-in through an OAuth 2.0/OpenID Connect provider.",
+    "oidc.local_admin_warning_title": "Keep a local emergency account",
+    "oidc.local_admin_warning": "The last active local administrator is protected and cannot be removed, so sign-in remains possible if the OIDC provider is unavailable.",
+    "oidc.enabled": "Enable OIDC sign-in",
+    "oidc.auto": "Automatically create users on first sign-in",
+    "oidc.auto_help": "Automatically created accounts receive the User role and initially have no group assignments.",
+    "oidc.issuer": "Issuer URL",
+    "oidc.provider_name": "Display name",
+    "oidc.secret_keep": "Leave empty to keep the stored secret",
+    "oidc.secret_help": "The client secret is stored encrypted in the settings database.",
+    "oidc.openid_required": "is always added.",
+    "oidc.username_claim": "Username claim",
+    "oidc.allowed_domains": "Allowed email domains",
+    "oidc.allowed_domains_help": "Optional, comma-separated. Empty means no domain restriction.",
+    "oidc.insecure": "Explicitly allow an insecure HTTP issuer URL",
+    "oidc.insecure_help": "For isolated test networks only. Production authentication must use HTTPS.",
+    "oidc.redirect_uri": "Redirect URI for the provider",
+    "oidc.save_test": "Save and test discovery",
+    "account.title": "My account",
+    "account.oidc_title": "OIDC account",
+    "account.oidc_help": "Password and multi-factor authentication are managed by the connected OpenID Connect provider.",
+    "account.password_title": "Change password",
+    "account.password_save": "Change password",
+    "account.twofa_title": "Two-factor authentication",
+    "account.recovery_once": "These recovery codes are shown only once:",
+    "account.recovery_count": "Remaining recovery codes",
+    "account.regenerate": "Regenerate recovery codes",
+    "account.disable_twofa": "Disable 2FA",
+    "account.enable_twofa": "Enable 2FA",
+    "account.setup_twofa": "Set up 2FA",
+    "device.card.password": "Password",
+    "device.password.title": "RustDesk password",
+    "device.password.value": "Stored password",
+    "device.password.help": "The password is only displayed for devices your user is allowed to access.",
+    "device.password.load_failed": "The password could not be loaded.",
+    "common.copy": "Copy",
+    "security.report.2fa_local": "{protected} of {total} active local user(s) have 2FA enabled; OIDC MFA is managed by the provider.",
+    "security.report.rbac_name": "User roles / emergency access",
+    "security.report.rbac_detail": "Active administrators: {admins}; local emergency administrators: {local_admins}. Active OIDC users: {oidc_users}.",
+    "security.report.oidc_detail": "OIDC is enabled. Provider: {provider}; auto-provisioning: {auto}; insecure HTTP allowed: {insecure}.",
+    "security.report.oidc_disabled": "OIDC sign-in is disabled; local sign-in remains available.",
+})
+
+
+TRANSLATIONS["en"].update({
+    "account.preferences_title": "Display & language",
+    "account.preferences_help": "These settings apply only to your own user account and do not change the view for other users.",
+    "account.preferences_saved": "Display and language were saved for your user account.",
+    "account.preferences_invalid_theme": "Invalid display mode.",
+    "account.preferences_invalid_language": "Invalid language.",
+    "devices.deleted_blocked": "The device was deleted and its RustDesk ID was blocked for future imports.",
+    "common.device": "Device",
+    "import.menu.blocklist": "Import blocklist",
+    "import.blocklist.title": "Import blocklist",
+    "import.blocklist.help": "When a device is deleted, its RustDesk ID is added automatically. CSV, server database, SSH and direct database imports skip these IDs so deleted devices do not return.",
+    "import.blocklist.device_name": "Device name optional",
+    "import.blocklist.reason": "Reason optional",
+    "import.blocklist.reason_label": "Reason",
+    "import.blocklist.add": "Block ID",
+    "import.blocklist.entries": "Blocked RustDesk IDs",
+    "import.blocklist.created": "Added",
+    "import.blocklist.remove": "Unblock",
+    "import.blocklist.remove_confirm": "Remove this ID from the blocklist? It can be imported again afterwards.",
+    "import.blocklist.empty": "The import blocklist is empty.",
+    "import.blocklist.blocked_short": "blocked",
+    "import.blocklist.id_required": "Enter a RustDesk ID.",
+    "import.blocklist.device_exists": "This RustDesk ID still exists as a device in the address book.",
+    "import.blocklist.added": "The RustDesk ID was added to the import blocklist.",
+    "import.blocklist.removed": "The RustDesk ID was removed from the import blocklist and can be imported again.",
+    "import.csv.done": "CSV import completed: {created} created, {blocked} skipped by blocklist, {skipped} invalid.",
+    "import.server.done": "RustDesk server import completed: {created} created, {updated} updated, {skipped} skipped, {blocked} blocked by import blocklist.",
+})
+
+
 def _resolve_device_view(value: str | None = None) -> str:
     allowed = {"cards", "list", "icons"}
     selected = (value or "").strip().lower()
@@ -593,6 +709,10 @@ def create_app() -> Flask:
 
     db.init_app(app)
     login_manager.init_app(app)
+    oauth.init_app(app)
+
+    if app.config.get("TRUST_PROXY_HEADERS"):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     with app.app_context():
         db.create_all()
@@ -618,17 +738,66 @@ def _migrate_schema() -> None:
     """Small SQLite migrations for existing installations without Alembic."""
     with db.engine.begin() as conn:
         user_cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(users)").fetchall()}
-        if "totp_secret_encrypted" not in user_cols:
-            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN totp_secret_encrypted TEXT")
-        if "totp_enabled" not in user_cols:
-            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN NOT NULL DEFAULT 0")
-        if "totp_recovery_hashes" not in user_cols:
-            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN totp_recovery_hashes TEXT")
+        reseal_all = False
+
+        legacy_columns = {
+            "totp_secret_encrypted": "TEXT",
+            "totp_enabled": "BOOLEAN NOT NULL DEFAULT 0",
+            "totp_recovery_hashes": "TEXT",
+        }
+        for column, definition in legacy_columns.items():
+            if column not in user_cols:
+                conn.exec_driver_sql(f"ALTER TABLE users ADD COLUMN {column} {definition}")
+                user_cols.add(column)
+
         security_signature_created = False
         if "security_signature" not in user_cols:
             conn.exec_driver_sql("ALTER TABLE users ADD COLUMN security_signature TEXT")
+            user_cols.add("security_signature")
             security_signature_created = True
+
+        role_created = "role" not in user_cols
+        preference_language_created = "preferred_language" not in user_cols
+        preference_theme_created = "preferred_theme" not in user_cols
+        auth_columns = {
+            "role": "VARCHAR(16) NOT NULL DEFAULT 'user'",
+            "active": "BOOLEAN NOT NULL DEFAULT 1",
+            "auth_provider": "VARCHAR(16) NOT NULL DEFAULT 'local'",
+            "oidc_issuer": "VARCHAR(255)",
+            "oidc_subject": "VARCHAR(255)",
+            "display_name": "VARCHAR(180)",
+            "email": "VARCHAR(255)",
+            "preferred_language": "VARCHAR(8) NOT NULL DEFAULT 'de'",
+            "preferred_theme": "VARCHAR(16) NOT NULL DEFAULT 'light'",
+        }
+        for column, definition in auth_columns.items():
+            if column not in user_cols:
+                conn.exec_driver_sql(f"ALTER TABLE users ADD COLUMN {column} {definition}")
+                user_cols.add(column)
+                reseal_all = True
+
+        if role_created:
+            # Every installation before 0.5.25 had exactly one effective administrator.
+            conn.exec_driver_sql("UPDATE users SET role='admin'")
+        conn.exec_driver_sql("UPDATE users SET active=1 WHERE active IS NULL")
+        conn.exec_driver_sql("UPDATE users SET auth_provider='local' WHERE auth_provider IS NULL OR trim(auth_provider)='' ")
+        if preference_language_created:
+            conn.exec_driver_sql("UPDATE users SET preferred_language=COALESCE((SELECT value FROM settings WHERE key='language'), 'de')")
+        else:
+            conn.exec_driver_sql("UPDATE users SET preferred_language='de' WHERE preferred_language IS NULL OR trim(preferred_language)='' ")
+        if preference_theme_created:
+            conn.exec_driver_sql("UPDATE users SET preferred_theme=COALESCE((SELECT value FROM settings WHERE key='theme_mode'), 'light')")
+        else:
+            conn.exec_driver_sql("UPDATE users SET preferred_theme='light' WHERE preferred_theme IS NULL OR trim(preferred_theme)='' ")
+        conn.exec_driver_sql("UPDATE users SET preferred_language='de' WHERE preferred_language NOT IN ('de','en')")
+        conn.exec_driver_sql("UPDATE users SET preferred_theme='light' WHERE preferred_theme NOT IN ('light','dark')")
+        conn.exec_driver_sql("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_oidc_identity ON users(oidc_issuer, oidc_subject) WHERE oidc_subject IS NOT NULL")
+        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_user_groups_user_id ON user_groups(user_id)")
+        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_user_groups_group_id ON user_groups(group_id)")
+
         current_app.config["_SECURITY_SIGNATURE_INITIALIZE_MISSING"] = security_signature_created
+        current_app.config["_SECURITY_SIGNATURE_RESEAL_ALL"] = reseal_all
+
         # Clean legacy placeholder values that older templates could save when optional
         # device fields were rendered as Python None.
         legacy_cleanup_queries = (
@@ -641,16 +810,93 @@ def _migrate_schema() -> None:
             conn.exec_driver_sql(cleanup_query)
 
 
+def admin_required(view):
+    """Require an authenticated administrator and enforce it server-side."""
+    @wraps(view)
+    @login_required
+    def wrapped(*args, **kwargs):
+        if not getattr(current_user, "is_admin", False):
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def _visible_group_ids() -> list[int]:
+    if not current_user.is_authenticated or getattr(current_user, "is_admin", False):
+        return []
+    return [group.id for group in current_user.groups]
+
+
+def _visible_device_query():
+    if getattr(current_user, "is_admin", False):
+        return Device.query
+    group_ids = _visible_group_ids()
+    if not group_ids:
+        return Device.query.filter(false())
+    return Device.query.filter(Device.group_id.in_(group_ids))
+
+
+def _visible_groups() -> list[Group]:
+    if getattr(current_user, "is_admin", False):
+        return Group.query.order_by(Group.name.asc()).all()
+    return sorted(current_user.groups, key=lambda group: group.name.casefold())
+
+
+def _accessible_device_or_404(device_id: int) -> Device:
+    return _visible_device_query().filter(Device.id == device_id).first_or_404()
+
+
+def _active_local_admin_count(*, exclude_user_id: int | None = None) -> int:
+    query = User.query.filter_by(role="admin", active=True, auth_provider="local")
+    if exclude_user_id is not None:
+        query = query.filter(User.id != exclude_user_id)
+    return query.count()
+
+
+def _normalize_role(value: str | None) -> str:
+    return "admin" if str(value or "").strip().lower() == "admin" else "user"
+
+
+def _normalize_auth_provider(value: str | None) -> str:
+    return "oidc" if str(value or "").strip().lower() == "oidc" else "local"
+
+def _valid_username(value: str) -> bool:
+    return bool(3 <= len(value) <= 80 and re.fullmatch(r"[A-Za-z0-9._@-]+", value))
+
+
+def _groups_from_form(field_name: str = "group_ids") -> list[Group]:
+    ids = {int(value) for value in request.form.getlist(field_name) if str(value).isdigit()}
+    if not ids:
+        return []
+    return Group.query.filter(Group.id.in_(ids)).order_by(Group.name.asc()).all()
+
+
+def _safe_next_url(value: str | None, default_endpoint: str = "dashboard") -> str:
+    candidate = str(value or "").strip()
+    if not candidate:
+        return url_for(default_endpoint)
+    parsed = urllib.parse.urlparse(candidate)
+    if parsed.scheme or parsed.netloc or not candidate.startswith("/") or candidate.startswith("//"):
+        return url_for(default_endpoint)
+    return candidate
+
+
 def _security_signature_payload(user: User) -> str:
     data = {
         "username": user.username or "",
         "password_hash": user.password_hash or "",
+        "role": user.role or "user",
+        "active": bool(user.active),
+        "auth_provider": user.auth_provider or "local",
+        "oidc_issuer": user.oidc_issuer or "",
+        "oidc_subject": user.oidc_subject or "",
+        "display_name": user.display_name or "",
+        "email": user.email or "",
         "totp_secret_encrypted": user.totp_secret_encrypted or "",
         "totp_enabled": bool(user.totp_enabled),
         "totp_recovery_hashes": user.totp_recovery_hashes or "",
     }
     return json.dumps(data, sort_keys=True, separators=(",", ":"))
-
 
 def _security_hmac(payload: str) -> str:
     key = str(current_app.config.get("SECURITY_SIGNING_KEY", "")).encode("utf-8")
@@ -683,19 +929,17 @@ def _reseal_user_after_verified_auth(user: User, *, username: str, reason: str) 
 
 
 def _ensure_user_security_signatures() -> None:
-    # Only initialize missing signatures during the one-time migration that creates
-    # the column. If the column already existed and a signature is missing, treat
-    # it as suspicious rather than silently resealing a possibly manipulated row.
-    if not current_app.config.get("_SECURITY_SIGNATURE_INITIALIZE_MISSING"):
+    initialize_missing = bool(current_app.config.get("_SECURITY_SIGNATURE_INITIALIZE_MISSING"))
+    reseal_all = bool(current_app.config.get("_SECURITY_SIGNATURE_RESEAL_ALL"))
+    if not initialize_missing and not reseal_all:
         return
     changed = False
     for user in User.query.all():
-        if not getattr(user, "security_signature", None):
+        if reseal_all or not getattr(user, "security_signature", None):
             _sign_user_security_state(user)
             changed = True
     if changed:
         db.session.commit()
-
 
 def _client_ip() -> str:
     if current_app.config.get("TRUST_PROXY_HEADERS"):
@@ -876,6 +1120,7 @@ def register_template_helpers(app: Flask) -> None:
     app.jinja_env.globals["get_bruteforce_settings"] = _get_bruteforce_settings
     app.jinja_env.globals["get_update_check_info"] = _get_update_check_info
     app.jinja_env.globals["get_update_auto_check_settings"] = _get_update_auto_check_settings
+    app.jinja_env.globals["get_oidc_settings"] = _get_oidc_settings
 
     @app.context_processor
     def inject_dynamic_template_values():
@@ -891,6 +1136,8 @@ def register_template_helpers(app: Flask) -> None:
             "bruteforce_settings": _get_bruteforce_settings(),
             "update_check_info": _get_update_check_info(),
             "update_auto_check_settings": _get_update_auto_check_settings(),
+            "oidc_settings": _get_oidc_settings(),
+            "is_admin": bool(current_user.is_authenticated and getattr(current_user, "is_admin", False)),
             "group_icon_choices": _translated_group_icon_choices(),
             "group_color_choices": _translated_group_color_choices(),
         }
@@ -927,6 +1174,13 @@ def register_hooks(app: Flask) -> None:
         has_user = db.session.query(User.id).first() is not None
         if not has_user:
             return redirect(url_for("setup"))
+        if current_user.is_authenticated and not getattr(current_user, "active", True):
+            username = getattr(current_user, "username", "")
+            _record_auth_event("disabled_session", username=username, success=False, message="Aktive Sitzung eines deaktivierten Benutzers beendet")
+            logout_user()
+            session.clear()
+            flash("Dieses Benutzerkonto wurde deaktiviert.", "warning")
+            return redirect(url_for("login"))
         if current_user.is_authenticated and not _verify_user_security_state(current_user):
             username = getattr(current_user, "username", "")
             _record_auth_event("security_signature_invalid_session", username=username, success=False, message="Aktive Sitzung beendet: Benutzer-Sicherheitsdatenbank-Signatur ungültig")
@@ -966,7 +1220,7 @@ def register_routes(app: Flask) -> None:
             elif password != password2:
                 flash("Die Passwörter stimmen nicht überein.", "danger")
             else:
-                user = User(username=username)
+                user = User(username=username, role="admin", active=True, auth_provider="local")
                 user.set_password(password)
                 _sign_user_security_state(user)
                 db.session.add(user)
@@ -995,8 +1249,13 @@ def register_routes(app: Flask) -> None:
             user = User.query.filter_by(username=username).first()
             signature_ok = _verify_user_security_state(user) if user else True
 
+            if user and not user.active:
+                _record_auth_event("login_disabled", username=username, success=False, message="Deaktiviertes Benutzerkonto")
+                flash("Dieses Benutzerkonto ist deaktiviert.", "danger")
+                return render_template("login.html")
+
             if user and user.check_password(password):
-                next_url = request.args.get("next")
+                next_url = _safe_next_url(request.args.get("next"))
                 signature_repair_needed = not signature_ok
                 if signature_repair_needed and _user_signature_policy() == "strict":
                     _record_auth_event("security_signature_invalid", username=username, success=False, message="Benutzer-Sicherheitsdatenbank-Signatur ungültig; Login durch Strict-Policy blockiert")
@@ -1020,11 +1279,102 @@ def register_routes(app: Flask) -> None:
                     flash("Angemeldet.", "success")
                 _record_auth_event("login_success", username=username, success=True, message=("Login ohne 2FA erfolgreich; Signatur neu versiegelt" if signature_repair_needed else "Login ohne 2FA erfolgreich"))
                 login_user(user)
-                return redirect(next_url or url_for("dashboard"))
+                return redirect(next_url)
             _record_auth_event("password_fail", username=username, success=False, message="Ungültiger Benutzername oder Passwort")
             flash("Benutzername oder Passwort ist falsch.", "danger")
 
         return render_template("login.html")
+
+    @app.route("/login/oidc")
+    def oidc_login():
+        if current_user.is_authenticated:
+            return redirect(url_for("dashboard"))
+        settings = _get_oidc_settings()
+        if not settings["enabled"] or not settings["configured"]:
+            flash("OIDC-Anmeldung ist nicht verfügbar.", "danger")
+            return redirect(url_for("login"))
+        try:
+            client = _configure_oidc_client()
+            session["oidc_next"] = _safe_next_url(request.args.get("next"))
+            redirect_uri = url_for("oidc_callback", _external=True)
+            return client.authorize_redirect(redirect_uri)
+        except Exception as exc:
+            _record_auth_event("oidc_start_fail", success=False, message=f"OIDC-Anmeldung konnte nicht gestartet werden: {exc}")
+            flash("OIDC-Anmeldung konnte nicht gestartet werden. Bitte Konfiguration und Provider-Erreichbarkeit prüfen.", "danger")
+            return redirect(url_for("login"))
+
+    @app.route("/login/oidc/callback")
+    def oidc_callback():
+        if current_user.is_authenticated:
+            return redirect(url_for("dashboard"))
+        settings = _get_oidc_settings()
+        try:
+            client = _configure_oidc_client()
+            token = client.authorize_access_token()
+            userinfo = token.get("userinfo") or {}
+            subject = str(userinfo.get("sub") or "").strip()
+            if not subject:
+                raise ValueError("OIDC-Antwort enthält keinen sub-Claim.")
+            issuer = _validate_oidc_issuer_url(settings["issuer_url"], allow_insecure=settings["allow_insecure"])
+            email = str(userinfo.get("email") or "").strip()[:255]
+            if not _oidc_email_allowed(email, settings):
+                raise PermissionError("Die E-Mail-Domain ist für diese Anwendung nicht freigegeben.")
+
+            user = User.query.filter_by(oidc_issuer=issuer, oidc_subject=subject).first()
+            signature_repair_needed = False
+            claimed_username = _oidc_claim_username(userinfo, settings)
+            if user is None:
+                user = User.query.filter_by(username=claimed_username, auth_provider="oidc", oidc_subject=None).first()
+                if user is not None:
+                    signature_ok = _verify_user_security_state(user)
+                    if not signature_ok and _user_signature_policy() == "strict":
+                        raise PermissionError("Die Benutzer-Sicherheitsdaten haben keine gültige Signatur.")
+                    signature_repair_needed = not signature_ok
+                    user.oidc_issuer = issuer
+                    user.oidc_subject = subject
+                elif settings["auto_provision"]:
+                    user = User(
+                        username=_unique_username(claimed_username),
+                        password_hash="",
+                        role="user",
+                        active=True,
+                        auth_provider="oidc",
+                        oidc_issuer=issuer,
+                        oidc_subject=subject,
+                    )
+                    db.session.add(user)
+                else:
+                    raise PermissionError("Für dieses OIDC-Konto wurde noch kein Benutzer angelegt.")
+            elif not _verify_user_security_state(user):
+                if _user_signature_policy() == "strict":
+                    raise PermissionError("Die Benutzer-Sicherheitsdaten haben keine gültige Signatur.")
+                signature_repair_needed = True
+
+            if user.auth_provider != "oidc":
+                raise PermissionError("Der Benutzername ist bereits einem lokalen Konto zugeordnet.")
+            if not user.active:
+                raise PermissionError("Dieses Benutzerkonto ist deaktiviert.")
+
+            user.display_name = str(userinfo.get("name") or userinfo.get("preferred_username") or "").strip()[:180] or None
+            user.email = email or None
+            user.last_login_at = utcnow()
+            _sign_user_security_state(user)
+            db.session.commit()
+            login_user(user)
+            session["oidc_id_token"] = token.get("id_token")
+            next_url = session.pop("oidc_next", None) or url_for("dashboard")
+            _record_auth_event("oidc_login_success", username=user.username, success=True, message=f"OIDC-Anmeldung über {settings['provider_name']} erfolgreich" + ("; Signatur neu versiegelt" if signature_repair_needed else ""))
+            flash("Über OpenID Connect angemeldet.", "success")
+            return redirect(_safe_next_url(next_url))
+        except PermissionError as exc:
+            db.session.rollback()
+            _record_auth_event("oidc_login_denied", success=False, message=str(exc))
+            flash(str(exc), "danger")
+        except Exception as exc:
+            db.session.rollback()
+            _record_auth_event("oidc_login_fail", success=False, message=f"OIDC-Callback fehlgeschlagen: {exc}")
+            flash("OIDC-Anmeldung ist fehlgeschlagen. Bitte Provider- und Client-Konfiguration prüfen.", "danger")
+        return redirect(url_for("login"))
 
     @app.route("/login/2fa", methods=["GET", "POST"])
     def login_2fa():
@@ -1032,7 +1382,7 @@ def register_routes(app: Flask) -> None:
             return redirect(url_for("dashboard"))
         user_id = session.get("pending_2fa_user_id")
         user = db.session.get(User, int(user_id)) if str(user_id).isdigit() else None
-        if not user or not getattr(user, "totp_enabled", False):
+        if not user or not getattr(user, "active", True) or not getattr(user, "totp_enabled", False):
             session.pop("pending_2fa_user_id", None)
             session.pop("pending_2fa_next", None)
             flash("Bitte erneut anmelden.", "warning")
@@ -1084,19 +1434,337 @@ def register_routes(app: Flask) -> None:
         username = current_user.username if current_user.is_authenticated else ""
         _record_auth_event("logout", username=username, success=True, message="Benutzer abgemeldet")
         logout_user()
+        session.clear()
         flash("Abgemeldet.", "info")
         return redirect(url_for("login"))
+
+    @app.route("/users", methods=["GET", "POST"])
+    @admin_required
+    def users():
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            provider = _normalize_auth_provider(request.form.get("auth_provider"))
+            role = _normalize_role(request.form.get("role"))
+            active = normalize_bool(request.form.get("active"))
+            password = request.form.get("password", "")
+            password2 = request.form.get("password2", "")
+
+            if not _valid_username(username):
+                flash("Benutzername muss 3 bis 80 Zeichen lang sein und darf nur Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich und @ enthalten.", "danger")
+            elif User.query.filter_by(username=username).first():
+                flash("Dieser Benutzername existiert bereits.", "warning")
+            elif provider == "local" and len(password) < 8:
+                flash("Lokale Benutzer benötigen ein Passwort mit mindestens 8 Zeichen.", "danger")
+            elif provider == "local" and password != password2:
+                flash("Die Passwörter stimmen nicht überein.", "danger")
+            else:
+                user = User(
+                    username=username,
+                    role=role,
+                    active=active,
+                    auth_provider=provider,
+                    password_hash="",
+                )
+                if provider == "local":
+                    user.set_password(password)
+                user.groups = _groups_from_form()
+                _sign_user_security_state(user)
+                db.session.add(user)
+                db.session.commit()
+                _record_auth_event("user_created", username=current_user.username, success=True, message=f"Benutzer {username} angelegt; Rolle={role}; Provider={provider}")
+                flash("Benutzer wurde angelegt.", "success")
+                return redirect(url_for("users"))
+
+        return render_template(
+            "users.html",
+            users=User.query.order_by(User.username.asc()).all(),
+            groups=Group.query.order_by(Group.name.asc()).all(),
+            local_admin_count=_active_local_admin_count(),
+        )
+
+    @app.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
+    @admin_required
+    def user_edit(user_id: int):
+        user = db.session.get(User, user_id) or abort(404)
+        all_groups = Group.query.order_by(Group.name.asc()).all()
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            provider = _normalize_auth_provider(request.form.get("auth_provider"))
+            role = _normalize_role(request.form.get("role"))
+            active = normalize_bool(request.form.get("active"))
+            new_password = request.form.get("new_password", "")
+            password2 = request.form.get("new_password2", "")
+
+            duplicate = User.query.filter(User.username == username, User.id != user.id).first()
+            removes_local_admin = user.role == "admin" and user.active and user.auth_provider == "local" and not (role == "admin" and active and provider == "local")
+
+            if not _valid_username(username):
+                flash("Benutzername ist ungültig.", "danger")
+            elif duplicate:
+                flash("Dieser Benutzername existiert bereits.", "warning")
+            elif user.id == current_user.id and (not active or role != "admin"):
+                flash("Das aktuell verwendete Administratorkonto kann sich nicht selbst deaktivieren oder herabstufen.", "danger")
+            elif removes_local_admin and _active_local_admin_count(exclude_user_id=user.id) == 0:
+                flash("Der letzte aktive lokale Administrator kann nicht deaktiviert, gelöscht, herabgestuft oder auf OIDC umgestellt werden.", "danger")
+            elif new_password and len(new_password) < 8:
+                flash("Das neue Passwort muss mindestens 8 Zeichen haben.", "danger")
+            elif new_password and new_password != password2:
+                flash("Die neuen Passwörter stimmen nicht überein.", "danger")
+            elif provider == "local" and user.auth_provider != "local" and not new_password:
+                flash("Beim Wechsel auf lokale Anmeldung muss ein neues Passwort gesetzt werden.", "danger")
+            else:
+                provider_changed = provider != user.auth_provider
+                user.username = username
+                user.role = role
+                user.active = active
+                user.auth_provider = provider
+                user.groups = _groups_from_form()
+                if provider_changed:
+                    user.oidc_issuer = None
+                    user.oidc_subject = None
+                    user.display_name = None
+                    user.email = None
+                    user.totp_enabled = False
+                    user.totp_secret_encrypted = None
+                    user.totp_recovery_hashes = None
+                    if provider == "oidc":
+                        user.password_hash = ""
+                if new_password:
+                    user.set_password(new_password)
+                _sign_user_security_state(user)
+                db.session.commit()
+                _record_auth_event("user_updated", username=current_user.username, success=True, message=f"Benutzer {username} aktualisiert; Rolle={role}; Provider={provider}; aktiv={active}")
+                flash("Benutzer wurde gespeichert.", "success")
+                return redirect(url_for("users"))
+
+        return render_template("user_form.html", user=user, groups=all_groups)
+
+    @app.route("/users/<int:user_id>/delete", methods=["POST"])
+    @admin_required
+    def user_delete(user_id: int):
+        user = db.session.get(User, user_id) or abort(404)
+        if user.id == current_user.id:
+            flash("Das aktuell verwendete Administratorkonto kann nicht gelöscht werden.", "danger")
+        elif user.role == "admin" and user.active and user.auth_provider == "local" and _active_local_admin_count(exclude_user_id=user.id) == 0:
+            flash("Der letzte aktive lokale Administrator kann nicht gelöscht werden.", "danger")
+        else:
+            username = user.username
+            db.session.delete(user)
+            db.session.commit()
+            _record_auth_event("user_deleted", username=current_user.username, success=True, message=f"Benutzer {username} gelöscht")
+            flash("Benutzer wurde gelöscht.", "info")
+        return redirect(url_for("users"))
+
+    @app.route("/settings/oidc", methods=["GET", "POST"])
+    @admin_required
+    def oidc_settings_page():
+        if request.method == "POST":
+            enabled = normalize_bool(request.form.get("oidc_enabled"))
+            auto_provision = normalize_bool(request.form.get("oidc_auto_provision"))
+            allow_insecure = normalize_bool(request.form.get("oidc_allow_insecure"))
+            issuer = request.form.get("oidc_issuer_url", "").strip()
+            client_id = request.form.get("oidc_client_id", "").strip()[:255]
+            client_secret = request.form.get("oidc_client_secret", "")
+            provider_name = request.form.get("oidc_provider_name", "OpenID Connect").strip()[:80] or "OpenID Connect"
+            scopes = " ".join(dict.fromkeys((request.form.get("oidc_scopes", "openid profile email") or "openid profile email").split()))
+            username_claim = request.form.get("oidc_username_claim", "preferred_username").strip()[:80] or "preferred_username"
+            allowed_domains = ",".join(item.strip().lower() for item in request.form.get("oidc_allowed_domains", "").split(",") if item.strip())
+            existing_secret = _get_setting("oidc_client_secret", "")
+
+            try:
+                normalized_issuer = _validate_oidc_issuer_url(issuer, allow_insecure=allow_insecure) if issuer else ""
+                if enabled and (not normalized_issuer or not client_id or (not client_secret and not existing_secret)):
+                    raise ValueError("Zum Aktivieren von OIDC werden Issuer-URL, Client-ID und Client-Secret benötigt.")
+                if "openid" not in scopes.split():
+                    scopes = "openid " + scopes
+                values = {
+                    "oidc_enabled": "true" if enabled else "false",
+                    "oidc_auto_provision": "true" if auto_provision else "false",
+                    "oidc_allow_insecure": "true" if allow_insecure else "false",
+                    "oidc_issuer_url": normalized_issuer,
+                    "oidc_client_id": client_id,
+                    "oidc_provider_name": provider_name,
+                    "oidc_scopes": scopes,
+                    "oidc_username_claim": username_claim,
+                    "oidc_allowed_domains": allowed_domains,
+                }
+                if client_secret:
+                    values["oidc_client_secret"] = encrypt_value(client_secret)
+                _set_settings_bulk(values)
+                _record_auth_event("oidc_settings_changed", username=current_user.username, success=True, message=f"OIDC aktiviert={enabled}; Issuer={normalized_issuer}; Auto-Provisioning={auto_provision}")
+
+                if request.form.get("action") == "test" and normalized_issuer:
+                    try:
+                        discovery_url = f"{normalized_issuer}/.well-known/openid-configuration"
+                        req = urllib.request.Request(discovery_url, headers={"Accept": "application/json", "User-Agent": "RustDesk-AddressBook-OIDC-Test"})
+                        # URL scheme and credentials are validated above.
+                        with urllib.request.urlopen(req, timeout=10) as response:  # nosec B310
+                            raw = response.read(1024 * 1024)
+                        metadata = json.loads(raw.decode("utf-8"))
+                        required = ["issuer", "authorization_endpoint", "token_endpoint", "jwks_uri"]
+                        missing = [key for key in required if not metadata.get(key)]
+                        if missing:
+                            raise ValueError("OIDC-Discovery unvollständig: " + ", ".join(missing))
+                        discovered_issuer = str(metadata.get("issuer") or "").rstrip("/")
+                        if discovered_issuer != normalized_issuer:
+                            raise ValueError("Der von Discovery gemeldete Issuer stimmt nicht mit der konfigurierten Issuer-URL überein.")
+                    except Exception as exc:
+                        flash(f"OIDC-Konfiguration wurde gespeichert, aber der Discovery-Test ist fehlgeschlagen: {exc}", "warning")
+                    else:
+                        flash("OIDC-Konfiguration gespeichert und Discovery erfolgreich geprüft.", "success")
+                else:
+                    flash("OIDC-Konfiguration wurde gespeichert.", "success")
+                return redirect(url_for("oidc_settings_page"))
+            except Exception as exc:
+                db.session.rollback()
+                flash(f"OIDC-Konfiguration konnte nicht gespeichert werden: {exc}", "danger")
+
+        settings = _get_oidc_settings()
+        return render_template(
+            "oidc_settings.html",
+            settings=settings,
+            redirect_uri=url_for("oidc_callback", _external=True),
+        )
+
+    @app.route("/account", methods=["GET", "POST"])
+    @login_required
+    def account():
+        if request.method == "POST":
+            action = request.form.get("action", "")
+
+            if action == "preferences":
+                theme_mode = request.form.get("theme_mode", "light").strip().lower()
+                language = request.form.get("language", "de").strip().lower()
+                if theme_mode not in {"light", "dark"}:
+                    flash(_t("account.preferences_invalid_theme", "Ungültiger Darstellungsmodus."), "danger")
+                elif language not in {key for key, _label in LANGUAGE_CHOICES}:
+                    flash(_t("account.preferences_invalid_language", "Ungültige Sprache."), "danger")
+                else:
+                    current_user.preferred_theme = theme_mode
+                    current_user.preferred_language = language
+                    db.session.commit()
+                    flash(_t("account.preferences_saved", "Darstellung und Sprache wurden für dein Benutzerkonto gespeichert."), "success")
+                return redirect(url_for("account"))
+
+            if current_user.auth_provider != "local":
+                flash("Passwort und Mehrfaktor-Authentifizierung werden für dieses Konto vom OIDC-Provider verwaltet.", "info")
+                return redirect(url_for("account"))
+            current_password = request.form.get("current_password", "")
+
+            if action == "password":
+                new_password = request.form.get("new_password", "")
+                new_password2 = request.form.get("new_password2", "")
+                if not current_user.check_password(current_password):
+                    flash("Aktuelles Passwort ist falsch.", "danger")
+                elif len(new_password) < 8:
+                    flash("Das neue Passwort muss mindestens 8 Zeichen haben.", "danger")
+                elif new_password != new_password2:
+                    flash("Die neuen Passwörter stimmen nicht überein.", "danger")
+                else:
+                    current_user.set_password(new_password)
+                    _sign_user_security_state(current_user)
+                    db.session.commit()
+                    _record_auth_event("password_changed", username=current_user.username, success=True, message="Eigenes Passwort geändert")
+                    flash("Passwort wurde geändert.", "success")
+                return redirect(url_for("account"))
+
+            if action == "totp_prepare":
+                if not current_user.check_password(current_password):
+                    flash("Aktuelles Passwort ist falsch.", "danger")
+                else:
+                    current_user.totp_secret_encrypted = encrypt_value(pyotp.random_base32())
+                    current_user.totp_enabled = False
+                    current_user.totp_recovery_hashes = None
+                    _sign_user_security_state(current_user)
+                    db.session.commit()
+                    flash("Scanne den QR-Code und bestätige anschließend einen Code.", "success")
+                return redirect(url_for("account"))
+
+            if action == "totp_enable":
+                code = request.form.get("totp_code", "")
+                if not current_user.check_password(current_password):
+                    flash("Aktuelles Passwort ist falsch.", "danger")
+                elif not _verify_totp_for_user(current_user, code):
+                    flash("2FA-Code ist ungültig oder abgelaufen.", "danger")
+                else:
+                    recovery_codes = _generate_recovery_codes()
+                    _set_recovery_codes_for_user(current_user, recovery_codes)
+                    current_user.totp_enabled = True
+                    _sign_user_security_state(current_user)
+                    db.session.commit()
+                    session["new_recovery_codes"] = recovery_codes
+                    _record_auth_event("2fa_enabled", username=current_user.username, success=True, message="2FA im Benutzerkonto aktiviert")
+                    flash("2FA wurde aktiviert. Speichere die Wiederherstellungscodes sicher ab.", "success")
+                return redirect(url_for("account"))
+
+            if action == "totp_disable":
+                code = request.form.get("totp_code", "")
+                if not current_user.check_password(current_password):
+                    flash("Aktuelles Passwort ist falsch.", "danger")
+                else:
+                    ok, _method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
+                    if not ok:
+                        flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
+                    else:
+                        current_user.totp_enabled = False
+                        current_user.totp_secret_encrypted = None
+                        current_user.totp_recovery_hashes = None
+                        _sign_user_security_state(current_user)
+                        db.session.commit()
+                        _record_auth_event("2fa_disabled", username=current_user.username, success=True, message="2FA im Benutzerkonto deaktiviert")
+                        flash("2FA wurde deaktiviert.", "info")
+                return redirect(url_for("account"))
+
+            if action == "totp_recovery_regenerate":
+                code = request.form.get("totp_code", "")
+                if not current_user.totp_enabled:
+                    flash("2FA ist nicht aktiviert.", "danger")
+                elif not current_user.check_password(current_password):
+                    flash("Aktuelles Passwort ist falsch.", "danger")
+                else:
+                    ok, _method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
+                    if not ok:
+                        flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
+                    else:
+                        recovery_codes = _generate_recovery_codes()
+                        _set_recovery_codes_for_user(current_user, recovery_codes)
+                        _sign_user_security_state(current_user)
+                        db.session.commit()
+                        session["new_recovery_codes"] = recovery_codes
+                        flash("Neue Wiederherstellungscodes wurden erstellt.", "success")
+                return redirect(url_for("account"))
+
+            if action == "totp_cancel":
+                if not current_user.totp_enabled:
+                    current_user.totp_secret_encrypted = None
+                    current_user.totp_recovery_hashes = None
+                    _sign_user_security_state(current_user)
+                    db.session.commit()
+                    flash("2FA-Einrichtung wurde verworfen.", "info")
+                return redirect(url_for("account"))
+
+            flash("Unbekannte Konto-Aktion.", "danger")
+            return redirect(url_for("account"))
+
+        return render_template(
+            "account.html",
+            totp_secret=_get_user_totp_secret(current_user) if current_user.auth_provider == "local" else "",
+            totp_qr_data_uri=_totp_qr_data_uri(current_user) if current_user.auth_provider == "local" else "",
+            recovery_code_count=_recovery_code_count(current_user),
+            new_recovery_codes=session.pop("new_recovery_codes", None),
+        )
 
     @app.route("/")
     @login_required
     def dashboard():
         device_view = _resolve_device_view(request.args.get("view"))
-        total_devices = Device.query.count()
-        favorite_devices = Device.query.filter_by(favorite=True).count()
-        online_devices = Device.query.filter_by(online=True).count()
-        groups = Group.query.order_by(Group.name.asc()).all()
-        favorites = Device.query.filter_by(favorite=True).order_by(Device.name.asc()).limit(8).all()
-        recent = Device.query.order_by(Device.updated_at.desc()).limit(8).all()
+        visible_devices = _visible_device_query()
+        total_devices = visible_devices.count()
+        favorite_devices = visible_devices.filter(Device.favorite.is_(True)).count()
+        online_devices = visible_devices.filter(Device.online.is_(True)).count()
+        groups = _visible_groups()
+        favorites = visible_devices.filter(Device.favorite.is_(True)).order_by(Device.name.asc()).limit(8).all()
+        recent = visible_devices.order_by(Device.updated_at.desc()).limit(8).all()
         return render_template(
             "dashboard.html",
             total_devices=total_devices,
@@ -1118,7 +1786,7 @@ def register_routes(app: Flask) -> None:
         sort = request.args.get("sort", "online").strip().lower()
         device_view = _resolve_device_view(request.args.get("view"))
 
-        query = Device.query
+        query = _visible_device_query()
         if q:
             like = f"%{q}%"
             query = query.filter(
@@ -1157,8 +1825,8 @@ def register_routes(app: Flask) -> None:
             query = query.order_by(Device.online.desc(), Device.favorite.desc(), Device.name.asc())
 
         all_devices = query.all()
-        groups = Group.query.order_by(Group.name.asc()).all()
-        available_os = sorted({row[0] for row in db.session.query(Device.os).filter(Device.os.isnot(None)).all() if row[0]})
+        groups = _visible_groups()
+        available_os = sorted({row[0] for row in _visible_device_query().with_entities(Device.os).filter(Device.os.isnot(None)).all() if row[0]})
         return render_template(
             "devices.html",
             devices=all_devices,
@@ -1174,7 +1842,7 @@ def register_routes(app: Flask) -> None:
         )
 
     @app.route("/devices/new", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def device_new():
         groups = Group.query.order_by(Group.name.asc()).all()
         if request.method == "POST":
@@ -1187,7 +1855,7 @@ def register_routes(app: Flask) -> None:
         return render_template("device_form.html", device=None, groups=groups)
 
     @app.route("/devices/<int:device_id>/edit", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def device_edit(device_id: int):
         device = db.session.get(Device, device_id) or abort(404)
         groups = Group.query.order_by(Group.name.asc()).all()
@@ -1199,29 +1867,43 @@ def register_routes(app: Flask) -> None:
         return render_template("device_form.html", device=device, groups=groups)
 
     @app.route("/devices/<int:device_id>/delete", methods=["POST"])
-    @login_required
+    @admin_required
     def device_delete(device_id: int):
         device = db.session.get(Device, device_id) or abort(404)
+        rustdesk_id = _normalize_import_block_id(device.rustdesk_id)
+        if rustdesk_id:
+            _add_import_blocklist_entry(
+                rustdesk_id,
+                device_name=device.name,
+                reason="Beim Löschen aus dem Adressbuch automatisch gesperrt",
+                created_by=current_user.username,
+            )
+        device_name = device.name
         db.session.delete(device)
         db.session.commit()
-        flash("Gerät wurde gelöscht.", "info")
+        _record_auth_event("device_deleted_blocked", username=current_user.username, success=True, message=f"Gerät {device_name} gelöscht; RustDesk-ID {rustdesk_id} für Importe gesperrt")
+        flash(_t("devices.deleted_blocked", "Gerät wurde gelöscht und seine RustDesk-ID für zukünftige Importe gesperrt."), "info")
         return redirect(url_for("devices"))
 
     @app.route("/devices/<int:device_id>/connect")
     @login_required
     def device_connect(device_id: int):
-        device = db.session.get(Device, device_id) or abort(404)
-        return redirect(rustdesk_link(device.rustdesk_id, decrypt_value(device.encrypted_password)))
+        device = _accessible_device_or_404(device_id)
+        response = redirect(rustdesk_link(device.rustdesk_id, decrypt_value(device.encrypted_password)))
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.route("/devices/<int:device_id>/password", methods=["POST"])
     @login_required
     def device_password(device_id: int):
-        device = db.session.get(Device, device_id) or abort(404)
-        return jsonify({"password": decrypt_value(device.encrypted_password)})
+        device = _accessible_device_or_404(device_id)
+        response = jsonify({"password": decrypt_value(device.encrypted_password)})
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
 
     @app.route("/devices/<int:device_id>/favorite", methods=["POST"])
-    @login_required
+    @admin_required
     def device_toggle_favorite(device_id: int):
         device = db.session.get(Device, device_id) or abort(404)
         device.favorite = not device.favorite
@@ -1229,7 +1911,7 @@ def register_routes(app: Flask) -> None:
         return redirect(request.referrer or url_for("devices"))
 
     @app.route("/devices/<int:device_id>/online", methods=["POST"])
-    @login_required
+    @admin_required
     def device_toggle_online(device_id: int):
         device = db.session.get(Device, device_id) or abort(404)
         device.online = not device.online
@@ -1237,7 +1919,7 @@ def register_routes(app: Flask) -> None:
         return redirect(request.referrer or url_for("devices"))
 
     @app.route("/groups", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def groups():
         if request.method == "POST":
             name = request.form.get("name", "").strip()
@@ -1255,7 +1937,7 @@ def register_routes(app: Flask) -> None:
         return render_template("groups.html", groups=Group.query.order_by(Group.name.asc()).all())
 
     @app.route("/groups/<int:group_id>/edit", methods=["POST"])
-    @login_required
+    @admin_required
     def group_edit(group_id: int):
         group = db.session.get(Group, group_id) or abort(404)
         name = request.form.get("name", "").strip()
@@ -1276,17 +1958,18 @@ def register_routes(app: Flask) -> None:
         return redirect(url_for("groups"))
 
     @app.route("/groups/<int:group_id>/delete", methods=["POST"])
-    @login_required
+    @admin_required
     def group_delete(group_id: int):
         group = db.session.get(Group, group_id) or abort(404)
         Device.query.filter_by(group_id=group.id).update({"group_id": None})
+        group.users.clear()
         db.session.delete(group)
         db.session.commit()
         flash("Gruppe wurde gelöscht. Zugeordnete Geräte bleiben erhalten.", "info")
         return redirect(url_for("groups"))
 
     @app.route("/import", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def import_devices():
         if request.method == "POST":
             upload = request.files.get("csv_file")
@@ -1294,11 +1977,16 @@ def register_routes(app: Flask) -> None:
                 flash("Bitte eine CSV-Datei auswählen.", "danger")
                 return redirect(url_for("import_devices"))
             rows = parse_csv_upload(upload)
-            count = 0
+            count = blocked = skipped = 0
+            blocked_ids = _blocked_import_ids()
             for row in rows:
                 name = row.get("name") or row.get("gerät") or row.get("device")
-                rustdesk_id = row.get("rustdesk_id") or row.get("rustdesk-id") or row.get("id")
+                rustdesk_id = _normalize_import_block_id(row.get("rustdesk_id") or row.get("rustdesk-id") or row.get("id"))
                 if not name or not rustdesk_id:
+                    skipped += 1
+                    continue
+                if rustdesk_id in blocked_ids:
+                    blocked += 1
                     continue
                 group_name = row.get("group") or row.get("gruppe")
                 group = _get_or_create_group(group_name) if group_name else None
@@ -1318,12 +2006,52 @@ def register_routes(app: Flask) -> None:
                 db.session.add(device)
                 count += 1
             db.session.commit()
-            flash(_t("import.csv.created", "Import abgeschlossen: {count} Geräte angelegt.").format(count=count), "success")
+            flash(
+                _t("import.csv.done", "CSV-Import abgeschlossen: {created} neu, {blocked} durch Blockliste übersprungen, {skipped} ungültig.").format(
+                    created=count, blocked=blocked, skipped=skipped
+                ),
+                "success",
+            )
             return redirect(url_for("devices"))
-        return render_template("import.html", groups=Group.query.order_by(Group.name.asc()).all())
+        return render_template(
+            "import.html",
+            groups=Group.query.order_by(Group.name.asc()).all(),
+            blocklist_entries=ImportBlocklistEntry.query.order_by(ImportBlocklistEntry.created_at.desc(), ImportBlocklistEntry.id.desc()).all(),
+        )
+
+    @app.route("/import/blocklist/add", methods=["POST"])
+    @admin_required
+    def import_blocklist_add():
+        rustdesk_id = _normalize_import_block_id(request.form.get("rustdesk_id"))
+        if not rustdesk_id:
+            flash(_t("import.blocklist.id_required", "Bitte eine RustDesk-ID eingeben."), "danger")
+        elif Device.query.filter_by(rustdesk_id=rustdesk_id).first():
+            flash(_t("import.blocklist.device_exists", "Diese RustDesk-ID ist aktuell noch als Gerät im Adressbuch vorhanden."), "warning")
+        else:
+            _add_import_blocklist_entry(
+                rustdesk_id,
+                device_name=request.form.get("device_name", "").strip()[:180],
+                reason=request.form.get("reason", "").strip()[:255] or "Manuell zur Import-Blockliste hinzugefügt",
+                created_by=current_user.username,
+            )
+            db.session.commit()
+            _record_auth_event("import_blocklist_added", username=current_user.username, success=True, message=f"RustDesk-ID {rustdesk_id} zur Import-Blockliste hinzugefügt")
+            flash(_t("import.blocklist.added", "RustDesk-ID wurde zur Import-Blockliste hinzugefügt."), "success")
+        return redirect(url_for("import_devices") + "#blocklist")
+
+    @app.route("/import/blocklist/<int:entry_id>/remove", methods=["POST"])
+    @admin_required
+    def import_blocklist_remove(entry_id: int):
+        entry = db.session.get(ImportBlocklistEntry, entry_id) or abort(404)
+        rustdesk_id = entry.rustdesk_id
+        db.session.delete(entry)
+        db.session.commit()
+        _record_auth_event("import_blocklist_removed", username=current_user.username, success=True, message=f"RustDesk-ID {rustdesk_id} aus der Import-Blockliste entfernt")
+        flash(_t("import.blocklist.removed", "RustDesk-ID wurde aus der Import-Blockliste entfernt und kann wieder importiert werden."), "info")
+        return redirect(url_for("import_devices") + "#blocklist")
 
     @app.route("/import/rustdesk-server", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def import_rustdesk_server():
         """Import devices from the RustDesk OSS server SQLite database.
 
@@ -1357,8 +2085,8 @@ def register_routes(app: Flask) -> None:
             wal_note = _t("import.server.wal_seen", " WAL wurde berücksichtigt.") if result.get("wal_seen") else _t("import.server.no_wal", " Keine WAL-Datei im Upload gefunden.")
             status_note = _t("import.server.status_note", " Online-Status wird nicht aus der Server-DB übernommen; nutze dafür Live-Status hbbs.")
             flash(
-                _t("import.server.done", "RustDesk-Server-Import abgeschlossen: {created} neu, {updated} aktualisiert, {skipped} übersprungen.").format(
-                    created=result["created"], updated=result["updated"], skipped=result["skipped"]
+                _t("import.server.done", "RustDesk-Server-Import abgeschlossen: {created} neu, {updated} aktualisiert, {skipped} übersprungen, {blocked} durch Blockliste gesperrt.").format(
+                    created=result["created"], updated=result["updated"], skipped=result["skipped"], blocked=result.get("blocked", 0)
                 ) + wal_note + status_note,
                 "success",
             )
@@ -1367,13 +2095,13 @@ def register_routes(app: Flask) -> None:
         return render_template("import_rustdesk_server.html", groups=Group.query.order_by(Group.name.asc()).all())
 
     @app.route("/sync/rustdesk-status", methods=["POST"])
-    @login_required
+    @admin_required
     def sync_rustdesk_status():
         flash(_t("status.flash_removed", "Status aus Server-DB wurde entfernt. Der Online-Status wird jetzt über hbbs Live abgefragt; die Server-DB bleibt für Import und Diagnose erhalten."), "info")
         return redirect(request.referrer or url_for("devices"))
 
     @app.route("/sync/rustdesk-live-status", methods=["POST"])
-    @login_required
+    @admin_required
     def sync_rustdesk_live_status():
         try:
             result = _sync_hbbs_live_status(trigger="manual")
@@ -1396,7 +2124,7 @@ def register_routes(app: Flask) -> None:
 
 
     @app.route("/api/status/auto-check", methods=["POST"])
-    @login_required
+    @admin_required
     def api_status_auto_check():
         auto = _get_auto_status_settings()
         if not auto["enabled"]:
@@ -1416,7 +2144,7 @@ def register_routes(app: Flask) -> None:
         return jsonify({"ok": True, "skipped": False, **result})
 
     @app.route("/sync/rustdesk-mounted-import", methods=["POST"])
-    @login_required
+    @admin_required
     def sync_rustdesk_mounted_import():
         configured = current_app.config.get("RUSTDESK_SERVER_DB", "")
         if not configured:
@@ -1440,13 +2168,14 @@ def register_routes(app: Flask) -> None:
         wal_note = " WAL sichtbar und per SQLite-Snapshot berücksichtigt." if _sqlite_family_info(db_path)["wal"] else " Keine WAL-Datei sichtbar."
         flash(
             f"Echtzeit-Import aus eingebundener Server-DB abgeschlossen: {result['created']} neu, "
-            f"{result['updated']} aktualisiert, {result['skipped']} übersprungen.{wal_note}",
+            f"{result['updated']} aktualisiert, {result['skipped']} übersprungen, "
+            f"{result.get('blocked', 0)} durch Blockliste gesperrt.{wal_note}",
             "success",
         )
         return redirect(request.referrer or url_for("import_rustdesk_server"))
 
     @app.route("/import/rustdesk-ssh/test", methods=["POST"])
-    @login_required
+    @admin_required
     def rustdesk_ssh_test():
         _save_ssh_import_settings_from_form()
         try:
@@ -1471,7 +2200,7 @@ def register_routes(app: Flask) -> None:
         return redirect(url_for("import_devices"))
 
     @app.route("/import/rustdesk-ssh/import", methods=["POST"])
-    @login_required
+    @admin_required
     def rustdesk_ssh_import():
         _save_ssh_import_settings_from_form()
         update_existing = normalize_bool(request.form.get("update_existing"))
@@ -1492,20 +2221,22 @@ def register_routes(app: Flask) -> None:
             "created": result["created"],
             "updated": result["updated"],
             "skipped": result["skipped"],
+            "blocked": result.get("blocked", 0),
             "wal_seen": result.get("wal_seen", False),
             "finished_at": _ui_timestamp(),
         }
         session["ssh_import_result"] = ssh_result
         flash(
             f"SSH-Import abgeschlossen: {result['created']} neu, "
-            f"{result['updated']} aktualisiert, {result['skipped']} übersprungen. "
+            f"{result['updated']} aktualisiert, {result['skipped']} übersprungen, "
+            f"{result.get('blocked', 0)} durch Blockliste gesperrt. "
             f"Remote-Snapshot enthielt {diagnostics.get('row_count', 0)} Peers.",
             "success",
         )
         return redirect(url_for("devices"))
 
     @app.route("/import/rustdesk-server/diagnose")
-    @login_required
+    @admin_required
     def rustdesk_server_diagnose():
         configured = current_app.config.get("RUSTDESK_SERVER_DB", "")
         diagnostics = None
@@ -1525,7 +2256,7 @@ def register_routes(app: Flask) -> None:
 
 
     @app.route("/export")
-    @login_required
+    @admin_required
     def export_devices():
         include_passwords = request.args.get("include_passwords") == "1"
         output = StringIO()
@@ -1560,7 +2291,7 @@ def register_routes(app: Flask) -> None:
         )
 
     @app.route("/backup", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def backup():
         backup_dir = Path(current_app.config["BACKUP_DIR"])
         db_file = Path(current_app.config["DATA_DIR"]) / "addressbook.db"
@@ -1667,7 +2398,7 @@ def register_routes(app: Flask) -> None:
         return render_template("backup.html", backups=files)
 
     @app.route("/backup/<path:filename>")
-    @login_required
+    @admin_required
     def backup_download(filename: str):
         safe = secure_filename(filename)
         if safe != filename:
@@ -1675,7 +2406,7 @@ def register_routes(app: Flask) -> None:
         return send_from_directory(current_app.config["BACKUP_DIR"], filename, as_attachment=True)
 
     @app.route("/security")
-    @login_required
+    @admin_required
     def security():
         events = AuthEvent.query.order_by(AuthEvent.created_at.desc()).limit(250).all()
         return render_template(
@@ -1690,7 +2421,7 @@ def register_routes(app: Flask) -> None:
         )
 
     @app.route("/security/auth-log/download")
-    @login_required
+    @admin_required
     def security_auth_log_download():
         auth_log = Path(current_app.config.get("AUTH_LOG_FILE"))
         if not auth_log.is_file():
@@ -1708,7 +2439,7 @@ def register_routes(app: Flask) -> None:
         return render_template("release_notes.html")
 
     @app.route("/api/update-check")
-    @login_required
+    @admin_required
     def api_update_check():
         result = _check_online_update_available()
         _record_update_check(result)
@@ -1716,7 +2447,7 @@ def register_routes(app: Flask) -> None:
 
 
     @app.route("/settings", methods=["GET", "POST"])
-    @login_required
+    @admin_required
     def settings():
         if request.method == "POST":
             action = request.form.get("action", "password")
@@ -1768,9 +2499,10 @@ def register_routes(app: Flask) -> None:
                 elif language not in {key for key, _label in LANGUAGE_CHOICES}:
                     flash("Ungültige Sprache.", "danger")
                 else:
-                    _set_setting("theme_mode", theme_mode)
-                    _set_setting("language", language)
-                    flash("Darstellung und Sprache wurden gespeichert.", "success")
+                    current_user.preferred_theme = theme_mode
+                    current_user.preferred_language = language
+                    db.session.commit()
+                    flash(_t("account.preferences_saved", "Darstellung und Sprache wurden für dein Benutzerkonto gespeichert."), "success")
                 return redirect(url_for("settings") + "#display")
 
             if action == "os_choices":
@@ -1963,12 +2695,16 @@ def register_routes(app: Flask) -> None:
 
 def _import_from_rustdesk_sqlite(db_path: Path, default_group_name: str, update_existing: bool) -> dict[str, int]:
     group = _get_or_create_group(default_group_name)
-    created = updated = skipped = status_values_seen = 0
+    created = updated = skipped = blocked = status_values_seen = 0
+    blocked_ids = _blocked_import_ids()
 
     for row in _read_rustdesk_peer_rows(db_path):
-        rustdesk_id = str(row["id"] or "").strip()
+        rustdesk_id = _normalize_import_block_id(row["id"])
         if not rustdesk_id:
             skipped += 1
+            continue
+        if rustdesk_id in blocked_ids:
+            blocked += 1
             continue
 
         existing = Device.query.filter_by(rustdesk_id=rustdesk_id).first()
@@ -2018,6 +2754,7 @@ def _import_from_rustdesk_sqlite(db_path: Path, default_group_name: str, update_
         "created": created,
         "updated": updated,
         "skipped": skipped,
+        "blocked": blocked,
         "wal_seen": _sqlite_family_info(db_path)["wal"],
         "status_values_seen": status_values_seen,
     }
@@ -2833,14 +3570,26 @@ def _security_audit_report() -> list[dict]:
 
     users = User.query.order_by(User.id.asc()).all()
     if users:
-        protected = sum(1 for u in users if getattr(u, "totp_enabled", False))
-        add("2FA", "ok" if protected == len(users) else "warn", _t("security.report.2fa", "{protected} von {total} Benutzer(n) haben 2FA aktiviert.").format(protected=protected, total=len(users)))
-        recovery = sum(_recovery_code_count(u) for u in users)
-        add(_t("security.report.recovery_name", "2FA-Recovery-Codes"), "ok" if recovery else "warn", _t("security.report.recovery", "Verfügbare Recovery-Codes gesamt: {count}.").format(count=recovery))
+        local_users = [u for u in users if u.auth_provider == "local" and u.active]
+        oidc_users = [u for u in users if u.auth_provider == "oidc" and u.active]
+        protected = sum(1 for u in local_users if getattr(u, "totp_enabled", False))
+        twofa_status = "ok" if not local_users or protected == len(local_users) else "warn"
+        add("2FA", twofa_status, _t("security.report.2fa_local", "{protected} von {total} aktiven lokalen Benutzer(n) haben 2FA aktiviert; OIDC-MFA wird durch den Provider verwaltet.").format(protected=protected, total=len(local_users)))
+        recovery = sum(_recovery_code_count(u) for u in local_users)
+        add(_t("security.report.recovery_name", "2FA-Recovery-Codes"), "ok" if recovery or not local_users else "warn", _t("security.report.recovery", "Verfügbare Recovery-Codes gesamt: {count}.").format(count=recovery))
         signed = sum(1 for u in users if _verify_user_security_state(u))
         add(_t("security.report.sign_name", "DB-Manipulationsschutz Benutzer"), "ok" if signed == len(users) else "danger", _t("security.report.sign", "{signed} von {total} Benutzer-Sicherheitszuständen haben eine gültige HMAC-Signatur. Policy: {policy}.").format(signed=signed, total=len(users), policy=_user_signature_policy()))
+        active_admins = sum(1 for u in users if u.active and u.role == "admin")
+        local_admins = sum(1 for u in users if u.active and u.role == "admin" and u.auth_provider == "local")
+        add(_t("security.report.rbac_name", "Benutzerrollen / Notfallzugang"), "ok" if active_admins and local_admins else "danger", _t("security.report.rbac_detail", "Aktive Administratoren: {admins}; davon lokale Notfall-Administratoren: {local_admins}. Aktive OIDC-Benutzer: {oidc_users}.").format(admins=active_admins, local_admins=local_admins, oidc_users=len(oidc_users)))
     else:
         add(_t("security.report.users_name", "Benutzer"), "danger", _t("security.report.no_users", "Kein Benutzer gefunden."))
+
+    oidc_settings = _get_oidc_settings()
+    if oidc_settings["enabled"]:
+        add("OpenID Connect", "ok" if oidc_settings["configured"] and not oidc_settings["allow_insecure"] else "warn", _t("security.report.oidc_detail", "OIDC ist aktiviert. Provider: {provider}; Auto-Provisioning: {auto}; unsicheres HTTP erlaubt: {insecure}.").format(provider=oidc_settings["provider_name"], auto=("ja" if oidc_settings["auto_provision"] else "nein"), insecure=("ja" if oidc_settings["allow_insecure"] else "nein")))
+    else:
+        add("OpenID Connect", "info", _t("security.report.oidc_disabled", "OIDC-Anmeldung ist deaktiviert; lokale Anmeldung bleibt verfügbar."))
 
     add("Session-Cookie HttpOnly", "ok" if current_app.config.get("SESSION_COOKIE_HTTPONLY") else "danger", f"SESSION_COOKIE_HTTPONLY={current_app.config.get('SESSION_COOKIE_HTTPONLY')}")
     add("Session-Cookie Secure", "ok" if current_app.config.get("SESSION_COOKIE_SECURE") else "warn", _t("security.report.cookie_secure", "Für reinen HTTPS-Betrieb sollte SESSION_COOKIE_SECURE=true gesetzt werden."))
@@ -3434,14 +4183,153 @@ def _get_update_auto_check_settings(checked_ts: int | None = None) -> dict:
         "age_seconds": max(0, age_seconds),
     }
 
+def _parse_bool_setting(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on", "ja"}
+
+
+def _validate_oidc_issuer_url(value: str, *, allow_insecure: bool = False) -> str:
+    issuer = str(value or "").strip().rstrip("/")
+    parsed = urllib.parse.urlparse(issuer)
+    allowed_schemes = {"https"} | ({"http"} if allow_insecure else set())
+    if parsed.scheme not in allowed_schemes or not parsed.netloc or parsed.username or parsed.password:
+        raise ValueError("Die OIDC-Issuer-URL ist ungültig. Standardmäßig ist ausschließlich HTTPS erlaubt.")
+    if parsed.query or parsed.fragment:
+        raise ValueError("Die OIDC-Issuer-URL darf keine Query-Parameter oder Fragmente enthalten.")
+    return issuer
+
+
+def _get_oidc_settings(*, include_secret: bool = False) -> dict:
+    allow_insecure = _parse_bool_setting(_get_setting("oidc_allow_insecure", "false"))
+    issuer = _get_setting("oidc_issuer_url", "").strip().rstrip("/")
+    scopes = " ".join(dict.fromkeys((_get_setting("oidc_scopes", "openid profile email") or "openid profile email").split()))
+    if "openid" not in scopes.split():
+        scopes = "openid " + scopes
+    settings = {
+        "enabled": _parse_bool_setting(_get_setting("oidc_enabled", "false")),
+        "issuer_url": issuer,
+        "client_id": _get_setting("oidc_client_id", "").strip(),
+        "scopes": scopes,
+        "provider_name": (_get_setting("oidc_provider_name", "OpenID Connect").strip() or "OpenID Connect")[:80],
+        "username_claim": (_get_setting("oidc_username_claim", "preferred_username").strip() or "preferred_username")[:80],
+        "auto_provision": _parse_bool_setting(_get_setting("oidc_auto_provision", "false")),
+        "allowed_domains": [item.strip().lower() for item in _get_setting("oidc_allowed_domains", "").split(",") if item.strip()],
+        "allow_insecure": allow_insecure,
+        "configured": bool(issuer and _get_setting("oidc_client_id", "").strip() and _get_setting("oidc_client_secret", "")),
+    }
+    if include_secret:
+        encrypted = _get_setting("oidc_client_secret", "")
+        try:
+            settings["client_secret"] = decrypt_value(encrypted) if encrypted else ""
+        except Exception:
+            settings["client_secret"] = ""
+    return settings
+
+
+def _configure_oidc_client():
+    settings = _get_oidc_settings(include_secret=True)
+    if not settings["enabled"] or not settings["configured"] or not settings.get("client_secret"):
+        raise ValueError("OIDC ist nicht vollständig konfiguriert oder nicht aktiviert.")
+    issuer = _validate_oidc_issuer_url(settings["issuer_url"], allow_insecure=settings["allow_insecure"])
+    return oauth.register(
+        "rustdesk_oidc",
+        overwrite=True,
+        client_id=settings["client_id"],
+        client_secret=settings["client_secret"],
+        server_metadata_url=f"{issuer}/.well-known/openid-configuration",
+        client_kwargs={
+            "scope": settings["scopes"],
+            "code_challenge_method": "S256",
+        },
+    )
+
+
+def _oidc_claim_username(userinfo: dict, settings: dict) -> str:
+    claim = settings.get("username_claim") or "preferred_username"
+    raw = userinfo.get(claim) or userinfo.get("preferred_username") or userinfo.get("email") or userinfo.get("name") or userinfo.get("sub")
+    value = str(raw or "").strip()
+    value = re.sub(r"[^A-Za-z0-9._@-]+", "-", value).strip("-.")[:80]
+    return value or f"oidc-{str(userinfo.get('sub') or secrets.token_hex(4))[:32]}"
+
+
+def _unique_username(base: str) -> str:
+    candidate = base[:80]
+    if not User.query.filter_by(username=candidate).first():
+        return candidate
+    for number in range(2, 10000):
+        suffix = f"-{number}"
+        candidate = f"{base[:80-len(suffix)]}{suffix}"
+        if not User.query.filter_by(username=candidate).first():
+            return candidate
+    raise ValueError("Für den OIDC-Benutzer konnte kein eindeutiger Benutzername erzeugt werden.")
+
+
+def _oidc_email_allowed(email: str, settings: dict) -> bool:
+    domains = settings.get("allowed_domains") or []
+    if not domains:
+        return True
+    email = str(email or "").strip().lower()
+    if "@" not in email:
+        return False
+    return email.rsplit("@", 1)[1] in domains
+
+
+def _set_settings_bulk(values: dict[str, str]) -> None:
+    for key, value in values.items():
+        setting = Setting.query.filter_by(key=key).first()
+        if setting:
+            setting.value = str(value)
+        else:
+            db.session.add(Setting(key=key, value=str(value)))
+    db.session.commit()
+
+
+def _normalize_import_block_id(value) -> str:
+    return str(value or "").strip()[:80]
+
+
+def _blocked_import_ids() -> set[str]:
+    return {row[0] for row in db.session.query(ImportBlocklistEntry.rustdesk_id).all() if row[0]}
+
+
+def _add_import_blocklist_entry(
+    rustdesk_id: str,
+    *,
+    device_name: str = "",
+    reason: str = "",
+    created_by: str = "",
+) -> ImportBlocklistEntry:
+    normalized = _normalize_import_block_id(rustdesk_id)
+    if not normalized:
+        raise ValueError("RustDesk-ID darf nicht leer sein.")
+    entry = ImportBlocklistEntry.query.filter_by(rustdesk_id=normalized).first()
+    if entry is None:
+        entry = ImportBlocklistEntry(rustdesk_id=normalized)
+        db.session.add(entry)
+    if device_name:
+        entry.device_name = str(device_name).strip()[:180]
+    if reason:
+        entry.reason = str(reason).strip()[:255]
+    if created_by:
+        entry.created_by = str(created_by).strip()[:80]
+    entry.created_at = utcnow()
+    return entry
+
+
 def _get_setting(key: str, default: str = "") -> str:
     setting = Setting.query.filter_by(key=key).first()
     return setting.value if setting else default
 
 
 def _get_language() -> str:
+    allowed = {key for key, _label in LANGUAGE_CHOICES}
+    if has_request_context() and current_user.is_authenticated:
+        lang = str(getattr(current_user, "preferred_language", "") or "").strip().lower()
+        if lang in allowed:
+            return lang
     lang = _get_setting("language", "de").strip().lower()
-    return lang if lang in {key for key, _label in LANGUAGE_CHOICES} else "de"
+    return lang if lang in allowed else "de"
 
 
 def _t(key: str, default: str | None = None) -> str:
@@ -3468,6 +4356,10 @@ def _translated_status_source_choices() -> list[tuple[str, str]]:
 
 
 def _get_theme_mode() -> str:
+    if has_request_context() and current_user.is_authenticated:
+        mode = str(getattr(current_user, "preferred_theme", "") or "").strip().lower()
+        if mode in {"light", "dark"}:
+            return mode
     mode = _get_setting("theme_mode", "light").strip().lower()
     return mode if mode in {"light", "dark"} else "light"
 
