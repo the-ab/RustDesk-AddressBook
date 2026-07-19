@@ -5,3 +5,8 @@ __pycache__
 /data
 /backups
 updates/*.zip
+
+.ruff_cache
+.pytest_cache
+.venv
+venv

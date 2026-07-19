@@ -1,46 +1,34 @@
-# RustDesk AddressBook Security Report
+# Sicherheitsstatus RustDesk AddressBook 0.5.28
 
-Version: `0.5.26-user-preferences-import-blocklist`
+**Stand:** 19. Juli 2026  
+**Version:** `0.5.28-container-runtime-healthcheck-trixie`
 
-## Sicherheitsrelevante Architektur
+## Behobene Schwerpunkte
 
-- Rollenmodell mit `admin` und `user`; Verwaltungs- und Schreibaktionen werden serverseitig durch geschützte Flask-Routen begrenzt.
-- Normale Benutzer sehen ausschließlich Geräte aus zugewiesenen Gruppen. Geräte ohne Gruppe werden nur Administratoren bereitgestellt; nicht sichtbare Geräte liefern auch über direkte URLs keine Daten.
-- Der aktuelle Administrator und der letzte aktive lokale Administrator sind gegen versehentliches Löschen, Deaktivieren, Herabstufen oder Provider-Wechsel geschützt.
-- Lokale Konten unterstützen Passwort, TOTP und einmalige gehashte Recovery-Codes.
-- OIDC verwendet Discovery sowie Authorization Code mit PKCE, `state`/`nonce` über Authlib und eine eindeutige Kontobindung über Issuer plus `sub`.
-- Das OIDC-Client-Secret wird mit Fernet verschlüsselt in der Datenbank gespeichert. Gerätepasswörter werden ebenfalls feldweise verschlüsselt.
-- Sicherheitsrelevante Benutzerfelder werden HMAC-signiert; Bestandskonten werden beim Schema-Upgrade neu versiegelt.
-- OIDC-Auto-Provisioning legt ausschließlich normale Benutzer ohne Gruppenzugriff an. Eine optionale Domain-Positivliste kann die automatische Anlage begrenzen.
-- Unsichere HTTP-Issuer sind standardmäßig abgewiesen und müssen ausdrücklich für isolierte Testumgebungen aktiviert werden.
-- CSRF-Schutz, sichere Redirect-Prüfung, Security Header, Login-Auditlog, interne Brute-Force-Sperre und fail2ban/CrowdSec-kompatibles `auth.log` bleiben aktiv.
+- Updatepakete werden vor dem Entpacken über Ed25519 und eine signierte SHA-256-Prüfsumme verifiziert.
+- Der Vollbackup-Restore akzeptiert nur reguläre Dateien in erlaubten Pfaden und begrenzt Anzahl, Einzelgröße und entpackte Gesamtgröße.
+- Bestehende 0.5.26-Benutzersignaturen werden nur nach erfolgreicher Prüfung des alten Signaturformats migriert. Ab 0.5.27 umfasst die Signatur auch Gruppenzuweisungen und Sitzungsstand.
+- Sicherheitsrelevante Kontoänderungen widerrufen bereits bestehende Sitzungen.
+- OIDC-Identitäten werden ausschließlich über die Kombination aus Issuer und `sub` gebunden; Domain-Filter verlangen `email_verified=true`.
+- Die Ersteinrichtung benötigt ein serverseitig erzeugtes Setup-Token.
+- Passwortabruf, RustDesk-Verbindungsstart und CSV-Export mit Passwörtern erfordern eine aktuelle Authentifizierung und werden protokolliert.
+- SSH-Import verlangt einen vorab bekannten SHA-256-Hostschlüssel-Fingerprint und verwendet `StrictHostKeyChecking=yes`.
+- CSV-Formelinjektion, gespeicherte Icon-DOM-Injektion, unbegrenztes Auth-Ereigniswachstum und externe JavaScript-Abhängigkeiten wurden adressiert.
+- Der Container läuft als unprivilegierter Benutzer mit entfernten Capabilities, `no-new-privileges`, schreibgeschütztem Root-Dateisystem und begrenztem tmpfs.
+- Python-Abhängigkeiten und das Python-Basisimage sind auf konkrete Versionen festgelegt.
 
-## Durchgeführte Build-Prüfungen
+## Bewusst erhaltene Betriebsoptionen
 
-- Python-Kompilierung und statische Prüfung aller App- und Scriptdateien
-- Jinja2-Syntaxprüfung aller HTML-Templates
-- JavaScript-Syntaxprüfung
-- Shell-Syntaxprüfung der Installations-, Update- und Entrypoint-Scripte
-- Migrationstest von einer Datenbank im 0.5.24-Schema
-- Funktionsprüfung für Admin- und Benutzerrollen, Gruppensichtbarkeit, ungruppierte Geräte und geschützte Verwaltungsrouten
-- Prüfung von lokalem Benutzeranlegen, Deaktivierung und Schutz des letzten lokalen Administrators
-- OIDC-Konfigurationsprüfung inklusive verschlüsselter Speicherung des Client-Secrets
-- simulierte OIDC-Callback-Prüfung mit automatischer Anlage eines normalen Benutzers ohne Gruppen
-- SQLite-Integritätsprüfung und ZIP-Strukturprüfung
+- HTTP kann weiterhin ausdrücklich aktiviert werden, bleibt aber standardmäßig deaktiviert. Für produktiven Zugriff ist HTTPS erforderlich.
+- Interne OIDC-Provider bleiben möglich, müssen aber bewusst über `OIDC_ALLOW_PRIVATE_ISSUER=true` freigegeben werden.
+- Unsignierte lokale Updates sind nur als expliziter interaktiver Notfallweg über `RAB_ALLOW_UNSIGNED_LOCAL_UPDATES=true` möglich; automatisierte Nutzung bleibt gesperrt.
+- Die SQLite-Datenbank ist weiterhin nicht vollständig verschlüsselt. Gerätepasswörter und OIDC-Client-Secret werden feldweise verschlüsselt; `data/config.json` muss entsprechend geschützt und gesichert werden.
 
-## Betriebsanforderungen
+## Migrationshinweis
 
-- Produktiv ausschließlich HTTPS verwenden.
-- `TRUST_PROXY_HEADERS=true` nur hinter einem vertrauenswürdigen Reverse Proxy setzen, der die Anwendung exklusiv erreicht.
-- Mindestens einen starken lokalen Administrator mit TOTP als Notfallzugang behalten.
-- Beim OIDC-Provider MFA erzwingen; die Anwendung kann den externen MFA-Status nicht selbst verifizieren.
-- Gruppen nach dem Minimalprinzip zuweisen und automatisch angelegte OIDC-Benutzer vor Freigabe prüfen.
-- Backups mit `addressbook.db` und `data/config.json` nur verschlüsselt und getrennt geschützt speichern.
+Das alte 0.5.26-Signaturformat enthielt noch keine Gruppenzuweisungen. Beim einmaligen Upgrade werden deshalb die vorhandenen Gruppenzuweisungen nach erfolgreicher Validierung der alten Benutzeridentität als Ausgangszustand übernommen und anschließend mit der neuen Signatur geschützt. Ab diesem Zeitpunkt werden direkte Änderungen an Rollen, Identität, Sitzungsstand oder Gruppenzuweisungen erkannt und die Anmeldung beziehungsweise Sitzung blockiert.
 
-## Rest-Risiken
 
-- Die SQLite-Datenbank ist nicht vollständig mit SQLCipher verschlüsselt. Wer `addressbook.db` und `data/config.json` gemeinsam erlangt, kann verschlüsselte Felder entschlüsseln und gilt als vollständiger Kompromiss.
-- Ein echter End-to-End-Test gegen jeden möglichen OIDC-Provider ist nicht möglich; Claim-Namen, Logout-Verhalten und Provider-Richtlinien können variieren.
-- CDN-basierte Bootstrap-/Icon-Ressourcen benötigen Browserzugriff nach außen. Für eine vollständig offline betriebene oder strengere CSP-Variante müssten diese Dateien lokal eingebunden werden.
-- Die hbbs-Live-Abfrage nutzt keine offiziell dokumentierte Web-API und kann sich nach RustDesk-Serverupdates ändern.
-- Ein externer Penetrationstest mit OWASP ZAP/Burp Suite wurde in dieser Build-Umgebung nicht durchgeführt.
+## 0.5.28 Betriebsstabilität
+
+Der eigentliche Webprozess bleibt unprivilegiert. Ein separater, kurzlebiger Init-Dienst erhält ausschließlich die für die Berechtigungsvorbereitung benötigten Capabilities. Der neue Healthcheck prüft Listener und SQLite-Verbindung. Das Basisimage verwendet Debian Trixie.

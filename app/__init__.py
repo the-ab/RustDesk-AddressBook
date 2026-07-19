@@ -5,6 +5,7 @@ import csv
 import hashlib
 import hmac
 import json
+import ipaddress
 import os
 import re
 import urllib.error
@@ -12,6 +13,7 @@ import urllib.parse
 import urllib.request
 import secrets
 import shutil
+import socket
 import sqlite3
 import subprocess
 import tempfile
@@ -31,6 +33,7 @@ from flask import (
     abort,
     jsonify,
     current_app,
+    g,
     has_request_context,
     flash,
     redirect,
@@ -46,7 +49,7 @@ import qrcode
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from sqlalchemy import false, or_
+from sqlalchemy import bindparam, false, or_, text
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -55,7 +58,7 @@ from .config import Config
 from .crypto import decrypt_value, encrypt_value
 from .extensions import db, login_manager, oauth
 from .helpers import csrf_token, normalize_bool, parse_csv_upload, rustdesk_link, validate_csrf
-from .models import AuthEvent, Device, Group, ImportBlocklistEntry, Setting, User, utcnow
+from .models import AuthEvent, Device, Group, ImportBlocklistEntry, Setting, TransientSecret, User, utcnow
 from .rustdesk_live import RustDeskLiveStatusError, query_hbbs_online_status
 
 
@@ -485,6 +488,8 @@ TRANSLATIONS["en"].update({
     "import.server.status_note": " Online status is not imported from the server DB; use Live status hbbs for that.",
     "import.server.done": "RustDesk server import completed: {created} created, {updated} updated, {skipped} skipped.",
     "import.ssh.result_import": "Import",
+    "import.ssh.host_fingerprint": "Verified SSH host-key fingerprint",
+    "import.ssh.host_fingerprint_help": "Compare the SHA-256 fingerprint with the RustDesk server through a trusted channel. Only the matching host key is stored in known_hosts.",
     "settings.status.host_placeholder": "rustdesk.example.com or IP",
     "settings.status.port_help": "Usually 21115 when your hbbs main port is 21116.",
     "settings.status.requester_help": "Only an identifier for the protocol request. It is not a device ID and not a password.",
@@ -498,7 +503,7 @@ TRANSLATIONS["en"].update({
     "security.log_intro": "The app writes failed logins to this file:",
     "security.fail_marker": "Failures contain the marker",
     "security.fail_filter": "Example fail2ban filter:",
-    "security.internal_lockout": "Internal lockout: {limit} failed attempts per IP or username within {window} seconds.",
+    "security.internal_lockout": "Internal lockout: {limit} failed attempts per source IP within {window} seconds.",
     "security.log_rotation": "Auth log rotation: every {days} day(s), keeping {keep} rotated file(s).",
     "security.auth_events": "Latest login / 2FA events",
     "security.table.time": "Time",
@@ -510,9 +515,16 @@ TRANSLATIONS["en"].update({
     "security.no_events": "No events yet.",
     "security.sqlite_title": "Note about SQLite encryption",
     "security.sqlite_text": "The running SQLite database is not fully SQLCipher-encrypted. Device passwords are encrypted per field. User security fields such as password hash and 2FA state are additionally signed with an HMAC key from data/config.json. This prevents an attacker with only SQLite write access from silently disabling 2FA. If an attacker obtains both database and runtime secrets, the installation is compromised.",
-    "security.signature_policy": "Signature policy: default is repair_on_verified_login for update-friendly migrations. For maximum hardening, set USER_SIGNATURE_POLICY=strict in docker-compose.yml.",
+    "security.signature_policy": "Signature policy: strict. Modified roles, OIDC identities and group assignments are blocked; automatic re-signing during login is disabled.",
+    "reauth.title": "Reauthentication",
+    "reauth.help": "After the sensitive-action window expires, reauthentication is required before retrieving device passwords, exporting passwords or starting a connection.",
+    "reauth.oidc": "Sign in again with OpenID Connect",
+    "reauth.totp": "2FA code",
+    "reauth.confirm": "Confirm",
     "setup.title": "Initial setup",
     "setup.subtitle": "Create the first admin user.",
+    "setup.token": "Setup token",
+    "setup.token_help": "Enter the one-time token printed by the installer or read it from /data/config.json on the server.",
     "setup.username": "Username",
     "setup.password": "Password",
     "setup.repeat_password": "Repeat password",
@@ -769,6 +781,7 @@ def _migrate_schema() -> None:
             "email": "VARCHAR(255)",
             "preferred_language": "VARCHAR(8) NOT NULL DEFAULT 'de'",
             "preferred_theme": "VARCHAR(16) NOT NULL DEFAULT 'light'",
+            "session_version": "INTEGER NOT NULL DEFAULT 1",
         }
         for column, definition in auth_columns.items():
             if column not in user_cols:
@@ -794,6 +807,24 @@ def _migrate_schema() -> None:
         conn.exec_driver_sql("CREATE UNIQUE INDEX IF NOT EXISTS uq_users_oidc_identity ON users(oidc_issuer, oidc_subject) WHERE oidc_subject IS NOT NULL")
         conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_user_groups_user_id ON user_groups(user_id)")
         conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_user_groups_group_id ON user_groups(group_id)")
+        conn.exec_driver_sql("UPDATE users SET session_version=1 WHERE session_version IS NULL OR session_version < 1")
+
+        signature_version = int(current_app.config.get("SECURITY_SIGNATURE_VERSION", 2))
+        row = conn.exec_driver_sql("SELECT value FROM settings WHERE key='security_signature_version'").fetchone()
+        stored_signature_version = int(row[0]) if row and str(row[0]).isdigit() else 0
+        if stored_signature_version < signature_version:
+            reseal_all = True
+            conn.exec_driver_sql(
+                "INSERT INTO settings(key, value, updated_at) VALUES('security_signature_version', ?, CURRENT_TIMESTAMP) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP",
+                (str(signature_version),),
+            )
+
+        valid_icons = [value for value, _label in GROUP_ICON_CHOICES]
+        icon_cleanup = text(
+            "UPDATE groups SET icon='collection' WHERE icon IS NULL OR icon NOT IN :valid_icons"
+        ).bindparams(bindparam("valid_icons", expanding=True))
+        conn.execute(icon_cleanup, {"valid_icons": valid_icons})
 
         current_app.config["_SECURITY_SIGNATURE_INITIALIZE_MISSING"] = security_signature_created
         current_app.config["_SECURITY_SIGNATURE_RESEAL_ALL"] = reseal_all
@@ -881,7 +912,13 @@ def _safe_next_url(value: str | None, default_endpoint: str = "dashboard") -> st
     return candidate
 
 
-def _security_signature_payload(user: User) -> str:
+def _legacy_security_signature_payload_v1(user: User) -> str:
+    """Return the exact signed payload used by 0.5.25/0.5.26.
+
+    During the one-time migration to signature version 2, an existing signature
+    must validate against this payload before it is upgraded. This prevents a
+    database modification made before the upgrade from being silently trusted.
+    """
     data = {
         "username": user.username or "",
         "password_hash": user.password_hash or "",
@@ -895,6 +932,28 @@ def _security_signature_payload(user: User) -> str:
         "totp_secret_encrypted": user.totp_secret_encrypted or "",
         "totp_enabled": bool(user.totp_enabled),
         "totp_recovery_hashes": user.totp_recovery_hashes or "",
+    }
+    return json.dumps(data, sort_keys=True, separators=(",", ":"))
+
+
+def _security_signature_payload(user: User) -> str:
+    group_ids = sorted(int(group.id) for group in getattr(user, "groups", []) if getattr(group, "id", None) is not None)
+    data = {
+        "signature_version": int(current_app.config.get("SECURITY_SIGNATURE_VERSION", 2)),
+        "username": user.username or "",
+        "password_hash": user.password_hash or "",
+        "role": user.role or "user",
+        "active": bool(user.active),
+        "auth_provider": user.auth_provider or "local",
+        "oidc_issuer": user.oidc_issuer or "",
+        "oidc_subject": user.oidc_subject or "",
+        "display_name": user.display_name or "",
+        "email": user.email or "",
+        "totp_secret_encrypted": user.totp_secret_encrypted or "",
+        "totp_enabled": bool(user.totp_enabled),
+        "totp_recovery_hashes": user.totp_recovery_hashes or "",
+        "session_version": int(getattr(user, "session_version", 1) or 1),
+        "group_ids": group_ids,
     }
     return json.dumps(data, sort_keys=True, separators=(",", ":"))
 
@@ -915,11 +974,16 @@ def _verify_user_security_state(user: User) -> bool:
     return hmac.compare_digest(stored, expected)
 
 
+def _verify_legacy_user_security_state_v1(user: User) -> bool:
+    stored = getattr(user, "security_signature", None) or ""
+    if not stored:
+        return False
+    expected = _security_hmac(_legacy_security_signature_payload_v1(user))
+    return hmac.compare_digest(stored, expected)
+
+
 def _user_signature_policy() -> str:
-    policy = str(current_app.config.get("USER_SIGNATURE_POLICY", "repair_on_verified_login")).strip().lower()
-    if policy not in {"strict", "repair_on_verified_login"}:
-        policy = "strict"
-    return policy
+    return "strict"
 
 
 def _reseal_user_after_verified_auth(user: User, *, username: str, reason: str) -> None:
@@ -933,13 +997,117 @@ def _ensure_user_security_signatures() -> None:
     reseal_all = bool(current_app.config.get("_SECURITY_SIGNATURE_RESEAL_ALL"))
     if not initialize_missing and not reseal_all:
         return
+
     changed = False
+    rejected_users: list[str] = []
     for user in User.query.all():
-        if reseal_all or not getattr(user, "security_signature", None):
+        stored = getattr(user, "security_signature", None) or ""
+        if not stored:
+            # Only databases that did not have a signature column at all are
+            # initialized automatically. A missing signature in an already
+            # protected database remains invalid and cannot be legitimized.
+            if initialize_missing:
+                _sign_user_security_state(user)
+                changed = True
+            else:
+                rejected_users.append(user.username)
+            continue
+
+        if not reseal_all or _verify_user_security_state(user):
+            continue
+
+        # Upgrade an old signature only after the exact 0.5.25/0.5.26 payload
+        # has validated. Invalid legacy signatures remain invalid, so login is
+        # blocked instead of silently accepting a modified role or identity.
+        if _verify_legacy_user_security_state_v1(user):
             _sign_user_security_state(user)
             changed = True
+        else:
+            rejected_users.append(user.username)
+
     if changed:
         db.session.commit()
+    if rejected_users:
+        current_app.logger.error(
+            "Sicherheitsmigration hat ungültige Benutzersignaturen nicht übernommen: %s",
+            ", ".join(sorted(set(rejected_users))),
+        )
+
+
+def _bump_user_session_version(user: User) -> None:
+    user.session_version = int(getattr(user, "session_version", 1) or 1) + 1
+
+
+def _start_user_session(user: User) -> None:
+    login_user(user)
+    session["auth_session_version"] = int(getattr(user, "session_version", 1) or 1)
+    session["auth_time"] = int(time.time())
+
+
+def _has_recent_auth() -> bool:
+    auth_time = session.get("auth_time")
+    try:
+        age = int(time.time()) - int(auth_time)
+    except (TypeError, ValueError):
+        return False
+    return 0 <= age <= int(current_app.config.get("SENSITIVE_ACTION_REAUTH_SECONDS", 1800))
+
+
+def _commit_user_security_change(user: User, *, keep_current_session: bool = False) -> None:
+    """Persist a security-sensitive user change and revoke older sessions."""
+    _bump_user_session_version(user)
+    _sign_user_security_state(user)
+    db.session.commit()
+    if keep_current_session and current_user.is_authenticated and current_user.id == user.id:
+        session["auth_session_version"] = int(user.session_version)
+        session["auth_time"] = int(time.time())
+
+
+def _store_transient_secret(user: User, purpose: str, payload, *, ttl_seconds: int = 600) -> str:
+    token = secrets.token_urlsafe(48)
+    expires_at = utcnow() + timedelta(seconds=max(60, min(int(ttl_seconds), 3600)))
+    encrypted_payload = encrypt_value(json.dumps(payload, ensure_ascii=False))
+    db.session.add(TransientSecret(
+        token=token,
+        user_id=user.id,
+        purpose=purpose[:64],
+        encrypted_payload=encrypted_payload,
+        expires_at=expires_at,
+    ))
+    db.session.commit()
+    return token
+
+
+def _pop_transient_secret(user: User, token: str | None, purpose: str):
+    if not token:
+        return None
+    entry = TransientSecret.query.filter_by(token=token, user_id=user.id, purpose=purpose[:64]).first()
+    if entry is None:
+        return None
+    try:
+        db.session.delete(entry)
+        db.session.commit()
+        if entry.expires_at < utcnow():
+            return None
+        return json.loads(decrypt_value(entry.encrypted_payload))
+    except Exception:
+        db.session.rollback()
+        return None
+
+
+def _queue_recovery_codes(user: User, recovery_codes: list[str]) -> None:
+    old_token = session.pop("new_recovery_token", None)
+    if old_token:
+        old = TransientSecret.query.filter_by(token=old_token, user_id=user.id, purpose="recovery_codes").first()
+        if old is not None:
+            db.session.delete(old)
+            db.session.commit()
+    session["new_recovery_token"] = _store_transient_secret(user, "recovery_codes", recovery_codes, ttl_seconds=600)
+
+
+def _consume_recovery_codes(user: User):
+    return _pop_transient_secret(user, session.pop("new_recovery_token", None), "recovery_codes")
+
 
 def _client_ip() -> str:
     if current_app.config.get("TRUST_PROXY_HEADERS"):
@@ -952,12 +1120,33 @@ def _client_ip() -> str:
     return (request.remote_addr or "unknown")[:64]
 
 
+def _prune_auth_events_if_needed() -> None:
+    now_ts = time.monotonic()
+    last = float(current_app.extensions.get("rab_auth_prune_at", 0.0) or 0.0)
+    if now_ts - last < 300:
+        return
+    current_app.extensions["rab_auth_prune_at"] = now_ts
+    retention_days = max(1, int(current_app.config.get("AUTH_EVENT_RETENTION_DAYS", 90)))
+    max_rows = max(1000, int(current_app.config.get("AUTH_EVENT_MAX_ROWS", 50000)))
+    cutoff = utcnow() - timedelta(days=retention_days)
+    AuthEvent.query.filter(AuthEvent.created_at < cutoff).delete(synchronize_session=False)
+    count = AuthEvent.query.count()
+    excess = count - max_rows
+    if excess > 0:
+        oldest_ids = [row.id for row in AuthEvent.query.with_entities(AuthEvent.id).order_by(AuthEvent.id.asc()).limit(excess).all()]
+        if oldest_ids:
+            AuthEvent.query.filter(AuthEvent.id.in_(oldest_ids)).delete(synchronize_session=False)
+    TransientSecret.query.filter(TransientSecret.expires_at < utcnow()).delete(synchronize_session=False)
+    db.session.commit()
+
+
 def _record_auth_event(event_type: str, *, username: str = "", success: bool = False, message: str = "") -> None:
     username = (username or "").strip()[:120]
     ip = _client_ip()
     user_agent = (request.headers.get("User-Agent", "") or "")[:255]
     message = (message or "")[:1000]
     try:
+        _prune_auth_events_if_needed()
         db.session.add(AuthEvent(
             event_type=(event_type or "unknown")[:64],
             username=username or None,
@@ -1068,9 +1257,10 @@ def _is_login_blocked(username: str) -> tuple[bool, int]:
     fail_types = ["password_fail", "2fa_fail"]
     base = AuthEvent.query.filter(AuthEvent.success.is_(False), AuthEvent.created_at >= since, AuthEvent.event_type.in_(fail_types))
     ip_count = base.filter(AuthEvent.ip_address == ip).count() if ip else 0
-    user_count = base.filter(AuthEvent.username == (username or "").strip()[:120]).count() if username else 0
-    if ip_count >= limit or user_count >= limit:
-        oldest = base.filter((AuthEvent.ip_address == ip) | (AuthEvent.username == (username or "").strip()[:120])).order_by(AuthEvent.created_at.asc()).first()
+    # A username-wide hard lock lets an unauthenticated attacker deny access to
+    # a known account. Enforce the blocking threshold per source IP instead.
+    if ip_count >= limit:
+        oldest = base.filter(AuthEvent.ip_address == ip).order_by(AuthEvent.created_at.asc()).first()
         if oldest and oldest.created_at:
             try:
                 elapsed = int((utcnow() - oldest.created_at).total_seconds())
@@ -1103,8 +1293,10 @@ def register_template_helpers(app: Flask) -> None:
     app.jinja_env.globals["os_icon_class"] = _os_icon_class
     app.jinja_env.globals["get_os_choices"] = _get_os_choices
     app.jinja_env.globals["group_icon_choices"] = _translated_group_icon_choices
+    app.jinja_env.globals["safe_group_icon"] = _safe_group_icon
     app.jinja_env.globals["group_color_choices"] = _translated_group_color_choices
     app.jinja_env.globals["theme_choices"] = THEME_CHOICES
+    app.jinja_env.globals["csp_nonce"] = lambda: getattr(g, "csp_nonce", "")
     app.jinja_env.globals["language_choices"] = LANGUAGE_CHOICES
     app.jinja_env.globals["get_language"] = _get_language
     app.jinja_env.globals["t"] = _t
@@ -1168,8 +1360,9 @@ def register_template_helpers(app: Flask) -> None:
 def register_hooks(app: Flask) -> None:
     @app.before_request
     def app_before_request():
+        g.csp_nonce = secrets.token_urlsafe(24)
         validate_csrf()
-        if request.endpoint in {"static", "setup"}:
+        if request.endpoint in {"static", "setup", "healthz"}:
             return None
         has_user = db.session.query(User.id).first() is not None
         if not has_user:
@@ -1188,6 +1381,19 @@ def register_hooks(app: Flask) -> None:
             session.clear()
             flash("Sitzung wurde aus Sicherheitsgründen beendet. Bitte melde dich erneut an.", "warning")
             return redirect(url_for("login"))
+        if current_user.is_authenticated:
+            expected = int(getattr(current_user, "session_version", 1) or 1)
+            try:
+                actual = int(session.get("auth_session_version", -1))
+            except (TypeError, ValueError):
+                actual = -1
+            if actual != expected:
+                username = getattr(current_user, "username", "")
+                _record_auth_event("session_revoked", username=username, success=False, message="Sitzung wegen geänderter Sicherheits- oder Kontodaten widerrufen")
+                logout_user()
+                session.clear()
+                flash("Deine Sitzung wurde widerrufen. Bitte melde dich erneut an.", "warning")
+                return redirect(url_for("login"))
         return None
 
     @app.after_request
@@ -1196,13 +1402,24 @@ def register_hooks(app: Flask) -> None:
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         response.headers.setdefault("Referrer-Policy", "same-origin")
         response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-        response.headers.setdefault("Content-Security-Policy", "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'")
+        nonce = getattr(g, "csp_nonce", "")
+        response.headers.setdefault("Content-Security-Policy", f"default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; object-src 'none'; frame-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests")
         if current_app.config.get("APP_HSTS") and request.is_secure:
             response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         return response
 
 
 def register_routes(app: Flask) -> None:
+    @app.route("/healthz")
+    def healthz():
+        try:
+            db.session.execute(text("SELECT 1"))
+            return jsonify(status="ok")
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Healthcheck-Datenbankprüfung fehlgeschlagen")
+            return jsonify(status="error"), 503
+
     @app.route("/setup", methods=["GET", "POST"])
     def setup():
         if db.session.query(User.id).first() is not None:
@@ -1212,8 +1429,12 @@ def register_routes(app: Flask) -> None:
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "")
             password2 = request.form.get("password2", "")
+            setup_token = request.form.get("setup_token", "")
 
-            if not username:
+            if not secrets.compare_digest(setup_token, str(current_app.config.get("SETUP_TOKEN", ""))):
+                _record_auth_event("setup_token_fail", username=username, success=False, message="Ungültiges Setup-Token")
+                flash("Das Setup-Token ist ungültig. Lies es auf dem Server aus data/config.json oder über docker exec.", "danger")
+            elif not username:
                 flash("Benutzername fehlt.", "danger")
             elif len(password) < 8:
                 flash("Das Passwort muss mindestens 8 Zeichen haben.", "danger")
@@ -1226,7 +1447,7 @@ def register_routes(app: Flask) -> None:
                 db.session.add(user)
                 db.session.commit()
                 _record_auth_event("setup_login", username=username, success=True, message="Installation abgeschlossen und Admin angemeldet")
-                login_user(user)
+                _start_user_session(user)
                 flash("Installation abgeschlossen.", "success")
                 return redirect(url_for("dashboard"))
 
@@ -1256,34 +1477,61 @@ def register_routes(app: Flask) -> None:
 
             if user and user.check_password(password):
                 next_url = _safe_next_url(request.args.get("next"))
-                signature_repair_needed = not signature_ok
-                if signature_repair_needed and _user_signature_policy() == "strict":
-                    _record_auth_event("security_signature_invalid", username=username, success=False, message="Benutzer-Sicherheitsdatenbank-Signatur ungültig; Login durch Strict-Policy blockiert")
-                    flash("Anmeldung blockiert: Die Benutzer-Sicherheitsdaten haben keine gültige Signatur. Für Recovery USER_SIGNATURE_POLICY temporär auf repair_on_verified_login setzen oder neu installieren.", "danger")
+                if not signature_ok:
+                    _record_auth_event("security_signature_invalid", username=username, success=False, message="Benutzer-Sicherheitsdatenbank-Signatur ungültig; Login blockiert")
+                    flash("Anmeldung blockiert: Die Sicherheitsdaten dieses Kontos wurden verändert. Stelle eine vertrauenswürdige Sicherung wieder her oder verwende ein anderes Administratorkonto.", "danger")
                     return render_template("login.html")
 
                 if getattr(user, "totp_enabled", False):
-                    _record_auth_event("password_ok_2fa_required", username=username, success=True, message=("Passwort korrekt; 2FA erforderlich; Signatur-Reparatur nach 2FA" if signature_repair_needed else "Passwort korrekt; 2FA erforderlich"))
+                    _record_auth_event("password_ok_2fa_required", username=username, success=True, message="Passwort korrekt; 2FA erforderlich")
                     session["pending_2fa_user_id"] = user.id
                     session["pending_2fa_next"] = next_url or url_for("dashboard")
-                    session["pending_2fa_signature_repair"] = bool(signature_repair_needed)
                     return redirect(url_for("login_2fa"))
 
                 user.last_login_at = utcnow()
-                if signature_repair_needed:
-                    _reseal_user_after_verified_auth(user, username=username, reason="Benutzer-Sicherheitsdaten nach gültigem Passwort neu signiert")
-                    flash("Angemeldet. Die Benutzer-Sicherheitsdaten wurden nach erfolgreicher Authentifizierung neu signiert.", "warning")
-                else:
-                    _sign_user_security_state(user)
-                    db.session.commit()
-                    flash("Angemeldet.", "success")
-                _record_auth_event("login_success", username=username, success=True, message=("Login ohne 2FA erfolgreich; Signatur neu versiegelt" if signature_repair_needed else "Login ohne 2FA erfolgreich"))
-                login_user(user)
+                _sign_user_security_state(user)
+                db.session.commit()
+                flash("Angemeldet.", "success")
+                _record_auth_event("login_success", username=username, success=True, message="Login ohne 2FA erfolgreich")
+                _start_user_session(user)
                 return redirect(next_url)
             _record_auth_event("password_fail", username=username, success=False, message="Ungültiger Benutzername oder Passwort")
+            time.sleep(0.2)
             flash("Benutzername oder Passwort ist falsch.", "danger")
 
         return render_template("login.html")
+
+    @app.route("/reauth", methods=["GET", "POST"])
+    @login_required
+    def reauth():
+        next_url = _safe_next_url(request.values.get("next")) or url_for("dashboard")
+        if request.method == "POST":
+            if current_user.auth_provider == "oidc":
+                username = current_user.username
+                logout_user()
+                session.pop("auth_session_version", None)
+                session.pop("auth_time", None)
+                session["oidc_next"] = next_url
+                session["oidc_force_reauth"] = True
+                _record_auth_event("reauth_oidc_start", username=username, success=True, message="Erneute OIDC-Authentifizierung gestartet")
+                return redirect(url_for("oidc_login", next=next_url, reauth="1"))
+
+            password = request.form.get("current_password", "")
+            second_factor = request.form.get("totp_code", "")
+            if not current_user.check_password(password):
+                _record_auth_event("reauth_fail", username=current_user.username, success=False, message="Passwort für erneute Authentifizierung falsch")
+                time.sleep(0.2)
+                flash("Aktuelles Passwort ist falsch.", "danger")
+            elif current_user.totp_enabled and not _verify_second_factor_for_user(current_user, second_factor, consume_recovery=False)[0]:
+                _record_auth_event("reauth_fail", username=current_user.username, success=False, message="Zweiter Faktor für erneute Authentifizierung falsch")
+                time.sleep(0.2)
+                flash("2FA-Code ist ungültig oder abgelaufen.", "danger")
+            else:
+                session["auth_time"] = int(time.time())
+                _record_auth_event("reauth_success", username=current_user.username, success=True, message="Erneute Authentifizierung erfolgreich")
+                return redirect(next_url)
+        response = render_template("reauth.html", next_url=next_url)
+        return response
 
     @app.route("/login/oidc")
     def oidc_login():
@@ -1295,8 +1543,11 @@ def register_routes(app: Flask) -> None:
             return redirect(url_for("login"))
         try:
             client = _configure_oidc_client()
-            session["oidc_next"] = _safe_next_url(request.args.get("next"))
+            session["oidc_next"] = _safe_next_url(request.args.get("next")) or session.get("oidc_next")
+            force_reauth = request.args.get("reauth") == "1" or bool(session.pop("oidc_force_reauth", False))
             redirect_uri = url_for("oidc_callback", _external=True)
+            if force_reauth:
+                return client.authorize_redirect(redirect_uri, prompt="login", max_age=0)
             return client.authorize_redirect(redirect_uri)
         except Exception as exc:
             _record_auth_event("oidc_start_fail", success=False, message=f"OIDC-Anmeldung konnte nicht gestartet werden: {exc}")
@@ -1317,22 +1568,15 @@ def register_routes(app: Flask) -> None:
                 raise ValueError("OIDC-Antwort enthält keinen sub-Claim.")
             issuer = _validate_oidc_issuer_url(settings["issuer_url"], allow_insecure=settings["allow_insecure"])
             email = str(userinfo.get("email") or "").strip()[:255]
+            if settings.get("allowed_domains") and userinfo.get("email_verified") is not True:
+                raise PermissionError("Für die Domainfreigabe ist ein vom OIDC-Provider bestätigter email_verified-Claim erforderlich.")
             if not _oidc_email_allowed(email, settings):
                 raise PermissionError("Die E-Mail-Domain ist für diese Anwendung nicht freigegeben.")
 
             user = User.query.filter_by(oidc_issuer=issuer, oidc_subject=subject).first()
-            signature_repair_needed = False
             claimed_username = _oidc_claim_username(userinfo, settings)
             if user is None:
-                user = User.query.filter_by(username=claimed_username, auth_provider="oidc", oidc_subject=None).first()
-                if user is not None:
-                    signature_ok = _verify_user_security_state(user)
-                    if not signature_ok and _user_signature_policy() == "strict":
-                        raise PermissionError("Die Benutzer-Sicherheitsdaten haben keine gültige Signatur.")
-                    signature_repair_needed = not signature_ok
-                    user.oidc_issuer = issuer
-                    user.oidc_subject = subject
-                elif settings["auto_provision"]:
+                if settings["auto_provision"]:
                     user = User(
                         username=_unique_username(claimed_username),
                         password_hash="",
@@ -1341,14 +1585,13 @@ def register_routes(app: Flask) -> None:
                         auth_provider="oidc",
                         oidc_issuer=issuer,
                         oidc_subject=subject,
+                        session_version=1,
                     )
                     db.session.add(user)
                 else:
-                    raise PermissionError("Für dieses OIDC-Konto wurde noch kein Benutzer angelegt.")
+                    raise PermissionError("Für diese Kombination aus OIDC-Issuer und Subject wurde noch kein Benutzer angelegt.")
             elif not _verify_user_security_state(user):
-                if _user_signature_policy() == "strict":
-                    raise PermissionError("Die Benutzer-Sicherheitsdaten haben keine gültige Signatur.")
-                signature_repair_needed = True
+                raise PermissionError("Die Benutzer-Sicherheitsdaten haben keine gültige Signatur.")
 
             if user.auth_provider != "oidc":
                 raise PermissionError("Der Benutzername ist bereits einem lokalen Konto zugeordnet.")
@@ -1360,10 +1603,9 @@ def register_routes(app: Flask) -> None:
             user.last_login_at = utcnow()
             _sign_user_security_state(user)
             db.session.commit()
-            login_user(user)
-            session["oidc_id_token"] = token.get("id_token")
+            _start_user_session(user)
             next_url = session.pop("oidc_next", None) or url_for("dashboard")
-            _record_auth_event("oidc_login_success", username=user.username, success=True, message=f"OIDC-Anmeldung über {settings['provider_name']} erfolgreich" + ("; Signatur neu versiegelt" if signature_repair_needed else ""))
+            _record_auth_event("oidc_login_success", username=user.username, success=True, message=f"OIDC-Anmeldung über {settings['provider_name']} erfolgreich")
             flash("Über OpenID Connect angemeldet.", "success")
             return redirect(_safe_next_url(next_url))
         except PermissionError as exc:
@@ -1388,12 +1630,10 @@ def register_routes(app: Flask) -> None:
             flash("Bitte erneut anmelden.", "warning")
             return redirect(url_for("login"))
         signature_ok = _verify_user_security_state(user)
-        signature_repair_pending = bool(session.get("pending_2fa_signature_repair"))
-        if not signature_ok and not signature_repair_pending:
+        if not signature_ok:
             _record_auth_event("security_signature_invalid", username=getattr(user, "username", ""), success=False, message="2FA-Anmeldung blockiert: Benutzer-Sicherheitsdatenbank-Signatur ungültig")
             session.pop("pending_2fa_user_id", None)
             session.pop("pending_2fa_next", None)
-            session.pop("pending_2fa_signature_repair", None)
             flash("Anmeldung aus Sicherheitsgründen blockiert. Bitte melde dich erneut an.", "danger")
             return redirect(url_for("login"))
         if request.method == "POST":
@@ -1406,17 +1646,12 @@ def register_routes(app: Flask) -> None:
             ok, method = _verify_second_factor_for_user(user, code, consume_recovery=True)
             if ok:
                 user.last_login_at = utcnow()
-                repair_done = bool(session.pop("pending_2fa_signature_repair", None))
                 _sign_user_security_state(user)
                 db.session.commit()
-                _record_auth_event("login_success_2fa", username=user.username, success=True, message=(("Login mit Wiederherstellungscode" if method == "recovery" else "Login mit TOTP") + ("; Signatur neu versiegelt" if repair_done else "")))
-                if repair_done:
-                    _record_auth_event("security_resealed", username=user.username, success=True, message="Benutzer-Sicherheitsdaten nach Passwort plus 2FA neu signiert")
-                login_user(user)
+                _record_auth_event("login_success_2fa", username=user.username, success=True, message=("Login mit Wiederherstellungscode" if method == "recovery" else "Login mit TOTP"))
+                _start_user_session(user)
                 next_url = session.pop("pending_2fa_next", None) or url_for("dashboard")
                 session.pop("pending_2fa_user_id", None)
-                if repair_done:
-                    flash("Die Benutzer-Sicherheitsdaten wurden nach erfolgreicher 2FA neu signiert.", "warning")
                 if method == "recovery":
                     remaining = _recovery_code_count(user)
                     flash(f"Angemeldet. Ein Wiederherstellungscode wurde verbraucht. Verbleibend: {remaining}.", "warning")
@@ -1424,6 +1659,7 @@ def register_routes(app: Flask) -> None:
                     flash("Angemeldet.", "success")
                 return redirect(next_url)
             _record_auth_event("2fa_fail", username=user.username, success=False, message="Ungültiger 2FA- oder Wiederherstellungscode")
+            time.sleep(0.2)
             flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
 
         return render_template("login_2fa.html")
@@ -1448,6 +1684,14 @@ def register_routes(app: Flask) -> None:
             active = normalize_bool(request.form.get("active"))
             password = request.form.get("password", "")
             password2 = request.form.get("password2", "")
+            oidc_issuer = request.form.get("oidc_issuer", "").strip()
+            oidc_subject = request.form.get("oidc_subject", "").strip()[:255]
+            if provider == "oidc" and oidc_issuer:
+                try:
+                    oidc_issuer = _validate_oidc_issuer_url(oidc_issuer, allow_insecure=_get_oidc_settings()["allow_insecure"])
+                except ValueError as exc:
+                    flash(str(exc), "danger")
+                    return redirect(url_for("users"))
 
             if not _valid_username(username):
                 flash("Benutzername muss 3 bis 80 Zeichen lang sein und darf nur Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich und @ enthalten.", "danger")
@@ -1457,6 +1701,10 @@ def register_routes(app: Flask) -> None:
                 flash("Lokale Benutzer benötigen ein Passwort mit mindestens 8 Zeichen.", "danger")
             elif provider == "local" and password != password2:
                 flash("Die Passwörter stimmen nicht überein.", "danger")
+            elif provider == "oidc" and (not oidc_issuer or not oidc_subject):
+                flash("OIDC-Benutzer müssen mit der eindeutigen Kombination aus Issuer und Subject angelegt werden.", "danger")
+            elif provider == "oidc" and User.query.filter_by(oidc_issuer=oidc_issuer, oidc_subject=oidc_subject).first():
+                flash("Diese OIDC-Identität ist bereits einem Benutzer zugeordnet.", "warning")
             else:
                 user = User(
                     username=username,
@@ -1464,6 +1712,9 @@ def register_routes(app: Flask) -> None:
                     active=active,
                     auth_provider=provider,
                     password_hash="",
+                    oidc_issuer=oidc_issuer if provider == "oidc" else None,
+                    oidc_subject=oidc_subject if provider == "oidc" else None,
+                    session_version=1,
                 )
                 if provider == "local":
                     user.set_password(password)
@@ -1494,8 +1745,17 @@ def register_routes(app: Flask) -> None:
             active = normalize_bool(request.form.get("active"))
             new_password = request.form.get("new_password", "")
             password2 = request.form.get("new_password2", "")
+            oidc_issuer = request.form.get("oidc_issuer", "").strip()
+            oidc_subject = request.form.get("oidc_subject", "").strip()[:255]
+            if provider == "oidc" and oidc_issuer:
+                try:
+                    oidc_issuer = _validate_oidc_issuer_url(oidc_issuer, allow_insecure=_get_oidc_settings()["allow_insecure"])
+                except ValueError as exc:
+                    flash(str(exc), "danger")
+                    return redirect(url_for("user_edit", user_id=user.id))
 
             duplicate = User.query.filter(User.username == username, User.id != user.id).first()
+            duplicate_oidc = User.query.filter(User.oidc_issuer == oidc_issuer, User.oidc_subject == oidc_subject, User.id != user.id).first() if provider == "oidc" and oidc_issuer and oidc_subject else None
             removes_local_admin = user.role == "admin" and user.active and user.auth_provider == "local" and not (role == "admin" and active and provider == "local")
 
             if not _valid_username(username):
@@ -1512,6 +1772,10 @@ def register_routes(app: Flask) -> None:
                 flash("Die neuen Passwörter stimmen nicht überein.", "danger")
             elif provider == "local" and user.auth_provider != "local" and not new_password:
                 flash("Beim Wechsel auf lokale Anmeldung muss ein neues Passwort gesetzt werden.", "danger")
+            elif provider == "oidc" and (not oidc_issuer or not oidc_subject):
+                flash("OIDC-Benutzer benötigen eine eindeutige Issuer-/Subject-Zuordnung.", "danger")
+            elif duplicate_oidc:
+                flash("Diese OIDC-Identität ist bereits einem anderen Benutzer zugeordnet.", "warning")
             else:
                 provider_changed = provider != user.auth_provider
                 user.username = username
@@ -1520,8 +1784,6 @@ def register_routes(app: Flask) -> None:
                 user.auth_provider = provider
                 user.groups = _groups_from_form()
                 if provider_changed:
-                    user.oidc_issuer = None
-                    user.oidc_subject = None
                     user.display_name = None
                     user.email = None
                     user.totp_enabled = False
@@ -1529,8 +1791,15 @@ def register_routes(app: Flask) -> None:
                     user.totp_recovery_hashes = None
                     if provider == "oidc":
                         user.password_hash = ""
+                if provider == "oidc":
+                    user.oidc_issuer = oidc_issuer
+                    user.oidc_subject = oidc_subject
+                else:
+                    user.oidc_issuer = None
+                    user.oidc_subject = None
                 if new_password:
                     user.set_password(new_password)
+                _bump_user_session_version(user)
                 _sign_user_security_state(user)
                 db.session.commit()
                 _record_auth_event("user_updated", username=current_user.username, success=True, message=f"Benutzer {username} aktualisiert; Rolle={role}; Provider={provider}; aktiv={active}")
@@ -1662,8 +1931,7 @@ def register_routes(app: Flask) -> None:
                     flash("Die neuen Passwörter stimmen nicht überein.", "danger")
                 else:
                     current_user.set_password(new_password)
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     _record_auth_event("password_changed", username=current_user.username, success=True, message="Eigenes Passwort geändert")
                     flash("Passwort wurde geändert.", "success")
                 return redirect(url_for("account"))
@@ -1675,8 +1943,7 @@ def register_routes(app: Flask) -> None:
                     current_user.totp_secret_encrypted = encrypt_value(pyotp.random_base32())
                     current_user.totp_enabled = False
                     current_user.totp_recovery_hashes = None
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     flash("Scanne den QR-Code und bestätige anschließend einen Code.", "success")
                 return redirect(url_for("account"))
 
@@ -1690,9 +1957,8 @@ def register_routes(app: Flask) -> None:
                     recovery_codes = _generate_recovery_codes()
                     _set_recovery_codes_for_user(current_user, recovery_codes)
                     current_user.totp_enabled = True
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
-                    session["new_recovery_codes"] = recovery_codes
+                    _commit_user_security_change(current_user, keep_current_session=True)
+                    _queue_recovery_codes(current_user, recovery_codes)
                     _record_auth_event("2fa_enabled", username=current_user.username, success=True, message="2FA im Benutzerkonto aktiviert")
                     flash("2FA wurde aktiviert. Speichere die Wiederherstellungscodes sicher ab.", "success")
                 return redirect(url_for("account"))
@@ -1709,8 +1975,7 @@ def register_routes(app: Flask) -> None:
                         current_user.totp_enabled = False
                         current_user.totp_secret_encrypted = None
                         current_user.totp_recovery_hashes = None
-                        _sign_user_security_state(current_user)
-                        db.session.commit()
+                        _commit_user_security_change(current_user, keep_current_session=True)
                         _record_auth_event("2fa_disabled", username=current_user.username, success=True, message="2FA im Benutzerkonto deaktiviert")
                         flash("2FA wurde deaktiviert.", "info")
                 return redirect(url_for("account"))
@@ -1728,9 +1993,8 @@ def register_routes(app: Flask) -> None:
                     else:
                         recovery_codes = _generate_recovery_codes()
                         _set_recovery_codes_for_user(current_user, recovery_codes)
-                        _sign_user_security_state(current_user)
-                        db.session.commit()
-                        session["new_recovery_codes"] = recovery_codes
+                        _commit_user_security_change(current_user, keep_current_session=True)
+                        _queue_recovery_codes(current_user, recovery_codes)
                         flash("Neue Wiederherstellungscodes wurden erstellt.", "success")
                 return redirect(url_for("account"))
 
@@ -1738,8 +2002,7 @@ def register_routes(app: Flask) -> None:
                 if not current_user.totp_enabled:
                     current_user.totp_secret_encrypted = None
                     current_user.totp_recovery_hashes = None
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     flash("2FA-Einrichtung wurde verworfen.", "info")
                 return redirect(url_for("account"))
 
@@ -1751,7 +2014,7 @@ def register_routes(app: Flask) -> None:
             totp_secret=_get_user_totp_secret(current_user) if current_user.auth_provider == "local" else "",
             totp_qr_data_uri=_totp_qr_data_uri(current_user) if current_user.auth_provider == "local" else "",
             recovery_code_count=_recovery_code_count(current_user),
-            new_recovery_codes=session.pop("new_recovery_codes", None),
+            new_recovery_codes=_consume_recovery_codes(current_user),
         )
 
     @app.route("/")
@@ -1889,6 +2152,9 @@ def register_routes(app: Flask) -> None:
     @login_required
     def device_connect(device_id: int):
         device = _accessible_device_or_404(device_id)
+        if not _has_recent_auth():
+            return redirect(url_for("reauth", next=request.path))
+        _record_auth_event("device_connect", username=current_user.username, success=True, message=f"RustDesk-Verbindung für Gerät {device.name} ({device.rustdesk_id}) gestartet")
         response = redirect(rustdesk_link(device.rustdesk_id, decrypt_value(device.encrypted_password)))
         response.headers["Cache-Control"] = "no-store"
         return response
@@ -1897,6 +2163,12 @@ def register_routes(app: Flask) -> None:
     @login_required
     def device_password(device_id: int):
         device = _accessible_device_or_404(device_id)
+        if not _has_recent_auth():
+            response = jsonify({"error": "reauth_required", "reauth_url": url_for("reauth", next=url_for("devices"))})
+            response.status_code = 401
+            response.headers["Cache-Control"] = "no-store"
+            return response
+        _record_auth_event("device_password_view", username=current_user.username, success=True, message=f"Gerätepasswort für {device.name} ({device.rustdesk_id}) abgerufen")
         response = jsonify({"password": decrypt_value(device.encrypted_password)})
         response.headers["Cache-Control"] = "no-store"
         return response
@@ -1962,7 +2234,11 @@ def register_routes(app: Flask) -> None:
     def group_delete(group_id: int):
         group = db.session.get(Group, group_id) or abort(404)
         Device.query.filter_by(group_id=group.id).update({"group_id": None})
+        affected_users = list(group.users)
         group.users.clear()
+        for affected_user in affected_users:
+            _bump_user_session_version(affected_user)
+            _sign_user_security_state(affected_user)
         db.session.delete(group)
         db.session.commit()
         flash("Gruppe wurde gelöscht. Zugeordnete Geräte bleiben erhalten.", "info")
@@ -2259,6 +2535,8 @@ def register_routes(app: Flask) -> None:
     @admin_required
     def export_devices():
         include_passwords = request.args.get("include_passwords") == "1"
+        if include_passwords and not _has_recent_auth():
+            return redirect(url_for("reauth", next=request.full_path.rstrip("?")))
         output = StringIO()
         fieldnames = ["name", "rustdesk_id", "customer", "location", "os", "tags", "notes", "favorite", "online", "group"]
         if include_passwords:
@@ -2280,8 +2558,14 @@ def register_routes(app: Flask) -> None:
             }
             if include_passwords:
                 row["password"] = decrypt_value(d.encrypted_password)
-            writer.writerow(row)
+            writer.writerow({key: _csv_safe_cell(value) for key, value in row.items()})
 
+        _record_auth_event(
+            "devices_export",
+            username=current_user.username,
+            success=True,
+            message=("Geräteexport mit entschlüsselten Passwörtern" if include_passwords else "Geräteexport ohne Passwörter"),
+        )
         suffix = "with-passwords" if include_passwords else "no-passwords"
         filename = f"rustdesk-addressbook-{suffix}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.csv"
         return Response(
@@ -2464,8 +2748,7 @@ def register_routes(app: Flask) -> None:
                     flash("Die neuen Passwörter stimmen nicht überein.", "danger")
                 else:
                     current_user.set_password(new_password)
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     _record_auth_event("password_changed", username=current_user.username, success=True, message="Admin-Passwort wurde geändert")
                     flash("Passwort wurde geändert.", "success")
                 return redirect(url_for("settings"))
@@ -2485,8 +2768,7 @@ def register_routes(app: Flask) -> None:
                 else:
                     old_username = current_user.username
                     current_user.username = new_username
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     _record_auth_event("username_changed", username=new_username, success=True, message=f"Admin-Benutzername wurde von {old_username} geändert")
                     flash("Admin-Benutzername wurde geändert.", "success")
                 return redirect(url_for("settings"))
@@ -2599,8 +2881,8 @@ def register_routes(app: Flask) -> None:
                 else:
                     current_user.totp_secret_encrypted = encrypt_value(pyotp.random_base32())
                     current_user.totp_enabled = False
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    current_user.totp_recovery_hashes = None
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     _record_auth_event("2fa_prepare", username=current_user.username, success=True, message="2FA-Einrichtung vorbereitet")
                     flash("2FA vorbereitet. Scanne den QR-Code und bestätige danach einen Code aus deiner Authenticator-App.", "success")
                 return redirect(url_for("settings"))
@@ -2616,10 +2898,9 @@ def register_routes(app: Flask) -> None:
                     recovery_codes = _generate_recovery_codes()
                     _set_recovery_codes_for_user(current_user, recovery_codes)
                     current_user.totp_enabled = True
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     _record_auth_event("2fa_enabled", username=current_user.username, success=True, message="2FA aktiviert und Recovery-Codes erstellt")
-                    session["new_recovery_codes"] = recovery_codes
+                    _queue_recovery_codes(current_user, recovery_codes)
                     flash("2FA wurde aktiviert. Speichere die Wiederherstellungscodes jetzt sicher ab; sie werden nur einmal angezeigt.", "success")
                 return redirect(url_for("settings"))
 
@@ -2636,8 +2917,7 @@ def register_routes(app: Flask) -> None:
                         current_user.totp_enabled = False
                         current_user.totp_secret_encrypted = None
                         current_user.totp_recovery_hashes = None
-                        _sign_user_security_state(current_user)
-                        db.session.commit()
+                        _commit_user_security_change(current_user, keep_current_session=True)
                         _record_auth_event("2fa_disabled", username=current_user.username, success=True, message=("2FA mit Recovery-Code deaktiviert" if method == "recovery" else "2FA deaktiviert"))
                         if method == "recovery":
                             flash("2FA wurde mit einem Wiederherstellungscode deaktiviert.", "warning")
@@ -2659,10 +2939,9 @@ def register_routes(app: Flask) -> None:
                     else:
                         recovery_codes = _generate_recovery_codes()
                         _set_recovery_codes_for_user(current_user, recovery_codes)
-                        _sign_user_security_state(current_user)
-                        db.session.commit()
+                        _commit_user_security_change(current_user, keep_current_session=True)
                         _record_auth_event("2fa_recovery_regenerated", username=current_user.username, success=True, message="2FA-Recovery-Codes neu erstellt")
-                        session["new_recovery_codes"] = recovery_codes
+                        _queue_recovery_codes(current_user, recovery_codes)
                         if method == "recovery":
                             flash("Neue Wiederherstellungscodes wurden erstellt. Der eingegebene alte Wiederherstellungscode wurde ersetzt.", "warning")
                         else:
@@ -2672,8 +2951,8 @@ def register_routes(app: Flask) -> None:
             if action == "totp_cancel":
                 if not getattr(current_user, "totp_enabled", False):
                     current_user.totp_secret_encrypted = None
-                    _sign_user_security_state(current_user)
-                    db.session.commit()
+                    current_user.totp_recovery_hashes = None
+                    _commit_user_security_change(current_user, keep_current_session=True)
                     _record_auth_event("2fa_cancel", username=current_user.username, success=True, message="2FA-Einrichtung verworfen")
                     flash("2FA-Einrichtung wurde verworfen.", "info")
                 return redirect(url_for("settings"))
@@ -2688,9 +2967,18 @@ def register_routes(app: Flask) -> None:
             totp_secret=_get_user_totp_secret(current_user),
             totp_qr_data_uri=_totp_qr_data_uri(current_user),
             recovery_code_count=_recovery_code_count(current_user),
-            new_recovery_codes=session.pop("new_recovery_codes", None),
+            new_recovery_codes=_consume_recovery_codes(current_user),
         )
 
+
+
+def _csv_safe_cell(value) -> str:
+    """Prevent spreadsheet formula execution while preserving exported text."""
+    text = "" if value is None else str(value)
+    probe = text.lstrip(" \t\r\n")
+    if probe.startswith(("=", "+", "-", "@")):
+        return "'" + text
+    return text
 
 
 def _import_from_rustdesk_sqlite(db_path: Path, default_group_name: str, update_existing: bool) -> dict[str, int]:
@@ -2807,19 +3095,34 @@ def _is_rustdesk_sqlite_family_file(filename: str) -> bool:
 
 def _extract_safe_zip_members(zip_path: Path, target_dir: Path) -> list[Path]:
     extracted: list[Path] = []
+    max_members = 16
+    max_total = min(int(current_app.config.get("MAX_CONTENT_LENGTH", 100 * 1024 * 1024)), 256 * 1024 * 1024)
+    total_size = 0
     try:
         with zipfile.ZipFile(zip_path) as zf:
-            for info in zf.infolist():
-                if info.is_dir():
-                    continue
+            infos = [info for info in zf.infolist() if not info.is_dir()]
+            if len(infos) > max_members:
+                raise ValueError(f"ZIP-Datei enthält zu viele Dateien (maximal {max_members}).")
+            for info in infos:
+                if info.file_size < 0 or info.file_size > max_total:
+                    raise ValueError("Eine Datei im ZIP überschreitet die zulässige Größe.")
+                total_size += info.file_size
+                if total_size > max_total:
+                    raise ValueError("Der entpackte ZIP-Inhalt überschreitet die zulässige Gesamtgröße.")
                 filename = secure_filename(Path(info.filename).name)
-                if not filename:
-                    continue
-                if not _is_rustdesk_sqlite_family_file(filename):
+                if not filename or not _is_rustdesk_sqlite_family_file(filename):
                     continue
                 target = target_dir / filename
                 with zf.open(info) as src, target.open("wb") as dst:
-                    shutil.copyfileobj(src, dst)
+                    remaining = info.file_size
+                    while remaining > 0:
+                        chunk = src.read(min(1024 * 1024, remaining))
+                        if not chunk:
+                            break
+                        dst.write(chunk)
+                        remaining -= len(chunk)
+                    if remaining != 0:
+                        raise ValueError("Eine ZIP-Datei konnte nicht vollständig oder konsistent entpackt werden.")
                 extracted.append(target)
     except zipfile.BadZipFile as exc:
         raise ValueError("Die ZIP-Datei konnte nicht gelesen werden.") from exc
@@ -3078,6 +3381,7 @@ def _get_ssh_import_settings() -> dict:
         "user": _get_setting("ssh_import_user", "rab-import").strip() or "rab-import",
         "key_path": _get_setting("ssh_import_key_path", str(default_key)).strip() or str(default_key),
         "known_hosts_path": _get_setting("ssh_import_known_hosts_path", str(default_known_hosts)).strip() or str(default_known_hosts),
+        "host_key_fingerprint": _get_setting("ssh_import_host_key_fingerprint", "").strip(),
         "remote_command": _get_setting("ssh_import_remote_command", "").strip(),
         "timeout": min(max(timeout, 3), 120),
     }
@@ -3088,6 +3392,7 @@ def _save_ssh_import_settings_from_form() -> None:
     user = request.form.get("ssh_user", "rab-import").strip() or "rab-import"
     key_path = request.form.get("ssh_key_path", "").strip()
     known_hosts_path = request.form.get("ssh_known_hosts_path", "").strip()
+    host_key_fingerprint = request.form.get("ssh_host_key_fingerprint", "").strip()
     remote_command = request.form.get("ssh_remote_command", "").strip()
     try:
         port = min(max(int(request.form.get("ssh_port", "22") or "22"), 1), 65535)
@@ -3103,6 +3408,7 @@ def _save_ssh_import_settings_from_form() -> None:
     _set_setting("ssh_import_user", user[:80])
     _set_setting("ssh_import_key_path", key_path[:500])
     _set_setting("ssh_import_known_hosts_path", known_hosts_path[:500])
+    _set_setting("ssh_import_host_key_fingerprint", host_key_fingerprint[:120])
     _set_setting("ssh_import_remote_command", remote_command[:500])
     _set_setting("ssh_import_timeout", str(timeout))
 
@@ -3134,6 +3440,48 @@ def _validate_ssh_text(value: str, field: str, *, allow_empty: bool = False) -> 
     return text
 
 
+def _verify_and_store_ssh_host_key(host: str, port: int, expected_fingerprint: str, known_hosts_path: Path, timeout: int) -> None:
+    expected = str(expected_fingerprint or "").strip()
+    if not expected.startswith("SHA256:"):
+        raise ValueError("Für den SSH-Import muss der zuvor separat geprüfte Hostschlüssel-Fingerprint im Format SHA256:... hinterlegt werden.")
+    ssh_keyscan = shutil.which("ssh-keyscan")
+    ssh_keygen = shutil.which("ssh-keygen")
+    if not ssh_keyscan or not ssh_keygen:
+        raise ValueError("ssh-keyscan oder ssh-keygen wurde im Container nicht gefunden.")
+    try:
+        scan = subprocess.run(
+            [ssh_keyscan, "-T", str(min(max(timeout, 3), 30)), "-p", str(port), host],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=min(max(timeout, 3), 30) + 5, check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        raise ValueError("SSH-Hostschlüssel konnte nicht sicher abgefragt werden.") from exc
+    lines = [line for line in scan.stdout.decode("utf-8", errors="replace").splitlines() if line and not line.startswith("#")]
+    if not lines:
+        raise ValueError("Der SSH-Server hat keinen Hostschlüssel geliefert.")
+    matching_line = None
+    with tempfile.TemporaryDirectory(prefix="ssh-hostkey-") as tmp_name:
+        key_file = Path(tmp_name) / "hostkey.pub"
+        for line in lines:
+            key_file.write_text(line + "\n", encoding="utf-8")
+            result = subprocess.run([ssh_keygen, "-lf", str(key_file), "-E", "sha256"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            output = result.stdout.decode("utf-8", errors="replace")
+            if expected in output.split():
+                matching_line = line
+                break
+    if matching_line is None:
+        raise ValueError("Der gelieferte SSH-Hostschlüssel stimmt nicht mit dem hinterlegten SHA256-Fingerprint überein.")
+    known_hosts_path.parent.mkdir(parents=True, exist_ok=True)
+    known_hosts_path.touch(mode=0o600, exist_ok=True)
+    target = host if port == 22 else f"[{host}]:{port}"
+    subprocess.run([ssh_keygen, "-R", target, "-f", str(known_hosts_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    with known_hosts_path.open("a", encoding="utf-8") as fh:
+        fh.write(matching_line + "\n")
+    try:
+        known_hosts_path.chmod(0o600)
+    except OSError:
+        pass
+
+
 @contextmanager
 def _ssh_fetch_rustdesk_db_snapshot():
     """Fetch a consistent RustDesk SQLite snapshot over a restricted SSH command.
@@ -3149,6 +3497,7 @@ def _ssh_fetch_rustdesk_db_snapshot():
     key_path = _resolve_ssh_path(settings["key_path"], default_name="rustdesk_import_ed25519", must_exist=True)
     known_hosts_path = _resolve_ssh_path(settings["known_hosts_path"], default_name="known_hosts", must_exist=False)
     known_hosts_path.parent.mkdir(parents=True, exist_ok=True)
+    _verify_and_store_ssh_host_key(host, settings["port"], settings.get("host_key_fingerprint", ""), known_hosts_path, settings["timeout"])
 
     try:
         key_path.chmod(0o600)
@@ -3160,8 +3509,11 @@ def _ssh_fetch_rustdesk_db_snapshot():
     with tempfile.TemporaryDirectory(prefix="rustdesk-ssh-import-", dir=upload_root) as tmp_name:
         tmp_dir = Path(tmp_name)
         snapshot = tmp_dir / "rustdesk-db-snapshot.sqlite3"
+        ssh_client = shutil.which("ssh")
+        if not ssh_client:
+            raise ValueError("Der SSH-Client wurde im Container nicht gefunden. Bitte Image mit openssh-client neu bauen.")
         cmd = [
-            "ssh",
+            ssh_client,
             "-T",
             "-i", str(key_path),
             "-p", str(settings["port"]),
@@ -3169,7 +3521,7 @@ def _ssh_fetch_rustdesk_db_snapshot():
             "-o", "BatchMode=yes",
             "-o", f"ConnectTimeout={settings['timeout']}",
             "-o", f"UserKnownHostsFile={known_hosts_path}",
-            "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "StrictHostKeyChecking=yes",
             f"{user}@{host}",
         ]
         if remote_command:
@@ -3803,33 +4155,70 @@ def _create_encrypted_full_backup(db_file: Path, backup_dir: Path, password: str
 def _safe_extract_full_backup(tar_bytes: bytes, data_dir: Path) -> list[str]:
     allowed_exact = {"manifest.json", "data/addressbook.db", "data/config.json"}
     allowed_prefixes = ("data/ssh/", "data/certs/", "data/logs/")
+    max_members = max(10, int(current_app.config.get("FULL_BACKUP_MAX_MEMBERS", 5000)))
+    max_total = max(1024 * 1024, int(current_app.config.get("FULL_BACKUP_MAX_TOTAL_BYTES", 512 * 1024 * 1024)))
+    max_file = max(1024 * 1024, int(current_app.config.get("FULL_BACKUP_MAX_FILE_BYTES", 128 * 1024 * 1024)))
     tmp_dir = data_dir / "tmp_restore_full" / secrets.token_hex(8)
     tmp_dir.mkdir(parents=True, exist_ok=True)
     restored: list[str] = []
     try:
         with tarfile.open(fileobj=BytesIO(tar_bytes), mode="r:gz") as tar:
-            names = tar.getnames()
-            if "manifest.json" not in names or "data/addressbook.db" not in names or "data/config.json" not in names:
+            members = tar.getmembers()
+            if len(members) > max_members:
+                raise ValueError(f"Vollbackup enthält zu viele Einträge (maximal {max_members}).")
+            names = {member.name for member in members}
+            if not {"manifest.json", "data/addressbook.db", "data/config.json"}.issubset(names):
                 raise ValueError("Vollbackup ist unvollständig. manifest.json, data/addressbook.db oder data/config.json fehlt.")
-            for member in tar.getmembers():
-                name = member.name
+            total_size = 0
+            seen: set[str] = set()
+            root = tmp_dir.resolve()
+            for member in members:
+                name = str(member.name or "")
+                if len(name) > 512 or name.startswith("/") or ".." in Path(name).parts:
+                    raise ValueError(f"Unsicherer Pfad im Vollbackup: {name}")
+                if name in seen:
+                    raise ValueError(f"Doppelter Pfad im Vollbackup: {name}")
+                seen.add(name)
                 if member.isdir():
                     continue
-                if name.startswith("/") or ".." in Path(name).parts:
-                    raise ValueError(f"Unsicherer Pfad im Vollbackup: {name}")
+                if not member.isreg():
+                    raise ValueError(f"Nicht unterstützter Dateityp im Vollbackup: {name}")
                 if name not in allowed_exact and not name.startswith(allowed_prefixes):
                     raise ValueError(f"Nicht erlaubter Pfad im Vollbackup: {name}")
-                tar.extract(member, tmp_dir)
+                if member.size < 0 or member.size > max_file:
+                    raise ValueError(f"Datei im Vollbackup ist zu groß: {name}")
+                total_size += member.size
+                if total_size > max_total:
+                    raise ValueError("Entpackter Vollbackup-Inhalt überschreitet die zulässige Gesamtgröße.")
+                target = (tmp_dir / name).resolve()
+                if root not in target.parents:
+                    raise ValueError(f"Pfad verlässt das Restore-Verzeichnis: {name}")
+                source = tar.extractfile(member)
+                if source is None:
+                    raise ValueError(f"Datei im Vollbackup konnte nicht gelesen werden: {name}")
+                target.parent.mkdir(parents=True, exist_ok=True)
+                written = 0
+                with target.open("xb") as dst:
+                    while written < member.size:
+                        chunk = source.read(min(1024 * 1024, member.size - written))
+                        if not chunk:
+                            break
+                        dst.write(chunk)
+                        written += len(chunk)
+                if written != member.size:
+                    raise ValueError(f"Datei im Vollbackup ist unvollständig: {name}")
 
+        manifest = json.loads((tmp_dir / "manifest.json").read_text(encoding="utf-8"))
+        if manifest.get("format") != "rustdesk-addressbook-full-backup" or int(manifest.get("version", 0)) != 1:
+            raise ValueError("Vollbackup-Manifest hat ein unbekanntes Format oder eine nicht unterstützte Version.")
         candidate_db = tmp_dir / "data" / "addressbook.db"
         _validate_addressbook_sqlite(candidate_db)
 
         for rel in ["addressbook.db", "config.json"]:
             src = tmp_dir / "data" / rel
-            if src.exists():
-                dst = data_dir / rel
-                _write_secure_file(dst, src.read_bytes(), 0o600)
-                restored.append(f"data/{rel}")
+            dst = data_dir / rel
+            _write_secure_file(dst, src.read_bytes(), 0o600)
+            restored.append(f"data/{rel}")
 
         for subdir in ["ssh", "certs", "logs"]:
             src_root = tmp_dir / "data" / subdir
@@ -3845,6 +4234,8 @@ def _safe_extract_full_backup(tar_bytes: bytes, data_dir: Path) -> list[str]:
                 restored.append(f"data/{subdir}/{rel.as_posix()}")
 
         return restored
+    except (tarfile.TarError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Vollbackup konnte nicht sicher gelesen werden: {exc}") from exc
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
@@ -4189,6 +4580,23 @@ def _parse_bool_setting(value: str | None, default: bool = False) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "on", "ja"}
 
 
+def _host_resolves_to_private_network(hostname: str) -> bool:
+    host = str(hostname or "").strip().lower().rstrip(".")
+    if not host:
+        return True
+    if host in {"localhost", "localhost.localdomain"} or host.endswith((".local", ".internal", ".localhost")):
+        return True
+    try:
+        addresses = {item[4][0].split("%", 1)[0] for item in socket.getaddrinfo(host, None)}
+    except socket.gaierror as exc:
+        raise ValueError("Der OIDC-Issuer-Hostname konnte nicht aufgelöst werden.") from exc
+    for address in addresses:
+        ip = ipaddress.ip_address(address)
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved or ip.is_unspecified:
+            return True
+    return False
+
+
 def _validate_oidc_issuer_url(value: str, *, allow_insecure: bool = False) -> str:
     issuer = str(value or "").strip().rstrip("/")
     parsed = urllib.parse.urlparse(issuer)
@@ -4197,6 +4605,8 @@ def _validate_oidc_issuer_url(value: str, *, allow_insecure: bool = False) -> st
         raise ValueError("Die OIDC-Issuer-URL ist ungültig. Standardmäßig ist ausschließlich HTTPS erlaubt.")
     if parsed.query or parsed.fragment:
         raise ValueError("Die OIDC-Issuer-URL darf keine Query-Parameter oder Fragmente enthalten.")
+    if not current_app.config.get("OIDC_ALLOW_PRIVATE_ISSUER") and _host_resolves_to_private_network(parsed.hostname or ""):
+        raise ValueError("Private, lokale oder reservierte OIDC-Issuer-Adressen sind gesperrt. Für einen bewusst internen Provider OIDC_ALLOW_PRIVATE_ISSUER=true setzen.")
     return issuer
 
 
@@ -4341,6 +4751,12 @@ def _t(key: str, default: str | None = None) -> str:
 
 def _translated_group_color_choices() -> list[tuple[str, str]]:
     return [(value, _t(f"group.color.{value}", label)) for value, label in GROUP_COLOR_CHOICES]
+
+
+def _safe_group_icon(value: str | None) -> str:
+    allowed = {item for item, _label in GROUP_ICON_CHOICES}
+    candidate = str(value or "").strip().lower()
+    return candidate if candidate in allowed else "collection"
 
 
 def _translated_group_icon_choices() -> list[tuple[str, str]]:

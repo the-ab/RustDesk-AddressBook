@@ -84,6 +84,6 @@ ignoreregex =</code></pre>
 <div class="alert alert-info mt-4">
   <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>{{ t('security.sqlite_title', 'Hinweis zur SQLite-Verschlüsselung') }}</div>
   <div>{{ t('security.sqlite_text', 'Die laufende SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter sind feldweise verschlüsselt. Zusätzlich werden Benutzer-Sicherheitsfelder wie Passwort-Hash und 2FA-Zustand mit einem HMAC-Schlüssel aus data/config.json signiert. Dadurch kann ein Angreifer mit nur SQLite-Schreibzugriff 2FA nicht unbemerkt abschalten. Hat ein Angreifer jedoch Datenbank und Runtime-Secrets, gilt die Installation als kompromittiert.') }}</div>
-  <div class="small text-secondary mt-2">{{ t('security.signature_policy', 'Signatur-Policy: Standard ist repair_on_verified_login für update-freundliche Migrationen. Für maximale Härtung kann in docker-compose.yml USER_SIGNATURE_POLICY=strict gesetzt werden.') }}</div>
+  <div class="small text-secondary mt-2">{{ t('security.signature_policy', 'Signatur-Policy: strict. Manipulierte Rollen, OIDC-Zuordnungen und Gruppenzuweisungen werden blockiert; automatische Neusignierung beim Login ist deaktiviert.') }}</div>
 </div>
 {% endblock %}

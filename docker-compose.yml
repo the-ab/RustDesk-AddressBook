@@ -1,9 +1,43 @@
 services:
+  rustdesk-addressbook-init:
+    build: .
+    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0528}
+    user: "0:0"
+    entrypoint:
+      - /app/scripts/prepare_runtime_dirs.sh
+    restart: "no"
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      disable: true
+    volumes:
+      - ${RAB_DATA_DIR:-./data}:/data
+      - ${RAB_BACKUP_DIR:-./backups}:/backups
+
   rustdesk-addressbook:
     build: .
-    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0526}
+    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0528}
     container_name: ${RAB_CONTAINER_NAME:-rustdesk-addressbook}
     restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    depends_on:
+      rustdesk-addressbook-init:
+        condition: service_completed_successfully
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=128m,mode=1777
     ports:
       - "${RAB_HTTPS_BIND:-0.0.0.0}:${RAB_HTTPS_PUBLISH_PORT:-5443}:5443"
     environment:
@@ -31,7 +65,14 @@ services:
       LOGIN_FAIL_WINDOW_SECONDS: ${LOGIN_FAIL_WINDOW_SECONDS:-900}
       AUTH_LOG_ROTATE_DAYS: ${AUTH_LOG_ROTATE_DAYS:-7}
       AUTH_LOG_ROTATE_KEEP: ${AUTH_LOG_ROTATE_KEEP:-8}
-      USER_SIGNATURE_POLICY: ${USER_SIGNATURE_POLICY:-repair_on_verified_login}
+      USER_SIGNATURE_POLICY: strict
+      AUTH_EVENT_RETENTION_DAYS: ${AUTH_EVENT_RETENTION_DAYS:-90}
+      AUTH_EVENT_MAX_ROWS: ${AUTH_EVENT_MAX_ROWS:-50000}
+      SENSITIVE_ACTION_REAUTH_SECONDS: ${SENSITIVE_ACTION_REAUTH_SECONDS:-1800}
+      FULL_BACKUP_MAX_MEMBERS: ${FULL_BACKUP_MAX_MEMBERS:-5000}
+      FULL_BACKUP_MAX_TOTAL_BYTES: ${FULL_BACKUP_MAX_TOTAL_BYTES:-536870912}
+      FULL_BACKUP_MAX_FILE_BYTES: ${FULL_BACKUP_MAX_FILE_BYTES:-134217728}
+      OIDC_ALLOW_PRIVATE_ISSUER: ${OIDC_ALLOW_PRIVATE_ISSUER:-false}
       RAB_UPDATE_BASE_URL: ${RAB_UPDATE_BASE_URL:-https://dl.ab-xnet.de}
     volumes:
       - ${RAB_DATA_DIR:-./data}:/data

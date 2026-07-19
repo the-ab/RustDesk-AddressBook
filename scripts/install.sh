@@ -92,7 +92,7 @@ BANNER
 
 TZ_DEFAULT="$(saved_default TZ 'Europe/Berlin')"
 CONTAINER_DEFAULT="$(saved_default RAB_CONTAINER_NAME 'rustdesk-addressbook')"
-IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0526')"
+IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0528')"
 DATA_DEFAULT="$(saved_default RAB_DATA_DIR './data')"
 BACKUP_DEFAULT="$(saved_default RAB_BACKUP_DIR './backups')"
 HTTPS_BIND_DEFAULT="$(saved_default RAB_HTTPS_BIND '0.0.0.0')"
@@ -159,6 +159,11 @@ mkdir -p "$BACKUP_DIR" updates
 chmod 700 "$DATA_DIR" || true
 chmod 700 "$BACKUP_DIR" || true
 chmod 700 "$DATA_DIR/ssh" || true
+# Der Container läuft ab 0.5.27 als UID/GID 10001 statt als root.
+if ! chown -R 10001:10001 "$DATA_DIR" "$BACKUP_DIR"; then
+  echo "WARNUNG: Host-Verzeichnisse konnten nicht vorab auf UID/GID 10001 gesetzt werden." >&2
+  echo "Der Docker-Init-Dienst versucht die Berechtigungen beim Start erneut zu korrigieren." >&2
+fi
 
 cat > .env <<ENVEOF
 TZ=${TZ_VALUE}
@@ -185,7 +190,15 @@ LOGIN_FAIL_LIMIT=${LOGIN_FAIL_LIMIT}
 LOGIN_FAIL_WINDOW_SECONDS=${LOGIN_FAIL_WINDOW_SECONDS}
 AUTH_LOG_ROTATE_DAYS=${AUTH_LOG_ROTATE_DAYS}
 AUTH_LOG_ROTATE_KEEP=${AUTH_LOG_ROTATE_KEEP}
-USER_SIGNATURE_POLICY=repair_on_verified_login
+USER_SIGNATURE_POLICY=strict
+AUTH_EVENT_RETENTION_DAYS=90
+AUTH_EVENT_MAX_ROWS=50000
+SENSITIVE_ACTION_REAUTH_SECONDS=1800
+FULL_BACKUP_MAX_MEMBERS=5000
+FULL_BACKUP_MAX_TOTAL_BYTES=536870912
+FULL_BACKUP_MAX_FILE_BYTES=134217728
+OIDC_ALLOW_PRIVATE_ISSUER=false
+RAB_ALLOW_UNSIGNED_LOCAL_UPDATES=false
 RUSTDESK_SERVER_DB=${RUSTDESK_SERVER_DB}
 ENVEOF
 
@@ -230,6 +243,34 @@ START_NOW="$(prompt_yes_no 'Container jetzt bauen und starten?' 'ja')"
 if [ "$START_NOW" = "true" ]; then
   $COMPOSE build --no-cache
   $COMPOSE up -d --force-recreate
+  echo "Warte auf Container-Healthcheck ..."
+  health=""
+  for _ in $(seq 1 30); do
+    health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$CONTAINER_NAME" 2>/dev/null || true)"
+    case "$health" in
+      healthy) break ;;
+      unhealthy)
+        echo "FEHLER: Container ist laut Healthcheck nicht funktionsfähig." >&2
+        docker logs --tail 100 "$CONTAINER_NAME" >&2 || true
+        exit 1
+        ;;
+    esac
+    sleep 2
+  done
+  if [ "$health" != "healthy" ]; then
+    echo "WARNUNG: Healthcheck wurde innerhalb des Prüfzeitraums nicht 'healthy' (Status: ${health:-unbekannt})." >&2
+    docker logs --tail 50 "$CONTAINER_NAME" >&2 || true
+  fi
   echo
   echo "Fertig. Öffne: https://SERVER-IP:${HTTPS_PORT}"
+  echo
+  SETUP_TOKEN_VALUE="$(docker exec "$CONTAINER_NAME" python -c 'import json; print(json.load(open("/data/config.json", encoding="utf-8"))["SETUP_TOKEN"])' 2>/dev/null || true)"
+  if [ -n "$SETUP_TOKEN_VALUE" ]; then
+    echo "Einmaliges Setup-Token für das erste Administratorkonto:"
+    echo "  $SETUP_TOKEN_VALUE"
+    echo "Das Token wird nur benötigt, solange noch kein Benutzerkonto existiert."
+  else
+    echo "Hinweis: Das Setup-Token konnte nicht automatisch ausgelesen werden."
+    echo "Abruf: docker exec $CONTAINER_NAME python -c 'import json; print(json.load(open(\"/data/config.json\"))[\"SETUP_TOKEN\"])'"
+  fi
 fi

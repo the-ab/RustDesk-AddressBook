@@ -10,7 +10,7 @@
   <div class="d-flex gap-2 flex-wrap page-actions">
     <a class="btn btn-outline-secondary" href="#ssh-import"><i class="bi bi-terminal me-1"></i>SSH import</a>
     <a class="btn btn-outline-secondary" href="#security"><i class="bi bi-shield-lock me-1"></i>Security</a>
-    <a class="btn btn-primary" href="#quickstart"><i class="bi bi-rocket-takeoff me-1"></i>Start</a>
+    <a class="btn btn-primary" href="#quickstart"><i class="bi bi-lightning me-1"></i>Start</a>
   </div>
 </div>
 
@@ -41,7 +41,7 @@
   <div class="col-12 col-xl-9">
     <section id="overview" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Overview</h2>
-      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It provides central device management, local and OpenID Connect login, role- and group-based visibility, RustDesk links, import/export, backups, local 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems.</p>
+      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It provides central device management, local and OpenID Connect login, role- and group-based visibility, RustDesk links, import/export, backups, local 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems. Version 0.5.28 uses Debian Trixie, prepares persistent volume permissions through a dedicated init service and reports container health through an internal database-backed check.</p>
       <div class="row g-3">
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-pc-display-horizontal me-2"></i><strong>Device management</strong><br><span class="text-secondary small">Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-broadcast-pin me-2"></i><strong>Live status</strong><br><span class="text-secondary small">Online/offline checks using the RustDesk hbbs OnlineRequest/OnlineResponse flow.</span></div></div>
@@ -54,21 +54,23 @@
       <h2 class="h4">Installation and update</h2>
       <h3 class="h6 mt-3">Fresh installation</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
-unzip rustdesk-addressbook-v0526.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0528.zip
+unzip rustdesk-addressbook-v0528.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
-      <p>The installer asks for timezone, container/image name, data and backup directories, HTTPS port, optional HTTP port, certificate names, reverse-proxy trust, optional read-only RustDesk DB mount, brute-force values and the update download base URL.</p>
+      <p>The installer asks for timezone, container/image name, data and backup directories, HTTPS port, optional HTTP port, certificate names, reverse-proxy trust, optional read-only RustDesk DB mount, brute-force values and the update download base URL. After the first start it prints the one-time setup token for the initial administrator.</p>
       <p>The values are written to <code>.env</code>. When you run <code>./scripts/install.sh</code> again, the existing <code>.env</code> values are used as defaults.</p>
       <h3 class="h6 mt-3">Manual update with ZIP in <code>updates/</code></h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates/rustdesk-addressbook-update-flat-v0526.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatic online update check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
 ./scripts/update.sh</code></pre>
-      <p>The update script first checks local ZIP files in <code>updates/</code>. If none is newer, it reads <code>latest.txt</code> from <code>RAB_UPDATE_BASE_URL</code>, shows release notes and asks before downloading and installing.</p>
+      <p>The update script first checks local ZIP files in <code>updates/</code>. Every package is verified with an Ed25519 signature and a signed SHA-256 checksum before extraction. If none is newer, it reads <code>latest.txt</code> from <code>RAB_UPDATE_BASE_URL</code>, downloads the ZIP and its <code>.sha256</code>/<code>.sig</code> sidecars, shows release notes and asks before installing.</p>
       <h3 class="h6 mt-3">Web UI</h3>
 <pre class="codebox"><code>https://SERVER-IP:5443</code></pre>
       <div class="alert alert-info mb-0">HTTP is disabled by default. If no own certificate is configured, a self-signed certificate is generated and the browser warning is expected.</div>
@@ -78,7 +80,7 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates
       <h2 class="h4">First setup</h2>
       <ol>
         <li>Open the Web UI.</li>
-        <li>Create the first local administrator.</li>
+        <li>Enter the one-time setup token printed by the installer and create the first local administrator.</li>
         <li>Enable TOTP under <strong>Account</strong> and store recovery codes offline.</li>
         <li>Configure appearance, language and hbbs under <strong>Settings</strong>.</li>
         <li>Create local or OIDC users under <strong>Users</strong> and assign groups.</li>
@@ -103,8 +105,8 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates
       <h2 class="h4">Devices</h2>
       <ul>
         <li>Administrators can create, edit and delete devices. Regular users cannot change device data. Deleting a device automatically blocks its RustDesk ID for future imports.</li>
-        <li><strong>Connect</strong>: opens a <code>rustdesk://</code> link. A stored password is decrypted only when the link is requested.</li>
-        <li><strong>Eye icon</strong>: all authorized users can explicitly fetch the password of a visible device. Only administrators see the edit form, where an empty field keeps it unchanged and the checkbox removes it.</li>
+        <li><strong>Connect</strong>: opens a <code>rustdesk://</code> link. A stored password is decrypted only when the link is requested. After the sensitive-action window expires, reauthentication is required and the action is audited.</li>
+        <li><strong>Eye icon</strong>: all authorized users can explicitly fetch the password of a visible device after recent authentication. Password retrieval and password CSV exports are recorded in the audit log. Only administrators see the edit form, where an empty field keeps it unchanged and the checkbox removes it.</li>
         <li><strong>Favorite / Online</strong>: administrators can toggle these values and refresh online state using hbbs.</li>
         <li><strong>Search/filter</strong>: name, ID, customer, location, OS/device type, tags and notes; filters for group, favourite and device type.</li>
         <li><strong>Sort</strong>: online first, name, favourites or last changed.</li>
@@ -128,8 +130,9 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates
         <li><strong>User</strong>: read-only access to Dashboard, Devices, Account and Help. Only devices in assigned groups are visible; connect and explicit password retrieval remain available. Every user can set their own theme and UI language under Account.</li>
         <li>Disabled accounts cannot sign in. The current administrator and the last active local administrator are protected from accidental removal, deactivation or demotion.</li>
         <li>OIDC uses provider discovery and Authorization Code with PKCE. The client secret is encrypted; the account binding uses issuer and <code>sub</code>.</li>
-        <li>Auto-provisioned OIDC users start with role User and no groups. Optional allowed email domains can restrict all OIDC sign-ins; the provider must then supply an email claim from an allowed domain.</li>
+        <li>Auto-provisioned OIDC users start with role User and no groups. Optional allowed email domains can restrict all OIDC sign-ins; the provider must then supply an <code>email_verified=true</code> email claim from an allowed domain.</li>
       </ul>
+      <p>Pre-created OIDC accounts must contain the exact issuer and immutable <code>sub</code>; usernames or email addresses are never used to bind an identity. Private/local issuer addresses are blocked by default unless <code>OIDC_ALLOW_PRIVATE_ISSUER=true</code> is explicitly configured.</p>
       <p>Copy the displayed redirect URI to the OIDC provider exactly. Behind a trusted TLS reverse proxy, enable <code>TRUST_PROXY_HEADERS=true</code> so the external HTTPS URL is generated correctly. Keep at least one active local administrator as an emergency login.</p>
     </div></section>
 
@@ -215,7 +218,7 @@ setfacl -m u:rab-import:r /docker_data/rustdesk/db_v2.sqlite3-shm 2&gt;/dev/null
 <pre class="codebox"><code>mkdir -p data/ssh
 cp rustdesk_import_ed25519 data/ssh/
 chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
-      <p>In the Web UI use <code>/data/ssh/rustdesk_import_ed25519</code>. The SSH test reports connection, transfer size, SQLite header, integrity check, peer table and peer count.</p>
+      <p>In the Web UI use <code>/data/ssh/rustdesk_import_ed25519</code> and enter the expected SHA-256 host-key fingerprint. The key is stored only after an exact match and <code>StrictHostKeyChecking=yes</code> remains active. The SSH test reports connection, transfer size, SQLite header, integrity check, peer table and peer count.</p>
     </div></section>
 
     <section id="backup" class="card app-card mb-4"><div class="card-body">
@@ -248,7 +251,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update check and release notes</h2>
       <p>The Web UI checks <code>latest.txt</code> below <code>RAB_UPDATE_BASE_URL</code>. If an update is available, a badge appears next to Admin/Logout and links to Settings → Update check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0526.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0528.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -302,7 +305,7 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
   <div class="d-flex gap-2 flex-wrap page-actions">
     <a class="btn btn-outline-secondary" href="#ssh-import"><i class="bi bi-terminal me-1"></i>SSH-Import</a>
     <a class="btn btn-outline-secondary" href="#security"><i class="bi bi-shield-lock me-1"></i>Sicherheit</a>
-    <a class="btn btn-primary" href="#quickstart"><i class="bi bi-rocket-takeoff me-1"></i>Start</a>
+    <a class="btn btn-primary" href="#quickstart"><i class="bi bi-lightning me-1"></i>Start</a>
   </div>
 </div>
 
@@ -346,21 +349,23 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
       <h2 class="h4">Installation und Update</h2>
       <h3 class="h6 mt-3">Neuinstallation mit Installationsscript</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
-unzip rustdesk-addressbook-v0526.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0528.zip
+unzip rustdesk-addressbook-v0528.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
-      <p>Das Script fragt HTTPS-Port, optionalen HTTP-Port, Datenverzeichnis, Backup-Verzeichnis, Brute-Force-Werte, Update-URL und optionalen read-only RustDesk-DB-Mount ab.</p>
+      <p>Das Script fragt HTTPS-Port, optionalen HTTP-Port, Datenverzeichnis, Backup-Verzeichnis, Brute-Force-Werte, Update-URL und optionalen read-only RustDesk-DB-Mount ab. Nach dem ersten Start zeigt es das einmalige Setup-Token für den ersten Administrator an.</p>
       <p>Die gesetzten Werte werden in <code>.env</code> gespeichert. Beim erneuten Aufruf werden diese Werte als Default vorgeschlagen.</p>
       <h3 class="h6 mt-3">Update-ZIP manuell ablegen</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates/rustdesk-addressbook-update-flat-v0526.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatischer Online-Check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
 ./scripts/update.sh</code></pre>
-      <p>Das Updatescript erkennt lokale ZIPs in <code>updates/</code>. Ist lokal nichts Neueres vorhanden, prüft es online unter <code>RAB_UPDATE_BASE_URL</code>, zeigt Änderungen an und fragt nach Download und Installation.</p>
+      <p>Das Updatescript erkennt lokale ZIPs in <code>updates/</code>. Vor dem Entpacken prüft es Ed25519-Signatur und signierte SHA-256-Prüfsumme. Ist lokal nichts Neueres vorhanden, lädt es online ZIP sowie <code>.sha256</code>/<code>.sig</code>, zeigt Änderungen an und fragt vor der Installation.</p>
       <h3 class="h6 mt-3">WebUI öffnen</h3>
 <pre class="codebox"><code>https://SERVER-IP:5443</code></pre>
       <div class="alert alert-info mb-0">HTTP ist standardmäßig deaktiviert. Bei HTTPS ohne eigenes Zertifikat wird automatisch ein selbstsigniertes Zertifikat erzeugt. Die Browser-Warnung ist in diesem Fall normal.</div>
@@ -370,7 +375,7 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates
       <h2 class="h4">Ersteinrichtung</h2>
       <ol>
         <li>WebUI öffnen.</li>
-        <li>Den ersten lokalen Administrator anlegen.</li>
+        <li>Das vom Installationsscript ausgegebene einmalige Setup-Token eingeben und den ersten lokalen Administrator anlegen.</li>
         <li>Unter <strong>Konto</strong> TOTP aktivieren und Recovery-Codes offline speichern.</li>
         <li>Darstellung, Sprache und hbbs unter <strong>Einstellungen</strong> konfigurieren.</li>
         <li>Lokale oder OIDC-Benutzer unter <strong>Benutzer</strong> anlegen und Gruppen zuweisen.</li>
@@ -420,8 +425,9 @@ wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates
         <li><strong>Benutzer</strong>: schreibgeschützter Zugriff auf Dashboard, Geräte, Konto und Anleitung. Sichtbar sind nur Geräte aus zugewiesenen Gruppen; Verbinden und ausdrücklicher Passwortabruf bleiben möglich. Jeder Benutzer kann unter Konto seine eigene Darstellung und Sprache festlegen.</li>
         <li>Deaktivierte Konten können sich nicht anmelden. Der aktuelle Administrator und der letzte aktive lokale Administrator sind gegen versehentliches Löschen, Deaktivieren oder Herabstufen geschützt.</li>
         <li>OIDC nutzt Provider-Discovery und Authorization Code mit PKCE. Das Client-Secret wird verschlüsselt; die Kontobindung erfolgt über Issuer und <code>sub</code>.</li>
-        <li>Automatisch angelegte OIDC-Benutzer starten mit Rolle Benutzer und ohne Gruppen. Erlaubte E-Mail-Domains können alle OIDC-Anmeldungen einschränken; der Provider muss dann eine E-Mail-Adresse aus einer erlaubten Domain liefern.</li>
+        <li>Automatisch angelegte OIDC-Benutzer starten mit Rolle Benutzer und ohne Gruppen. Erlaubte E-Mail-Domains können alle OIDC-Anmeldungen einschränken; der Provider muss dann eine bestätigte E-Mail-Adresse mit <code>email_verified=true</code> aus einer erlaubten Domain liefern.</li>
       </ul>
+      <p>Vorab angelegte OIDC-Konten müssen den exakten Issuer und das unveränderliche <code>sub</code> enthalten; Benutzername oder E-Mail werden niemals zur Kontobindung verwendet. Private/lokale Issuer-Adressen sind standardmäßig gesperrt und benötigen bewusst <code>OIDC_ALLOW_PRIVATE_ISSUER=true</code>.</p>
       <p>Die angezeigte Redirect-URI muss exakt beim OIDC-Provider eingetragen werden. Hinter einem vertrauenswürdigen TLS-Reverse-Proxy sorgt <code>TRUST_PROXY_HEADERS=true</code> für die korrekte externe HTTPS-URL. Mindestens einen aktiven lokalen Administrator als Notfallzugang behalten.</p>
     </div></section>
 
@@ -507,7 +513,7 @@ setfacl -m u:rab-import:r /docker_data/rustdesk/db_v2.sqlite3-shm 2&gt;/dev/null
 <pre class="codebox"><code>mkdir -p data/ssh
 cp rustdesk_import_ed25519 data/ssh/
 chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
-      <p>In der WebUI wird dann <code>/data/ssh/rustdesk_import_ed25519</code> verwendet. Der SSH-Test prüft Verbindung, übertragene Bytes, SQLite-Header, Integrity-Check, peer-Tabelle und Anzahl der Peers.</p>
+      <p>In der WebUI wird dann <code>/data/ssh/rustdesk_import_ed25519</code> verwendet und der erwartete SHA-256-Hostschlüssel-Fingerprint eingetragen. Der Schlüssel wird nur bei exakter Übereinstimmung übernommen; <code>StrictHostKeyChecking=yes</code> bleibt aktiv. Der SSH-Test prüft anschließend Verbindung, übertragene Bytes, SQLite-Header, Integrity-Check, peer-Tabelle und Anzahl der Peers.</p>
     </div></section>
 
     <section id="backup" class="card app-card mb-4"><div class="card-body">
@@ -519,7 +525,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li>Vorhandene Backups können heruntergeladen, wiederhergestellt oder gelöscht werden. Restore per Upload akzeptiert DB-/SQLite-, <code>.rabenc</code>- und <code>.rabfull</code>-Dateien.</li>
         <li>Vor jedem Restore wird der bisherige Datenbankstand automatisch als Sicherheitsbackup gespeichert.</li>
       </ul>
-      <div class="alert alert-warning mb-0">Mindestens 12 Zeichen für <code>.rabenc</code> und 16 für <code>.rabfull</code>. Passwörter getrennt speichern. Nach einem Vollbackup-Restore den Container neu starten, damit <code>config.json</code> neu geladen wird.</div>
+      <div class="alert alert-warning mb-0">Mindestens 12 Zeichen für <code>.rabenc</code> und 16 für <code>.rabfull</code>. Passwörter getrennt speichern. Nach einem Vollbackup-Restore den Container neu starten, damit <code>config.json</code> neu geladen wird. Der Restore akzeptiert nur reguläre Dateien in festgelegten Pfaden und begrenzt Eintragszahl, Einzelgröße und entpackte Gesamtgröße; Links und Gerätedateien werden abgewiesen.</div>
     </div></section>
 
     <section id="settings" class="card app-card mb-4"><div class="card-body">
@@ -540,12 +546,12 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update-Check und Release-Notizen</h2>
       <p>Die WebUI prüft <code>latest.txt</code> unterhalb von <code>RAB_UPDATE_BASE_URL</code>. Wenn ein Update verfügbar ist, erscheint oben rechts ein Badge neben Admin/Logout und verlinkt zum Update-Check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0526.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0528.zip
 [de]
 - Deutsche Änderung 1
 [en]
 - English change 1</code></pre>
-      <p>Ohne Sprachbereiche werden alle Zeilen unterhalb des ZIP-Namens als Release-Notizen angezeigt. Die WebUI meldet Updates nur; installiert wird über <code>./scripts/update.sh</code>.</p>
+      <p>Neben der Update-ZIP müssen gleichnamige Dateien <code>.zip.sha256</code> und <code>.zip.sig</code> veröffentlicht werden. Ohne Sprachbereiche werden alle Zeilen unterhalb des ZIP-Namens als Release-Notizen angezeigt. Die WebUI meldet Updates nur; installiert wird über <code>./scripts/update.sh</code>.</p>
     </div></section>
 
     <section id="security" class="card app-card mb-4"><div class="card-body">
@@ -555,7 +561,8 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li>Lokale 2FA aktivieren und Recovery-Codes offline speichern; für OIDC-Benutzer MFA beim Identitätsanbieter erzwingen.</li>
         <li>Mindestens einen aktiven lokalen Notfall-Administrator behalten und Gruppen nach dem Minimalprinzip zuweisen.</li>
         <li>Backups mit <code>config.json</code>, OIDC-Secret, SSH-Keys oder TLS-Keys nur verschlüsselt speichern.</li>
-        <li>Die Seite <strong>Sicherheit</strong> prüft Administratoren, OIDC-Status, lokale 2FA/Recovery-Codes, HMAC-Signaturen, Cookies/HSTS/Proxy, Logs und Rechte, Runtime-Secrets, Datenbank/Backups, Sperre/Rotation, Update-Check, hbbs und HTTPS.</li>
+        <li>Die Seite <strong>Sicherheit</strong> prüft Administratoren, OIDC-Status, lokale 2FA/Recovery-Codes, HMAC-Signaturen für Identität/Rolle/Sitzung/Gruppen, Cookies/HSTS/Proxy, Logs und Rechte, Runtime-Secrets, Datenbank/Backups, IP-basierte Sperre/Rotation, Update-Check, hbbs und HTTPS.</li>
+        <li>Der Container läuft als UID/GID 10001 mit entfernten Capabilities, no-new-privileges, schreibgeschütztem Root-Dateisystem und begrenztem tmpfs. Bootstrap-Ressourcen werden lokal ausgeliefert; Scripts verwenden CSP-Nonces.</li>
         <li>Für stärkere Trennung das Adressbuch nicht direkt auf dem RustDesk-Server betreiben.</li>
       </ul>
     </div></section>

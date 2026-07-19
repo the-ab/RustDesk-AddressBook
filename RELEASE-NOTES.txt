@@ -1,9 +1,11 @@
-0.5.26-user-preferences-import-blocklist
+0.5.28-container-runtime-healthcheck-trixie
 [de]
-- Darstellung und Sprache werden pro Benutzerkonto gespeichert; lokale und OIDC-Benutzer können ihre Ansicht unter Mein Konto unabhängig voneinander anpassen.
-- Beim Löschen eines Geräts wird seine RustDesk-ID automatisch in eine persistente Import-Blockliste aufgenommen.
-- CSV-, Server-DB-, SSH- und direkte DB-Importe überspringen gesperrte IDs; Administratoren können die Blockliste verwalten und IDs wieder freigeben.
+- Neustartschleife bestehender Installationen behoben: Ein kurzlebiger Init-Dienst bereitet Daten-, Zertifikats-, Log-, SSH- und Backup-Verzeichnisse vor; die Webanwendung läuft weiterhin unprivilegiert mit UID/GID 10001.
+- Container-Basis von Debian Bookworm auf Debian Trixie umgestellt.
+- Docker-Healthcheck mit internem /healthz-Endpunkt und SQLite-Prüfung ergänzt; selbstsigniertes HTTPS wird unterstützt.
+- Installations- und Updateskripte warten nicht mehr ausschließlich auf Host-Chown und prüfen nach dem Start den Health-Status.
 [en]
-- Display mode and UI language are stored per user account; local and OIDC users can customize their own view under My account independently.
-- Deleting a device automatically adds its RustDesk ID to a persistent import blocklist.
-- CSV, server DB, SSH and direct DB imports skip blocked IDs; administrators can manage the blocklist and unblock IDs.
+- Fixed the restart loop on existing installations: a short-lived init service prepares data, certificate, log, SSH and backup directories while the web application continues to run unprivileged as UID/GID 10001.
+- Switched the container base from Debian Bookworm to Debian Trixie.
+- Added a Docker health check with an internal /healthz endpoint and SQLite probe, including support for self-signed HTTPS.
+- Installation and update scripts no longer depend solely on a host-side chown and check container health after startup.

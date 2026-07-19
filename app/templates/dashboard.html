@@ -50,7 +50,7 @@
   </div>
   <div class="col-12 col-xl-4">
     <div class="card app-card mb-4"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-search me-1"></i>{{ t('dashboard.quick_search', 'Schnellsuche') }}</h2><form action="{{ url_for('devices') }}" method="get"><input type="hidden" name="view" value="{{ device_view }}"><div class="input-group"><input class="form-control" name="q" placeholder="{{ t('dashboard.search_placeholder', 'Name, ID, Kunde, Standort...') }}"><button class="btn btn-primary" type="submit">{{ t('common.search', 'Suchen') }}</button></div></form></div></div>
-    <div class="card app-card"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-collection me-1"></i>{{ t('dashboard.groups', 'Gruppen') }}</h2><div class="d-flex flex-wrap gap-2">{% for group in groups %}<a class="badge text-bg-{{ group.color }} text-decoration-none p-2" href="{{ url_for('devices', group=group.id, view=device_view) }}"><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</a>{% else %}<span class="text-secondary">{{ t('dashboard.no_groups', 'Keine Gruppen vorhanden.') }}</span>{% endfor %}</div></div></div>
+    <div class="card app-card"><div class="card-body"><h2 class="h5 mb-3"><i class="bi bi-collection me-1"></i>{{ t('dashboard.groups', 'Gruppen') }}</h2><div class="d-flex flex-wrap gap-2">{% for group in groups %}<a class="badge text-bg-{{ group.color }} text-decoration-none p-2" href="{{ url_for('devices', group=group.id, view=device_view) }}"><i class="bi bi-{{ safe_group_icon(group.icon) }} me-1"></i>{{ group.name }}</a>{% else %}<span class="text-secondary">{{ t('dashboard.no_groups', 'Keine Gruppen vorhanden.') }}</span>{% endfor %}</div></div></div>
   </div>
 </div>
 

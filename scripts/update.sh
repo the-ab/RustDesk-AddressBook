@@ -3,17 +3,21 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if docker compose version >/dev/null 2>&1; then
-  COMPOSE="docker compose"
-elif command -v docker-compose >/dev/null 2>&1; then
-  COMPOSE="docker-compose"
-else
-  echo "FEHLER: Docker Compose wurde nicht gefunden." >&2
-  exit 1
-fi
+COMPOSE=""
+require_compose() {
+  if docker compose version >/dev/null 2>&1; then
+    COMPOSE="docker compose"
+  elif command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE="docker-compose"
+  else
+    echo "FEHLER: Docker Compose wurde nicht gefunden." >&2
+    return 1
+  fi
+}
 
 CURRENT_VERSION_FILE="app/config.py"
 UPDATES_DIR="updates"
+UPDATE_PUBLIC_KEY="scripts/keys/update-signing-public-v1.pem"
 mkdir -p "$UPDATES_DIR"
 
 is_tty=0
@@ -32,7 +36,9 @@ Ablauf ohne Parameter:
   3. Bei verfügbarem Online-Update fragt es, ob heruntergeladen und installiert werden soll.
 
 Manuelles Update:
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0517.zip -O updates/rustdesk-addressbook-update-flat-v0517.zip
+  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
+  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
+  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
   ./scripts/update.sh
 
 Standard-Aufruf:
@@ -43,16 +49,17 @@ Wenn dort keine neuere Version liegt, wird automatisch online unter RAB_UPDATE_B
 Bei verfügbarer Online-Version werden die Änderungen angezeigt und das Script fragt nach Download und Installation.
 
 Manuelles Update bleibt möglich:
-  cp rustdesk-addressbook-update-flat-v0517.zip updates/
+  cp rustdesk-addressbook-update-flat-v0528.zip* updates/
   ./scripts/update.sh
 
 Direkte ZIP-Pfade bleiben unterstützt:
-  ./scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0517.zip
+  ./scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0528.zip
 
 Online-Manifest unter RAB_UPDATE_BASE_URL:
-  latest.txt  erste Zeile: rustdesk-addressbook-update-flat-v0517.zip
+  Neben der ZIP: gleichnamige .zip.sha256 und .zip.sig
+  latest.txt  erste Zeile: rustdesk-addressbook-update-flat-v0528.zip
               Folgezeilen optional als Release-Notizen
-Alternativ kann neben der ZIP eine Datei rustdesk-addressbook-update-flat-v0517.txt oder release-notes-v0517.txt liegen.
+Alternativ kann neben der ZIP eine Datei rustdesk-addressbook-update-flat-v0528.txt oder release-notes-v0528.txt liegen.
 USAGE
 }
 
@@ -160,6 +167,85 @@ fetch_url() {
 fetch_url_optional() {
   local url="$1" out="$2"
   fetch_url "$url" "$out" >/dev/null 2>&1
+}
+
+allow_unsigned_local_update() {
+  local value
+  value="$(read_env_value RAB_ALLOW_UNSIGNED_LOCAL_UPDATES 'false' | tr '[:upper:]' '[:lower:]')"
+  case "$value" in true|1|yes|y|ja|j) return 0 ;; *) return 1 ;; esac
+}
+
+validate_update_zip_structure() {
+  local zip="$1"
+  python3 - "$zip" <<'PYZIP'
+import stat, sys, zipfile
+from pathlib import PurePosixPath
+path = sys.argv[1]
+with zipfile.ZipFile(path) as zf:
+    infos = zf.infolist()
+    if not infos or len(infos) > 20000:
+        raise SystemExit("Update-ZIP ist leer oder enthält zu viele Einträge.")
+    total = 0
+    seen = set()
+    for info in infos:
+        name = info.filename.replace('\\', '/')
+        parts = PurePosixPath(name).parts
+        if not name or name.startswith('/') or '..' in parts or name in seen:
+            raise SystemExit(f"Unsicherer oder doppelter ZIP-Pfad: {name}")
+        seen.add(name)
+        mode = (info.external_attr >> 16) & 0xFFFF
+        if stat.S_ISLNK(mode):
+            raise SystemExit(f"Symbolische Links sind in Update-ZIPs nicht erlaubt: {name}")
+        total += max(0, info.file_size)
+        if info.file_size > 256 * 1024 * 1024 or total > 1024 * 1024 * 1024:
+            raise SystemExit("Update-ZIP überschreitet die zulässigen Entpackgrößen.")
+PYZIP
+}
+
+verify_update_package() {
+  local zip checksum_file signature_file
+  zip="$1"
+  checksum_file="${zip}.sha256"
+  signature_file="${zip}.sig"
+  if [ ! -s "$checksum_file" ] || [ ! -s "$signature_file" ]; then
+    if allow_unsigned_local_update; then
+      echo "WARNUNG: Unsigiertes lokales Update wurde ausdrücklich über RAB_ALLOW_UNSIGNED_LOCAL_UPDATES=true freigegeben." >&2
+      if ! prompt_yes_no "Unsigiertes Update wirklich verwenden?" "nein"; then
+        echo "Update abgebrochen." >&2
+        return 1
+      fi
+      validate_update_zip_structure "$zip"
+      return 0
+    fi
+    echo "FEHLER: Signaturdateien fehlen. Erwartet: ${checksum_file} und ${signature_file}" >&2
+    echo "Unsigierte Updates sind standardmäßig gesperrt." >&2
+    return 1
+  fi
+  command -v openssl >/dev/null 2>&1 || { echo "FEHLER: openssl wird für die Update-Signaturprüfung benötigt." >&2; return 1; }
+  command -v sha256sum >/dev/null 2>&1 || { echo "FEHLER: sha256sum wurde nicht gefunden." >&2; return 1; }
+  [ -s "$UPDATE_PUBLIC_KEY" ] || { echo "FEHLER: Öffentlicher Update-Schlüssel fehlt: $UPDATE_PUBLIC_KEY" >&2; return 1; }
+  if ! openssl pkeyutl -verify -pubin -inkey "$UPDATE_PUBLIC_KEY" -rawin -in "$checksum_file" -sigfile "$signature_file" >/dev/null 2>&1; then
+    echo "FEHLER: Die digitale Ed25519-Signatur des Update-Manifests ist ungültig." >&2
+    return 1
+  fi
+  local expected filename actual
+  expected="$(awk 'NR==1 {print $1}' "$checksum_file")"
+  filename="$(awk 'NR==1 {print $2}' "$checksum_file" | sed 's/^\*//')"
+  if ! [[ "$expected" =~ ^[0-9a-fA-F]{64}$ ]]; then
+    echo "FEHLER: Ungültige SHA-256-Datei." >&2
+    return 1
+  fi
+  if [ -n "$filename" ] && [ "$filename" != "$(basename "$zip")" ]; then
+    echo "FEHLER: SHA-256-Datei gehört zu '$filename', nicht zu '$(basename "$zip")'." >&2
+    return 1
+  fi
+  actual="$(sha256sum "$zip" | awk '{print $1}')"
+  if [ "${actual,,}" != "${expected,,}" ]; then
+    echo "FEHLER: SHA-256-Prüfsumme des Updatepakets stimmt nicht." >&2
+    return 1
+  fi
+  validate_update_zip_structure "$zip"
+  echo "Update-Signatur und SHA-256-Prüfsumme erfolgreich geprüft."
 }
 
 print_notes_file() {
@@ -292,13 +378,23 @@ value_from_check() {
 }
 
 download_online_update_to_updates() {
-  local info_file="$1" file url target
+  local info_file="$1" file url target tmp_dir
   file="$(value_from_check FILE "$info_file")"
   url="$(value_from_check URL "$info_file")"
   target="$UPDATES_DIR/$file"
-  echo "Lade herunter: $url"
-  fetch_url "$url" "$target"
-  echo "Gespeichert: $target"
+  tmp_dir="$(mktemp -d "$UPDATES_DIR/.download.XXXXXX")"
+  trap 'rm -rf "$tmp_dir"' RETURN
+  echo "Lade signiertes Update herunter: $url"
+  fetch_url "$url" "$tmp_dir/$file"
+  fetch_url "${url}.sha256" "$tmp_dir/${file}.sha256"
+  fetch_url "${url}.sig" "$tmp_dir/${file}.sig"
+  verify_update_package "$tmp_dir/$file"
+  mv "$tmp_dir/$file" "$target"
+  mv "$tmp_dir/${file}.sha256" "${target}.sha256"
+  mv "$tmp_dir/${file}.sig" "${target}.sig"
+  rm -rf "$tmp_dir"
+  trap - RETURN
+  echo "Gespeichert und geprüft: $target"
   echo "$target"
 }
 
@@ -349,6 +445,7 @@ perform_update() {
     echo "FEHLER: ZIP nicht gefunden: $zip_file" >&2
     exit 1
   fi
+  verify_update_package "$zip_file" || exit 1
 
   current_str="$(current_version_string)"
   current_num="$(extract_version_number "$current_str")"
@@ -373,6 +470,8 @@ INFO
     echo "Kein Update nötig: Zielversion ist nicht neuer als die installierte Version."
     exit 0
   fi
+
+  require_compose || exit 1
 
   if ! prompt_yes_no "Update jetzt installieren?" "ja"; then
     echo "Update abgebrochen. ZIP bleibt unverändert liegen: $zip_file"
@@ -410,8 +509,36 @@ INFO
 
   remove_known_containers
 
+  data_dir="$(read_env_value RAB_DATA_DIR './data')"
+  backup_dir="$(read_env_value RAB_BACKUP_DIR './backups')"
+  mkdir -p "$data_dir" "$backup_dir"
+  if ! chown -R 10001:10001 "$data_dir" "$backup_dir"; then
+    echo "WARNUNG: Host-Verzeichnisse konnten nicht vorab auf UID/GID 10001 gesetzt werden." >&2
+    echo "Der Docker-Init-Dienst übernimmt die Berechtigungskorrektur beim Start." >&2
+  fi
+
   $COMPOSE build --no-cache
   $COMPOSE up -d --force-recreate --remove-orphans
+
+  container_name="$(read_env_value RAB_CONTAINER_NAME 'rustdesk-addressbook')"
+  echo "Warte auf Container-Healthcheck ..."
+  health=""
+  for _ in $(seq 1 30); do
+    health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$container_name" 2>/dev/null || true)"
+    case "$health" in
+      healthy) break ;;
+      unhealthy)
+        echo "FEHLER: Container ist laut Healthcheck nicht funktionsfähig." >&2
+        docker logs --tail 100 "$container_name" >&2 || true
+        exit 1
+        ;;
+    esac
+    sleep 2
+  done
+  if [ "$health" != "healthy" ]; then
+    echo "WARNUNG: Healthcheck wurde innerhalb des Prüfzeitraums nicht 'healthy' (Status: ${health:-unbekannt})." >&2
+    docker logs --tail 50 "$container_name" >&2 || true
+  fi
 
   echo
   echo "Update abgeschlossen auf: ${target_str}"

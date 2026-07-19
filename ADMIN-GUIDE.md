@@ -1,13 +1,13 @@
 # RustDesk AddressBook Admin Guide
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.26-user-preferences-import-blocklist`.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.28-container-runtime-healthcheck-trixie`.
 
 ## 1. Installation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
-unzip rustdesk-addressbook-v0526.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0528.zip
+unzip rustdesk-addressbook-v0528.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -38,11 +38,12 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0526.zip
-unzip rustdesk-addressbook-v0526.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0528.zip
+unzip rustdesk-addressbook-v0528.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
+chown -R 10001:10001 data backups
 docker compose up -d --build
 ```
 
@@ -52,7 +53,9 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0526.zip -O updates/rustdesk-addressbook-update-flat-v0526.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
 ./scripts/update.sh
 ```
 
@@ -63,7 +66,7 @@ cd /opt/rustdesk-addressbook
 ./scripts/update.sh
 ```
 
-Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Ist dort nichts Neueres vorhanden, liest es `RAB_UPDATE_BASE_URL/latest.txt`, zeigt die Release-Notizen und fragt vor Download und Installation. Vor der Installation wird eine Sicherung angelegt:
+Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Vor dem Entpacken müssen eine gültige Ed25519-Signatur und die signierte SHA-256-Prüfsumme vorliegen; manipulierte oder unsignierte Pakete werden standardmäßig abgewiesen. Ist dort nichts Neueres vorhanden, liest es `RAB_UPDATE_BASE_URL/latest.txt`, zeigt die Release-Notizen und fragt vor Download und Installation. Vor der Installation wird eine Sicherung angelegt:
 
 ```text
 ../rustdesk-addressbook-preupdate-YYYYmmdd-HHMMSS/
@@ -74,30 +77,30 @@ Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-comp
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0526.zip
+rustdesk-addressbook-update-flat-v0528.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0526.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`.
+Neben der ZIP müssen auf dem Downloadserver die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0528.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
 
 ### 2.4 Manueller Fallback
 
+Der direkte manuelle Entpackweg umgeht die Sicherheitslogik des Updaters und ist deshalb nicht empfohlen. Nutze auch bei lokal übertragenen Dateien bevorzugt:
+
 ```bash
 cd /opt/rustdesk-addressbook
-docker compose down
-cp -a data ../rustdesk-addressbook-data-backup
-cp -a backups ../rustdesk-addressbook-backups-backup 2>/dev/null || true
-unzip -o updates/rustdesk-addressbook-update-flat-v0526.zip
-docker compose build --no-cache
-docker compose up -d --force-recreate --remove-orphans
+cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0528.zip* updates/
+./scripts/update.sh
 ```
+
+Nur für eine kontrollierte Wiederherstellung mit bereits unabhängig geprüften Dateien kann ein Administrator den Container manuell stoppen, Daten sichern und das Archiv entpacken. Unsignierte Updates lassen sich ausschließlich interaktiv und nach explizitem Setzen von `RAB_ALLOW_UNSIGNED_LOCAL_UPDATES=true` freigeben; für automatisierte Abläufe bleiben sie gesperrt.
 
 ## 3. Ersteinrichtung
 
-1. WebUI öffnen und den ersten lokalen Administrator anlegen.
+1. WebUI öffnen, das vom Installationsscript ausgegebene einmalige Setup-Token eingeben und den ersten lokalen Administrator anlegen. Alternativer Abruf: `docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'`.
 2. Unter **Konto** TOTP aktivieren und Recovery-Codes offline sichern.
 3. Unter **Mein Konto → Darstellung & Sprache** Theme und Sprache individuell für das eigene Konto wählen.
 4. Unter **Einstellungen → Online-Status** hbbs Host/Port konfigurieren.
@@ -105,7 +108,7 @@ docker compose up -d --force-recreate --remove-orphans
 6. OIDC optional unter **Einstellungen → OpenID Connect** konfigurieren.
 7. Ein verschlüsseltes `.rabfull`-Vollbackup erstellen.
 
-Bei einem Update von 0.5.24 oder älter wird das vorhandene Benutzerkonto automatisch als aktiver lokaler Administrator übernommen. Mindestens ein aktiver lokaler Administrator muss als Notfallzugang bestehen bleiben.
+Bei einem Update von 0.5.24 oder älter wird das vorhandene Benutzerkonto automatisch als aktiver lokaler Administrator übernommen. Beim Update von 0.5.26 wird die vorhandene alte Signatur vor der Migration geprüft; eine bereits manipulierte Rolle oder Identität wird nicht neu signiert und bleibt für die Anmeldung gesperrt. Mindestens ein aktiver lokaler Administrator muss als Notfallzugang bestehen bleiben.
 
 ## 4. Dashboard und Geräteansichten
 
@@ -134,8 +137,8 @@ Funktionen:
 - Suche in Name, ID, Kunde, Standort, Gerätetyp, Tags und Notizen
 - Filter nach Gruppe, Favorit und Gerätetyp
 - Sortierung: Online zuerst, Name, Favoriten oder zuletzt geändert
-- `rustdesk://`-Direktlink; ein gespeichertes Passwort wird erst beim Klick entschlüsselt und in den RustDesk-Link eingefügt
-- Passwort-Auge im Bearbeitungsformular lädt das gespeicherte Passwort nur nach ausdrücklichem Klick
+- `rustdesk://`-Direktlink; ein gespeichertes Passwort wird erst beim Klick entschlüsselt und in den RustDesk-Link eingefügt. Nach Ablauf des konfigurierten Sicherheitsfensters ist eine erneute lokale oder OIDC-Anmeldung erforderlich
+- Passwort-Auge im Bearbeitungsformular lädt das gespeicherte Passwort nur nach ausdrücklichem Klick; Passwortabruf, Passwort-CSV-Export und Verbindungsstart werden im Auditlog erfasst
 - bleibt das Passwortfeld leer, bleibt das Passwort unverändert; über die Checkbox kann es gelöscht werden
 - optionale Werte `None`/`null` werden beim Speichern als leer bereinigt
 
@@ -172,9 +175,9 @@ Das Client-Secret wird mit dem Schlüssel aus `data/config.json` verschlüsselt 
 Optionen:
 
 - **Automatische Benutzeranlage:** Beim ersten erfolgreichen Login wird ein Benutzerkonto mit Rolle **Benutzer** angelegt. Es besitzt zunächst keine Gruppen und sieht deshalb keine Geräte, bis ein Administrator Gruppen zuweist.
-- **Erlaubte E-Mail-Domains:** Kommagetrennte Positivliste für alle OIDC-Anmeldungen. Ist sie gesetzt, muss der Provider eine E-Mail-Adresse aus einer erlaubten Domain liefern; andernfalls wird die Anmeldung abgewiesen.
-- **Vorab angelegtes OIDC-Konto:** Ein Administrator kann ein OIDC-Konto bereits vor dem ersten Login anlegen. Der Benutzername muss zum konfigurierten Claim passen; beim ersten Login wird das Konto sicher an Issuer und `sub` gebunden.
-- **Unsicheres HTTP zulassen:** Nur für ausdrücklich isolierte Testumgebungen. Produktiv HTTPS verwenden.
+- **Erlaubte E-Mail-Domains:** Kommagetrennte Positivliste für alle OIDC-Anmeldungen. Ist sie gesetzt, muss der Provider eine bestätigte E-Mail-Adresse (`email_verified=true`) aus einer erlaubten Domain liefern; andernfalls wird die Anmeldung abgewiesen.
+- **Vorab angelegtes OIDC-Konto:** Ein Administrator trägt Issuer und das unveränderliche OIDC-`sub` bereits beim Anlegen ein. Es gibt keine automatische Bindung über Benutzername oder E-Mail; die eindeutige Identität ist ausschließlich die Kombination aus Issuer und `sub`.
+- **Unsicheres HTTP zulassen:** Nur für ausdrücklich isolierte Testumgebungen. Produktiv HTTPS verwenden. Private, lokale oder reservierte Issuer-Adressen sind zusätzlich standardmäßig blockiert; ein bewusst interner Provider benötigt `OIDC_ALLOW_PRIVATE_ISSUER=true`.
 
 Hinter einem TLS-Reverse-Proxy muss `TRUST_PROXY_HEADERS=true` nur dann gesetzt werden, wenn ausschließlich der vertrauenswürdige Proxy die Anwendung erreicht. Dadurch kann die externe HTTPS-Redirect-URI korrekt erzeugt werden. Die lokale Anmeldung bleibt als Notfallzugang verfügbar; mindestens ein aktiver lokaler Administrator kann nicht entfernt werden.
 
@@ -300,7 +303,7 @@ cp rustdesk_import_ed25519 data/ssh/
 chmod 600 data/ssh/rustdesk_import_ed25519
 ```
 
-WebUI-Pfad: `/data/ssh/rustdesk_import_ed25519`. Der eingebaute Test prüft Verbindung, Laufzeit, Bytes, SQLite-Header, `integrity_check`, Peer-Tabelle und Peer-Anzahl. Erst danach den Import starten. Host, Port, Benutzer, Key-Pfad und Host-Key-Datei werden in den Einstellungen gespeichert.
+WebUI-Pfad: `/data/ssh/rustdesk_import_ed25519`. Zusätzlich muss der erwartete SHA-256-Hostschlüssel-Fingerprint des RustDesk-Servers eingetragen werden, zum Beispiel aus `ssh-keyscan -p 22 SERVER 2>/dev/null | ssh-keygen -lf - -E sha256`. Erst bei Übereinstimmung wird der Schlüssel in `known_hosts` übernommen; `StrictHostKeyChecking=yes` bleibt aktiv. Der eingebaute Test prüft anschließend Verbindung, Laufzeit, Bytes, SQLite-Header, `integrity_check`, Peer-Tabelle und Peer-Anzahl.
 
 ## 10. Backup / Restore
 
@@ -316,7 +319,7 @@ Wichtig:
 
 - `.rabenc` enthält nur die Datenbank und benötigt die dazugehörige `data/config.json`, um Gerätepasswörter zu entschlüsseln.
 - `.rabfull` ist für Umzug/Totalausfall empfohlen.
-- Nach `.rabfull`-Restore Container neu starten, damit `config.json` und Schlüssel neu geladen werden.
+- Nach `.rabfull`-Restore Container neu starten, damit `config.json` und Schlüssel neu geladen werden. Der Restore akzeptiert nur reguläre Dateien in festgelegten Pfaden und begrenzt Dateianzahl, Einzelgröße und entpackte Gesamtgröße; Links und Gerätedateien werden abgewiesen.
 - Backup-Passwörter außerhalb des Servers aufbewahren.
 
 ## 11. Einstellungen
@@ -327,7 +330,7 @@ Die Einstellungen sind nur für Administratoren verfügbar:
 - **OpenID Connect:** Provider, Issuer, Client-Zugangsdaten, Scopes, Username-Claim, Auto-Provisioning und erlaubte Domains
 - **Gerätetypen:** ein Wert pro Zeile als Vorauswahl im Geräteformular
 - **Online-Status:** hbbs-Parameter und automatisches Intervall
-- **Brute-Force-Sperre:** 2–50 Fehlversuche, Zeitfenster 1–1440 Minuten; Änderung erfordert Admin-Passwort
+- **Brute-Force-Sperre:** 2–50 Fehlversuche pro Quell-IP, Zeitfenster 1–1440 Minuten; Änderung erfordert Admin-Passwort. Dadurch kann ein Angreifer kein fremdes Konto allein über dessen Benutzernamen sperren
 - **Update-Check:** automatischer Check 1–168 Stunden; installiert keine Updates
 - **Sicherheitshinweise:** Verschlüsselungs- und Backup-Hinweise
 
@@ -344,17 +347,17 @@ Der Sicherheitsstatus prüft:
 - aktive Administratoren, lokale Notfall-Administratoren und OIDC-Konten
 - lokale 2FA-Abdeckung und vorhandene Recovery-Codes; OIDC-MFA wird beim Provider verwaltet und kann lokal nicht verifiziert werden
 - OIDC-Aktivierung, Issuer, Client-ID, verschlüsseltes Client-Secret und Auto-Provisioning
-- HMAC-Signaturen sensibler Benutzer-Sicherheitsfelder
+- HMAC-Signaturen von Benutzerrolle, Kontostatus, OIDC-Identität, 2FA-Zustand, Sitzungsstand und Gruppenzuweisungen
 - HttpOnly-/Secure-Cookie und HSTS
 - Proxy-Header-Konfiguration
 - Auth-Log und Dateirechte
 - `config.json` und SQLite-Dateirechte
 - unverschlüsselte/verschlüsselte Backups
-- interne Brute-Force-Sperre
+- IP-basierte interne Brute-Force-Sperre sowie automatische Alters-/Mengenbegrenzung der Auth-Ereignisse
 - Auth-Logrotation
 - Update-Check, hbbs-Konfiguration und HTTPS-Endpunkt
 
-Die SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter und das OIDC-Client-Secret sind feldweise mit Fernet verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert. Rollen- und Gruppenzugriffe werden in den Backend-Routen geprüft. Datenbank plus `config.json` gelten zusammen als sensibles Schlüsselmaterial.
+Die SQLite-Datenbank ist nicht vollständig SQLCipher-verschlüsselt. Gerätepasswörter und das OIDC-Client-Secret sind feldweise mit Fernet verschlüsselt; Benutzer-Sicherheitszustand und Gruppenzuweisungen sind zusätzlich HMAC-signiert. Sicherheitsänderungen erhöhen eine Sitzungsversionsnummer und widerrufen bereits ausgestellte Sitzungen. Rollen- und Gruppenzugriffe werden in den Backend-Routen geprüft. Datenbank plus `config.json` gelten zusammen als sensibles Schlüsselmaterial.
 
 ### 12.1 Auth-Logrotation
 
@@ -375,6 +378,11 @@ fail2ban-client status rustdesk-addressbook
 ```
 
 `TRUST_PROXY_HEADERS=true` nur hinter einem vertrauenswürdigen Reverse Proxy setzen.
+
+
+### 12.3 Container- und Frontend-Härtung
+
+Der Container läuft mit UID/GID `10001`, ohne Linux-Capabilities, mit `no-new-privileges`, schreibgeschütztem Root-Dateisystem und begrenztem `/tmp`-tmpfs. Schreibbar bleiben nur die eingebundenen Daten- und Backup-Verzeichnisse. Bootstrap und Bootstrap Icons werden lokal ausgeliefert; ausführbare Frontend-Ressourcen werden nicht mehr von einem externen CDN geladen. Die Content Security Policy verwendet einen pro Antwort erzeugten Script-Nonce.
 
 ## 13. HTTPS
 
@@ -408,7 +416,7 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
 
 Bei Problemen:
 
-- **Update:** ZIP-Struktur prüfen; Flat-Update muss Dateien direkt im Archivwurzelverzeichnis enthalten.
+- **Update:** ZIP-Struktur prüfen; Flat-Update muss Dateien direkt im Archivwurzelverzeichnis enthalten. Zusätzlich müssen `.zip.sha256` und `.zip.sig` denselben Basisnamen besitzen und mit dem eingebauten öffentlichen Schlüssel verifizierbar sein.
 - **SSH:** zuerst WebUI-Test ausführen und Bytes, Header, Integrität und Peer-Anzahl prüfen.
 - **hbbs:** TCP-Port `21115` aus dem Container testen.
 - **RustDesk-DB:** Diagnose aufrufen und WAL/SHM sowie Peer-Tabelle prüfen.
@@ -422,3 +430,17 @@ Kernoberfläche, Anleitung und Release-Historie sind Deutsch/Englisch. Technisch
 ```bash
 RAB_UPDATE_LANG=en ./scripts/update.sh
 ```
+
+## Container-Init und Healthcheck
+
+Ab 0.5.28 bereitet der kurzlebige Dienst `rustdesk-addressbook-init` die eingebundenen Daten- und Backup-Verzeichnisse vor. Damit starten auch bestehende Installationen, deren Host-Verzeichnisse noch `root` gehören. Der eigentliche Webcontainer läuft weiterhin als UID/GID 10001.
+
+Status prüfen:
+
+```bash
+docker compose ps
+docker inspect --format '{{.State.Health.Status}}' rustdesk-addressbook
+docker logs --tail 100 rustdesk-addressbook
+```
+
+Der Healthcheck ruft intern je nach aktivierter Konfiguration `https://127.0.0.1:5443/healthz` oder `http://127.0.0.1:5000/healthz` auf und prüft dabei zusätzlich die SQLite-Verbindung. Selbstsignierte lokale Zertifikate werden für diesen ausschließlich internen Test akzeptiert.

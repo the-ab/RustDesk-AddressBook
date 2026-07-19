@@ -26,22 +26,25 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
     if not cfg.get("SECURITY_SIGNING_KEY"):
         cfg["SECURITY_SIGNING_KEY"] = secrets.token_hex(64)
         changed = True
+    if not cfg.get("SETUP_TOKEN"):
+        cfg["SETUP_TOKEN"] = secrets.token_urlsafe(32)
+        changed = True
 
     if changed:
         tmp = config_file.with_suffix(".json.tmp")
         with tmp.open("w", encoding="utf-8") as fh:
             json.dump(cfg, fh, indent=2)
         tmp.replace(config_file)
-        try:
-            config_file.chmod(0o600)
-        except PermissionError:
-            pass
+    try:
+        config_file.chmod(0o600)
+    except PermissionError:
+        pass
 
     return cfg
 
 
 class Config:
-    APP_VERSION = "0.5.26-user-preferences-import-blocklist"
+    APP_VERSION = "0.5.28-container-runtime-healthcheck-trixie"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -51,6 +54,7 @@ class Config:
     SECRET_KEY = runtime_config["SECRET_KEY"]
     FERNET_KEY = runtime_config["FERNET_KEY"]
     SECURITY_SIGNING_KEY = runtime_config["SECURITY_SIGNING_KEY"]
+    SETUP_TOKEN = os.environ.get("RAB_SETUP_TOKEN", runtime_config["SETUP_TOKEN"])
 
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATA_DIR / 'addressbook.db'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -70,7 +74,14 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "false").lower() in {"1", "true", "yes", "on"}
     APP_HSTS = os.environ.get("APP_HSTS", "false").lower() in {"1", "true", "yes", "on"}
-    # strict = ungültige Benutzer-HMAC blockiert Login hart.
-    # repair_on_verified_login = bei gültigem Passwort plus ggf. 2FA neu versiegeln; sinnvoll für Updates/Key-Rotation.
-    USER_SIGNATURE_POLICY = os.environ.get("USER_SIGNATURE_POLICY", "repair_on_verified_login").strip().lower()
+    # Sicherheitsrelevante Benutzerzustände werden ausschließlich strikt geprüft.
+    USER_SIGNATURE_POLICY = "strict"
+    SECURITY_SIGNATURE_VERSION = 2
+    AUTH_EVENT_RETENTION_DAYS = int(os.environ.get("AUTH_EVENT_RETENTION_DAYS", "90"))
+    AUTH_EVENT_MAX_ROWS = int(os.environ.get("AUTH_EVENT_MAX_ROWS", "50000"))
+    SENSITIVE_ACTION_REAUTH_SECONDS = int(os.environ.get("SENSITIVE_ACTION_REAUTH_SECONDS", "1800"))
+    FULL_BACKUP_MAX_MEMBERS = int(os.environ.get("FULL_BACKUP_MAX_MEMBERS", "5000"))
+    FULL_BACKUP_MAX_TOTAL_BYTES = int(os.environ.get("FULL_BACKUP_MAX_TOTAL_BYTES", str(512 * 1024 * 1024)))
+    FULL_BACKUP_MAX_FILE_BYTES = int(os.environ.get("FULL_BACKUP_MAX_FILE_BYTES", str(128 * 1024 * 1024)))
+    OIDC_ALLOW_PRIVATE_ISSUER = os.environ.get("OIDC_ALLOW_PRIVATE_ISSUER", "false").lower() in {"1", "true", "yes", "on"}
     RAB_UPDATE_BASE_URL = os.environ.get("RAB_UPDATE_BASE_URL", "https://dl.ab-xnet.de").strip()

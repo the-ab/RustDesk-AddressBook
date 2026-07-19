@@ -8,6 +8,24 @@
   });
 
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  document.querySelectorAll('[data-confirm]').forEach((element) => {
+    const eventName = element.tagName === 'FORM' ? 'submit' : 'click';
+    element.addEventListener(eventName, (event) => {
+      if (!window.confirm(element.dataset.confirm || 'Fortfahren?')) event.preventDefault();
+    });
+  });
+
+  document.querySelectorAll('[data-user-provider]').forEach((provider) => {
+    const form = provider.closest('form') || document;
+    const updateProviderFields = () => {
+      const isLocal = provider.value === 'local';
+      form.querySelectorAll('.local-password-field').forEach((el) => el.classList.toggle('d-none', !isLocal));
+      form.querySelectorAll('.oidc-identity-field').forEach((el) => el.classList.toggle('d-none', isLocal));
+    };
+    provider.addEventListener('change', updateProviderFields);
+    updateProviderFields();
+  });
   const i18n = window.RAB_I18N || {};
 
   function activateSettingsTabFromHash() {
@@ -46,8 +64,9 @@
             method: 'POST',
             headers: {'X-CSRF-Token': csrfToken}
           });
+          const data = await response.json().catch(() => ({}));
+          if (response.status === 401 && data.reauth_url) { window.location.assign(data.reauth_url); return; }
           if (response.ok) {
-            const data = await response.json();
             input.value = data.password || '';
             input.dataset.loaded = '1';
           }
@@ -69,8 +88,11 @@
     const targetSelector = select.dataset.previewTarget;
     const target = targetSelector ? document.querySelector(targetSelector) : null;
     if (!target) return;
-    const value = select.value || 'collection';
-    target.innerHTML = `<i class="bi bi-${value}"></i>`;
+    const allowed = new Set(['collection','hdd-network','server','pc-display','pc-display-horizontal','laptop','windows','ubuntu','apple','android2','phone','router','ethernet','globe2','house','building','person-workspace','people','shield-lock','cloud','database','device-hdd','tools','wrench-adjustable','tag','star','folder']);
+    const value = allowed.has(select.value) ? select.value : 'collection';
+    const icon = document.createElement('i');
+    icon.className = `bi bi-${value}`;
+    target.replaceChildren(icon);
   }
 
   const passwordModalElement = document.getElementById('devicePasswordModal');
@@ -84,8 +106,9 @@
       passwordValue.value = '';
       try {
         const response = await fetch(url, {method: 'POST', headers: {'X-CSRF-Token': csrfToken, 'Accept': 'application/json'}});
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 401 && data.reauth_url) { window.location.assign(data.reauth_url); return; }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
         passwordValue.value = data.password || '';
         if (passwordTitle) passwordTitle.textContent = button.dataset.deviceName || 'RustDesk';
         bootstrap.Modal.getOrCreateInstance(passwordModalElement).show();

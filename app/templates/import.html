@@ -1,13 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ t('import.title', 'Import / Export') }} - RustDesk AddressBook<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const hash = window.location.hash;
-  if (!hash) return;
-  const trigger = document.querySelector('[data-bs-target="' + hash + '"]');
-  if (trigger && window.bootstrap) bootstrap.Tab.getOrCreateInstance(trigger).show();
-});
-</script>
-{% endblock %}
+{% block title %}{{ t('import.title', 'Import / Export') }} - RustDesk AddressBook{% endblock %}
 {% block content %}
 {% set db_mount = rustdesk_server_db_status() %}
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
@@ -26,10 +18,10 @@ document.addEventListener('DOMContentLoaded', function () {
   <div class="col-12 col-lg-3 col-xl-2">
     <div class="card app-card import-sidebar sticky-lg-top">
       <div class="list-group list-group-flush settings-nav" id="importTabs" role="tablist">
-        <button class="list-group-item list-group-item-action active" id="csv-tab" data-bs-toggle="pill" data-bs-target="#csv" type="button" role="tab"><i class="bi bi-filetype-csv me-2"></i>{{ t('import.menu.csv', 'CSV Import / Export') }}</button>
-        <button class="list-group-item list-group-item-action" id="server-tab" data-bs-toggle="pill" data-bs-target="#server" type="button" role="tab"><i class="bi bi-database-up me-2"></i>{{ t('import.menu.server', 'Server-DB Upload') }}</button>
+        <button class="list-group-item list-group-item-action active" id="csv-tab" data-bs-toggle="pill" data-bs-target="#csv" type="button" role="tab"><i class="bi bi-file-earmark-spreadsheet me-2"></i>{{ t('import.menu.csv', 'CSV Import / Export') }}</button>
+        <button class="list-group-item list-group-item-action" id="server-tab" data-bs-toggle="pill" data-bs-target="#server" type="button" role="tab"><i class="bi bi-cloud-upload me-2"></i>{{ t('import.menu.server', 'Server-DB Upload') }}</button>
         <button class="list-group-item list-group-item-action" id="ssh-tab" data-bs-toggle="pill" data-bs-target="#ssh" type="button" role="tab"><i class="bi bi-terminal me-2"></i>{{ t('import.menu.ssh', 'SSH Import') }}</button>
-        <button class="list-group-item list-group-item-action" id="direct-tab" data-bs-toggle="pill" data-bs-target="#direct" type="button" role="tab"><i class="bi bi-database-down me-2"></i>{{ t('import.menu.direct', 'Direkter DB-Import') }}</button>
+        <button class="list-group-item list-group-item-action" id="direct-tab" data-bs-toggle="pill" data-bs-target="#direct" type="button" role="tab"><i class="bi bi-cloud-download me-2"></i>{{ t('import.menu.direct', 'Direkter DB-Import') }}</button>
         <button class="list-group-item list-group-item-action" id="blocklist-tab" data-bs-toggle="pill" data-bs-target="#blocklist" type="button" role="tab"><i class="bi bi-slash-circle me-2"></i>{{ t('import.menu.blocklist', 'Import-Blockliste') }} <span class="badge text-bg-secondary ms-1">{{ blocklist_entries|length }}</span></button>
         <button class="list-group-item list-group-item-action" id="notes-tab" data-bs-toggle="pill" data-bs-target="#notes" type="button" role="tab"><i class="bi bi-info-circle me-2"></i>{{ t('import.menu.notes', 'Hinweise') }}</button>
       </div>
@@ -43,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <div class="col-12 col-xl-6">
             <div class="card app-card h-100">
               <div class="card-body">
-                <h2 class="h5 mb-3"><i class="bi bi-filetype-csv me-1"></i>{{ t('import.csv.title', 'CSV Import') }}</h2>
+                <h2 class="h5 mb-3"><i class="bi bi-file-earmark-spreadsheet me-1"></i>{{ t('import.csv.title', 'CSV Import') }}</h2>
                 <form method="post" enctype="multipart/form-data" action="{{ url_for('import_devices') }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <div class="mb-3">
@@ -67,7 +59,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
                 <p class="text-secondary">{{ t('import.export.help', 'Exportiere dein Adressbuch als CSV. Aus Sicherheitsgründen ist der Export ohne Gerätepasswörter vorausgewählt.') }}</p>
                 <div class="d-flex flex-wrap gap-2">
                   <a class="btn btn-outline-primary" href="{{ url_for('export_devices') }}"><i class="bi bi-download me-1"></i>{{ t('import.export.no_passwords', 'Export ohne Passwörter') }}</a>
-                  <a class="btn btn-outline-warning" href="{{ url_for('export_devices', include_passwords='1') }}" onclick="return confirm('{{ t('import.export.password_warning', 'Dieser Export enthält entschlüsselte Gerätepasswörter im Klartext. Fortfahren?') }}')"><i class="bi bi-exclamation-triangle me-1"></i>{{ t('import.export.with_passwords', 'Export mit Passwörtern') }}</a>
+                  <a class="btn btn-outline-warning" href="{{ url_for('export_devices', include_passwords='1') }}" data-confirm="{{ t('import.export.password_warning', 'Dieser Export enthält entschlüsselte Gerätepasswörter im Klartext. Fortfahren?') }}"><i class="bi bi-exclamation-triangle me-1"></i>{{ t('import.export.with_passwords', 'Export mit Passwörtern') }}</a>
                 </div>
               </div>
             </div>
@@ -78,7 +70,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
       <div class="tab-pane fade" id="server" role="tabpanel" aria-labelledby="server-tab" tabindex="0">
         <div class="card app-card">
           <div class="card-body">
-            <h2 class="h5 mb-3"><i class="bi bi-database-up me-1"></i>{{ t('import.server.title', 'RustDesk Server Import') }}</h2>
+            <h2 class="h5 mb-3"><i class="bi bi-cloud-upload me-1"></i>{{ t('import.server.title', 'RustDesk Server Import') }}</h2>
             <form method="post" enctype="multipart/form-data" action="{{ url_for('import_rustdesk_server') }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="mb-3">
@@ -91,7 +83,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
                 <div class="col-12 col-md-6"><label class="form-label">{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}</label><input class="form-control" name="group_name_new" placeholder="{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}"></div>
               </div>
               <div class="form-check my-3"><input class="form-check-input" type="checkbox" name="update_existing" id="update_existing" checked><label class="form-check-label" for="update_existing">{{ t('common.update_existing', 'Vorhandene Geräte mit gleicher RustDesk-ID aktualisieren') }}</label></div>
-              <button class="btn btn-primary" type="submit"><i class="bi bi-database-up me-1"></i>{{ t('import.server.button', 'Server-DB importieren') }}</button>
+              <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-upload me-1"></i>{{ t('import.server.button', 'Server-DB importieren') }}</button>
             </form>
           </div>
         </div>
@@ -111,6 +103,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
               <div class="col-12 col-md-6"><label class="form-label">{{ t('import.ssh.timeout', 'Timeout Sekunden') }}</label><input class="form-control" name="ssh_timeout" value="{{ ssh.timeout }}" inputmode="numeric"></div>
               <div class="col-12"><label class="form-label">{{ t('import.ssh.key_path', 'Private-Key-Pfad im Container') }}</label><input class="form-control" name="ssh_key_path" value="{{ ssh.key_path }}" placeholder="/data/ssh/rustdesk_import_ed25519"><div class="form-text">{{ t('import.ssh.key_help', 'Der Key muss aus Sicherheitsgründen unter /data liegen, empfohlen: /data/ssh/rustdesk_import_ed25519.') }}</div></div>
               <div class="col-12"><label class="form-label">{{ t('import.ssh.known_hosts', 'Known-Hosts-Datei') }}</label><input class="form-control" name="ssh_known_hosts_path" value="{{ ssh.known_hosts_path }}" placeholder="/data/ssh/known_hosts"></div>
+              <div class="col-12"><label class="form-label">{{ t('import.ssh.host_fingerprint', 'Geprüfter SSH-Hostschlüssel-Fingerprint') }}</label><input class="form-control font-monospace" name="ssh_host_key_fingerprint" value="{{ ssh.host_key_fingerprint }}" placeholder="SHA256:..."><div class="form-text">{{ t('import.ssh.host_fingerprint_help', 'Vergleiche den Fingerprint auf einem vertrauenswürdigen Weg mit dem RustDesk-Server. Nur der passende Hostschlüssel wird in known_hosts übernommen.') }}</div></div>
               <div class="col-12"><label class="form-label">{{ t('import.ssh.remote_command', 'Remote-Kommando optional') }}</label><input class="form-control" name="ssh_remote_command" value="{{ ssh.remote_command }}" placeholder="{{ t('import.ssh.remote_help', 'leer lassen, wenn authorized_keys ein forced command nutzt') }}"><div class="form-text">{{ t('import.ssh.remote_help', 'Bei einem eingeschränkten Key mit forced command leer lassen.') }}</div></div>
               <div class="col-12 col-md-6"><label class="form-label">{{ t('common.group', 'Zielgruppe') }}</label><select class="form-select" name="group_id"><option value="">RustDesk Server</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
               <div class="col-12 col-md-6"><label class="form-label">{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}</label><input class="form-control" name="group_name_new" placeholder="SSH Import"></div>
@@ -140,13 +133,13 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
       <div class="tab-pane fade" id="direct" role="tabpanel" aria-labelledby="direct-tab" tabindex="0">
         <div class="card app-card">
           <div class="card-body">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3"><div><h2 class="h5 mb-1"><i class="bi bi-database-down me-1"></i>{{ t('import.direct.title', 'Direkter DB-Import') }}</h2><p class="text-secondary mb-0">{{ t('import.direct.help', 'Nutzt eine per read-only Mount eingebundene RustDesk-Serverdatenbank. WAL/SHM werden beim SQLite-Snapshot berücksichtigt.') }}</p></div><span class="badge {{ db_mount.badge }}">{% if db_mount.exists %}{{ t('import.direct.active', 'aktiv') }}{% elif db_mount.configured %}{{ t('import.direct.not_found', 'nicht gefunden') }}{% else %}{{ t('import.direct.disabled', 'nicht aktiviert') }}{% endif %}</span></div>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3"><div><h2 class="h5 mb-1"><i class="bi bi-cloud-download me-1"></i>{{ t('import.direct.title', 'Direkter DB-Import') }}</h2><p class="text-secondary mb-0">{{ t('import.direct.help', 'Nutzt eine per read-only Mount eingebundene RustDesk-Serverdatenbank. WAL/SHM werden beim SQLite-Snapshot berücksichtigt.') }}</p></div><span class="badge {{ db_mount.badge }}">{% if db_mount.exists %}{{ t('import.direct.active', 'aktiv') }}{% elif db_mount.configured %}{{ t('import.direct.not_found', 'nicht gefunden') }}{% else %}{{ t('import.direct.disabled', 'nicht aktiviert') }}{% endif %}</span></div>
             <div class="alert {% if db_mount.exists %}alert-success{% elif db_mount.configured %}alert-warning{% else %}alert-secondary{% endif %} small">{{ db_mount.message }}</div>
             <form method="post" action="{{ url_for('sync_rustdesk_mounted_import') }}" class="row g-3 align-items-end">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="col-12 col-md-6"><label class="form-label">{{ t('common.group', 'Zielgruppe') }}</label><select class="form-select" name="group_id" {% if not db_mount.exists %}disabled{% endif %}><option value="">RustDesk Server</option>{% for group in groups %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}</select></div>
               <div class="col-12 col-md-6"><label class="form-label">{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}</label><input class="form-control" name="group_name_new" placeholder="{{ t('common.new_group_optional', 'Neue Zielgruppe optional') }}" {% if not db_mount.exists %}disabled{% endif %}></div>
-              <div class="col-12 d-flex flex-wrap gap-2"><button class="btn btn-outline-secondary" type="submit" {% if not db_mount.exists %}disabled title="{{ t('import.direct.disabled_title', 'RUSTDESK_SERVER_DB ist nicht gesetzt oder Datei nicht vorhanden') }}"{% endif %}><i class="bi bi-database-down me-1"></i>{{ t('import.direct.button', 'Echtzeit-Import aus eingebundener DB') }}</button>{% if db_mount.configured %}<a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>{{ t('import.direct.diagnose', 'DB Diagnose') }}</a>{% endif %}</div>
+              <div class="col-12 d-flex flex-wrap gap-2"><button class="btn btn-outline-secondary" type="submit" {% if not db_mount.exists %}disabled title="{{ t('import.direct.disabled_title', 'RUSTDESK_SERVER_DB ist nicht gesetzt oder Datei nicht vorhanden') }}"{% endif %}><i class="bi bi-cloud-download me-1"></i>{{ t('import.direct.button', 'Echtzeit-Import aus eingebundener DB') }}</button>{% if db_mount.configured %}<a class="btn btn-outline-secondary" href="{{ url_for('rustdesk_server_diagnose') }}"><i class="bi bi-clipboard-data me-1"></i>{{ t('import.direct.diagnose', 'DB Diagnose') }}</a>{% endif %}</div>
             </form>
           </div>
         </div>
@@ -177,7 +170,7 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
                 <td data-label="{{ t('common.device', 'Gerät') }}">{{ entry.device_name or '-' }}</td>
                 <td data-label="{{ t('import.blocklist.reason_label', 'Grund') }}">{{ entry.reason or '-' }}</td>
                 <td data-label="{{ t('import.blocklist.created', 'Eingetragen') }}"><span class="small">{{ entry.created_at.strftime('%d.%m.%Y %H:%M') if entry.created_at else '-' }}{% if entry.created_by %}<br>{{ entry.created_by }}{% endif %}</span></td>
-                <td data-label="{{ t('common.actions', 'Aktionen') }}" class="text-end"><form method="post" action="{{ url_for('import_blocklist_remove', entry_id=entry.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('{{ t('import.blocklist.remove_confirm', 'Diese ID aus der Blockliste entfernen? Sie kann danach wieder importiert werden.') }}')"><i class="bi bi-unlock me-1"></i>{{ t('import.blocklist.remove', 'Freigeben') }}</button></form></td>
+                <td data-label="{{ t('common.actions', 'Aktionen') }}" class="text-end"><form method="post" action="{{ url_for('import_blocklist_remove', entry_id=entry.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-danger" type="submit" data-confirm="{{ t('import.blocklist.remove_confirm', 'Diese ID aus der Blockliste entfernen? Sie kann danach wieder importiert werden.') }}"><i class="bi bi-unlock me-1"></i>{{ t('import.blocklist.remove', 'Freigeben') }}</button></form></td>
               </tr>{% endfor %}</tbody>
             </table></div>
             {% else %}<div class="text-secondary">{{ t('import.blocklist.empty', 'Die Import-Blockliste ist leer.') }}</div>{% endif %}
@@ -191,12 +184,4 @@ Proxmox,123456789,meinpasswort,Zuhause,Keller,Proxmox,"server,homelab",Host,1,1,
     </div>
   </div>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const hash = window.location.hash;
-  if (!hash) return;
-  const trigger = document.querySelector('[data-bs-target="' + hash + '"]');
-  if (trigger && window.bootstrap) bootstrap.Tab.getOrCreateInstance(trigger).show();
-});
-</script>
 {% endblock %}

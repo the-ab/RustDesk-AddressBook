@@ -36,6 +36,7 @@ class User(UserMixin, db.Model):
     totp_enabled = db.Column(db.Boolean, default=False, nullable=False)
     totp_recovery_hashes = db.Column(db.Text, nullable=True)
     security_signature = db.Column(db.Text, nullable=True)
+    session_version = db.Column(db.Integer, nullable=False, default=1)
     created_at = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False)
     last_login_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
@@ -70,6 +71,17 @@ class AuthEvent(db.Model):
     success = db.Column(db.Boolean, default=False, nullable=False, index=True)
     message = db.Column(db.Text, nullable=True)
 
+
+class TransientSecret(db.Model):
+    __tablename__ = "transient_secrets"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(128), unique=True, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    purpose = db.Column(db.String(64), nullable=False, index=True)
+    encrypted_payload = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False, index=True)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
 
 class Group(db.Model):
     __tablename__ = "groups"

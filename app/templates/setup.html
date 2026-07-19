@@ -10,6 +10,11 @@
         <form method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
+            <label class="form-label">{{ t('setup.token', 'Setup-Token') }}</label>
+            <input class="form-control font-monospace" type="password" name="setup_token" autocomplete="off" required>
+            <div class="form-text">{{ t('setup.token_help', 'Das einmalige Token steht in data/config.json unter SETUP_TOKEN oder kann auf dem Server mit docker exec rustdesk-addressbook python -c "import json; print(json.load(open(\'/data/config.json\'))[\'SETUP_TOKEN\'])" ausgelesen werden.') }}</div>
+          </div>
+          <div class="mb-3">
             <label class="form-label">{{ t('setup.username', 'Benutzername') }}</label>
             <input class="form-control" name="username" autocomplete="username" required autofocus>
           </div>

@@ -25,11 +25,13 @@
       <div class="col-12 col-md-6 col-xl-3 d-flex align-items-end"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="active" value="1" id="newUserActive" checked><label class="form-check-label" for="newUserActive">{{ t('users.active', 'Aktiv') }}</label></div></div>
       <div class="col-12 col-md-6 local-password-field"><label class="form-label">{{ t('users.password', 'Passwort') }}</label><input class="form-control" type="password" name="password" minlength="8" autocomplete="new-password"><div class="form-text">{{ t('users.password_local_help', 'Nur für lokale Benutzer erforderlich, mindestens 8 Zeichen.') }}</div></div>
       <div class="col-12 col-md-6 local-password-field"><label class="form-label">{{ t('users.password_repeat', 'Passwort wiederholen') }}</label><input class="form-control" type="password" name="password2" minlength="8" autocomplete="new-password"></div>
+      <div class="col-12 col-md-6 oidc-identity-field d-none"><label class="form-label">OIDC Issuer</label><input class="form-control" name="oidc_issuer" placeholder="https://id.example.org/realms/main"><div class="form-text">{{ t('users.oidc_issuer_help', 'Muss exakt dem iss-Claim des Providers entsprechen.') }}</div></div>
+      <div class="col-12 col-md-6 oidc-identity-field d-none"><label class="form-label">OIDC Subject</label><input class="form-control font-monospace" name="oidc_subject" placeholder="sub"><div class="form-text">{{ t('users.oidc_subject_help', 'Stabile eindeutige Kennung aus dem sub-Claim. Benutzername oder E-Mail werden nicht zur Kontobindung verwendet.') }}</div></div>
       <div class="col-12">
         <label class="form-label">{{ t('users.assigned_groups', 'Zugewiesene Gruppen') }}</label>
         <div class="row g-2">
           {% for group in groups %}
-          <div class="col-12 col-sm-6 col-lg-4 col-xl-3"><label class="form-check border rounded p-2 h-100"><input class="form-check-input ms-0 me-2" type="checkbox" name="group_ids" value="{{ group.id }}"><span><i class="bi bi-{{ group.icon }} me-1"></i>{{ group.name }}</span></label></div>
+          <div class="col-12 col-sm-6 col-lg-4 col-xl-3"><label class="form-check border rounded p-2 h-100"><input class="form-check-input ms-0 me-2" type="checkbox" name="group_ids" value="{{ group.id }}"><span><i class="bi bi-{{ safe_group_icon(group.icon) }} me-1"></i>{{ group.name }}</span></label></div>
           {% else %}<div class="text-secondary small">{{ t('users.no_groups', 'Noch keine Gruppen vorhanden.') }}</div>{% endfor %}
         </div>
       </div>
@@ -50,18 +52,11 @@
           <td data-label="{{ t('users.provider', 'Anmeldung') }}"><span class="badge text-bg-light border">{{ user.auth_provider|upper }}</span>{% if user.auth_provider == 'oidc' and not user.oidc_subject %}<div class="small text-warning mt-1">{{ t('users.oidc_pending', 'Noch nicht mit OIDC verknüpft') }}</div>{% endif %}</td>
           <td data-label="{{ t('users.assigned_groups', 'Zugewiesene Gruppen') }}">{% if user.is_admin %}<span class="text-secondary small">{{ t('users.all_devices', 'Alle Geräte') }}</span>{% elif user.groups %}{% for group in user.groups %}<span class="badge text-bg-{{ group.color }} me-1 mb-1">{{ group.name }}</span>{% endfor %}{% else %}<span class="text-secondary small">{{ t('users.no_access', 'Keine Geräte sichtbar') }}</span>{% endif %}</td>
           <td data-label="{{ t('users.last_login', 'Letzte Anmeldung') }}">{{ user.last_login_at|datetime_de if user.last_login_at else '-' }}</td>
-          <td class="text-end mobile-actions-cell" data-label="{{ t('common.actions', 'Aktionen') }}"><div class="btn-group btn-group-sm"><a class="btn btn-outline-secondary" href="{{ url_for('user_edit', user_id=user.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a><form method="post" action="{{ url_for('user_delete', user_id=user.id) }}" onsubmit="return confirm('{{ t('users.delete_confirm', 'Benutzer wirklich löschen?') }}')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger" type="submit" {% if user.id == current_user.id %}disabled{% endif %} title="{{ t('common.delete', 'Löschen') }}"><i class="bi bi-trash"></i></button></form></div></td>
+          <td class="text-end mobile-actions-cell" data-label="{{ t('common.actions', 'Aktionen') }}"><div class="btn-group btn-group-sm"><a class="btn btn-outline-secondary" href="{{ url_for('user_edit', user_id=user.id) }}" title="{{ t('common.edit', 'Bearbeiten') }}"><i class="bi bi-pencil"></i></a><form method="post" action="{{ url_for('user_delete', user_id=user.id) }}" data-confirm="{{ t('users.delete_confirm', 'Benutzer wirklich löschen?') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger" type="submit" {% if user.id == current_user.id %}disabled{% endif %} title="{{ t('common.delete', 'Löschen') }}"><i class="bi bi-trash"></i></button></form></div></td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const provider = document.querySelector('[data-user-provider]');
-  const update = () => document.querySelectorAll('.local-password-field').forEach(el => el.classList.toggle('d-none', provider && provider.value !== 'local'));
-  if (provider) { provider.addEventListener('change', update); update(); }
-});
-</script>
 {% endblock %}

@@ -1,9 +1,9 @@
-rustdesk-addressbook-update-flat-v0526.zip
+rustdesk-addressbook-update-flat-v0528.zip
 [de]
-- Darstellung und Sprache werden pro Benutzerkonto gespeichert; lokale und OIDC-Benutzer können ihre Ansicht unter Mein Konto unabhängig voneinander anpassen.
-- Beim Löschen eines Geräts wird seine RustDesk-ID automatisch in eine persistente Import-Blockliste aufgenommen.
-- CSV-, Server-DB-, SSH- und direkte DB-Importe überspringen gesperrte IDs; Administratoren können die Blockliste verwalten und IDs wieder freigeben.
+- Neustartschleife bestehender Installationen durch einen separaten Berechtigungs-Init-Dienst behoben; die Webanwendung bleibt unprivilegiert.
+- Container-Basis auf Debian Trixie umgestellt.
+- Docker-Healthcheck mit internem /healthz- und SQLite-Test ergänzt.
 [en]
-- Display mode and UI language are stored per user account; local and OIDC users can customize their own view under My account independently.
-- Deleting a device automatically adds its RustDesk ID to a persistent import blocklist.
-- CSV, server DB, SSH and direct DB imports skip blocked IDs; administrators can manage the blocklist and unblock IDs.
+- Fixed the restart loop on existing installations through a dedicated permission init service while keeping the web application unprivileged.
+- Switched the container base to Debian Trixie.
+- Added a Docker health check with an internal /healthz and SQLite probe.

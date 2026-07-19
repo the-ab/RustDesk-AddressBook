@@ -9,7 +9,7 @@
   <form method="post" class="page-actions">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="action" value="create">
-    <button class="btn btn-primary" type="submit"><i class="bi bi-database-down me-1"></i>{{ t('backup.create', 'Backup erstellen') }}</button>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-cloud-download me-1"></i>{{ t('backup.create', 'Backup erstellen') }}</button>
   </form>
 </div>
 
@@ -50,13 +50,13 @@
                     <input type="hidden" name="action" value="restore_existing">
                     <input type="hidden" name="filename" value="{{ file.name }}">
                     {% if encrypted %}<input class="form-control form-control-sm backup-password-input" type="password" name="restore_password" placeholder="{{ t('backup.password_placeholder', 'Backup-Passwort') }}" required>{% endif %}
-                    <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('{{ t('backup.restore_confirm', 'Dieses Backup wirklich wiederherstellen? Bei Vollbackups werden auch config.json, SSH- und Zertifikatsdateien überschrieben. Nach Restore eines Vollbackups muss der Container neu gestartet werden.') }}')"><i class="bi bi-arrow-counterclockwise me-1"></i>{{ t('backup.restore', 'Wiederherstellen') }}</button>
+                    <button class="btn btn-outline-danger btn-sm" type="submit" data-confirm="{{ t('backup.restore_confirm', 'Dieses Backup wirklich wiederherstellen? Bei Vollbackups werden auch config.json, SSH- und Zertifikatsdateien überschrieben. Nach Restore eines Vollbackups muss der Container neu gestartet werden.') }}"><i class="bi bi-arrow-counterclockwise me-1"></i>{{ t('backup.restore', 'Wiederherstellen') }}</button>
                   </form>
                   <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="delete_existing">
                     <input type="hidden" name="filename" value="{{ file.name }}">
-                    <button class="btn btn-outline-secondary btn-sm" type="submit" onclick="return confirm('{{ t('backup.delete_confirm', 'Dieses Backup wirklich löschen?') }}')"><i class="bi bi-trash me-1"></i>{{ t('common.delete', 'Löschen') }}</button>
+                    <button class="btn btn-outline-secondary btn-sm" type="submit" data-confirm="{{ t('backup.delete_confirm', 'Dieses Backup wirklich löschen?') }}"><i class="bi bi-trash me-1"></i>{{ t('common.delete', 'Löschen') }}</button>
                   </form>
                 </div>
               </td>
@@ -103,7 +103,7 @@
           <div class="input-group rab-file-picker"><label class="btn btn-outline-secondary" for="backupFileInput"><i class="bi bi-folder2-open me-1"></i>{{ t('common.choose_file', 'Datei auswählen') }}</label><span class="form-control rab-file-label" data-file-label-for="backupFileInput">{{ t('common.no_file_selected', 'Keine Datei ausgewählt') }}</span></div>
         </div>
         <div class="mb-3"><label class="form-label">{{ t('backup.restore_password', 'Backup-Passwort, falls .rabenc oder .rabfull') }}</label><input class="form-control" type="password" name="restore_password" autocomplete="off"></div>
-        <button class="btn btn-outline-danger" type="submit" onclick="return confirm('{{ t('backup.upload_confirm', 'Hochgeladenes Backup wirklich wiederherstellen? Der aktuelle Stand wird vorher automatisch gesichert.') }}')"><i class="bi bi-upload me-1"></i>{{ t('backup.upload_restore', 'Hochladen & wiederherstellen') }}</button>
+        <button class="btn btn-outline-danger" type="submit" data-confirm="{{ t('backup.upload_confirm', 'Hochgeladenes Backup wirklich wiederherstellen? Der aktuelle Stand wird vorher automatisch gesichert.') }}"><i class="bi bi-upload me-1"></i>{{ t('backup.upload_restore', 'Hochladen & wiederherstellen') }}</button>
       </form>
     </div></div>
   </div>

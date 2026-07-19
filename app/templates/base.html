@@ -6,8 +6,8 @@
   <title>{% block title %}RustDesk AddressBook{% endblock %}</title>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/favicon.svg', v=app_version) }}">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css', v=app_version) }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css', v=app_version) }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/app.css', v=app_version) }}" rel="stylesheet">
 </head>
 <body>
@@ -27,11 +27,11 @@
         <li class="nav-item"><a class="nav-link" href="{{ url_for('groups') }}"><i class="bi bi-collection me-1"></i>{{ t('nav.groups', 'Gruppen') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('users') }}"><i class="bi bi-people me-1"></i>{{ t('nav.users', 'Benutzer') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('import_devices') }}"><i class="bi bi-arrow-down-up me-1"></i>{{ t('nav.import_export', 'Import / Export') }}</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('backup') }}"><i class="bi bi-database-down me-1"></i>{{ t('nav.backup', 'Backup') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('backup') }}"><i class="bi bi-cloud-download me-1"></i>{{ t('nav.backup', 'Backup') }}</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('security') }}"><i class="bi bi-shield-lock me-1"></i>{{ t('nav.security', 'Sicherheit') }}</a></li>
         {% endif %}
         <li class="nav-item"><a class="nav-link" href="{{ url_for('help_page') }}"><i class="bi bi-question-circle me-1"></i>{{ t('nav.help', 'Anleitung') }}</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('account') }}"><i class="bi bi-person-gear me-1"></i>{{ t('nav.account', 'Mein Konto') }}</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('account') }}"><i class="bi bi-person-circle me-1"></i>{{ t('nav.account', 'Mein Konto') }}</a></li>
         {% if is_admin %}<li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}"><i class="bi bi-gear me-1"></i>{{ t('nav.settings', 'Einstellungen') }}</a></li>{% endif %}
       </ul>
       <div class="d-flex align-items-center gap-2 app-navbar-actions">
@@ -69,12 +69,12 @@
 
 {% if current_user.is_authenticated %}
 <div class="modal fade" id="devicePasswordModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title h5" id="devicePasswordTitle">{{ t('device.password.title', 'RustDesk-Passwort') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('common.close', 'Schließen') }}"></button></div><div class="modal-body"><label class="form-label">{{ t('device.password.value', 'Gespeichertes Passwort') }}</label><div class="input-group"><input class="form-control font-monospace" id="devicePasswordValue" type="text" readonly><button class="btn btn-outline-secondary" id="devicePasswordCopy" type="button"><i class="bi bi-copy me-1"></i>{{ t('common.copy', 'Kopieren') }}</button></div><div class="form-text">{{ t('device.password.help', 'Das Passwort wird nur für Geräte angezeigt, auf die dein Benutzer zugreifen darf.') }}</div></div></div></div>
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title h5" id="devicePasswordTitle">{{ t('device.password.title', 'RustDesk-Passwort') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('common.close', 'Schließen') }}"></button></div><div class="modal-body"><label class="form-label">{{ t('device.password.value', 'Gespeichertes Passwort') }}</label><div class="input-group"><input class="form-control font-monospace" id="devicePasswordValue" type="text" readonly><button class="btn btn-outline-secondary" id="devicePasswordCopy" type="button"><i class="bi bi-clipboard me-1"></i>{{ t('common.copy', 'Kopieren') }}</button></div><div class="form-text">{{ t('device.password.help', 'Das Passwort wird nur für Geräte angezeigt, auf die dein Benutzer zugreifen darf.') }}</div></div></div></div>
 </div>
 {% endif %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js', v=app_version) }}"></script>
 {% if current_user.is_authenticated %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   window.RAB_AUTO_STATUS = {
     enabled: {{ "true" if is_admin and auto_status_settings.enabled else "false" }},
     intervalSeconds: {{ auto_status_settings.interval_seconds }},
@@ -103,6 +103,6 @@
 </script>
 {% endif %}
 <footer class="container-fluid px-3 px-lg-4 pb-3 text-secondary small app-footer">RustDesk AddressBook <a class="text-secondary" href="{{ url_for('release_notes') }}" title="{{ t('release.title', 'Release-Änderungen anzeigen') }}">{{ app_version_short }}</a></footer>
-<script src="{{ url_for('static', filename='js/app.js', v=app_version) }}"></script>
+<script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/app.js', v=app_version) }}"></script>
 </body>
 </html>
