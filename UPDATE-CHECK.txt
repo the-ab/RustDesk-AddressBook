@@ -1,9 +1,9 @@
-rustdesk-addressbook-update-flat-v0528.zip
+rustdesk-addressbook-update-flat-v0529.zip
 [de]
-- Neustartschleife bestehender Installationen durch einen separaten Berechtigungs-Init-Dienst behoben; die Webanwendung bleibt unprivilegiert.
-- Container-Basis auf Debian Trixie umgestellt.
-- Docker-Healthcheck mit internem /healthz- und SQLite-Test ergänzt.
+- Alle regulären Markdown-Dateien auf Englisch als Standardsprache vereinheitlicht.
+- Deutsche Dokumentationsfassungen mit der Endung *.de.md ergänzt.
+- README-, Release-Notes-, Admin-Guide-, Sicherheits- und weitere Dokumentationspaare vereinheitlicht.
 [en]
-- Fixed the restart loop on existing installations through a dedicated permission init service while keeping the web application unprivileged.
-- Switched the container base to Debian Trixie.
-- Added a Docker health check with an internal /healthz and SQLite probe.
+- Standardized all regular Markdown files on English as the default language.
+- Added German documentation editions using the *.de.md suffix.
+- Standardized README, release notes, admin guide, security, and other documentation pairs.

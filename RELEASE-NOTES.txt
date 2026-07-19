@@ -1,11 +1,11 @@
-0.5.28-container-runtime-healthcheck-trixie
+0.5.29-english-default-markdown-docs
 [de]
-- Neustartschleife bestehender Installationen behoben: Ein kurzlebiger Init-Dienst bereitet Daten-, Zertifikats-, Log-, SSH- und Backup-Verzeichnisse vor; die Webanwendung läuft weiterhin unprivilegiert mit UID/GID 10001.
-- Container-Basis von Debian Bookworm auf Debian Trixie umgestellt.
-- Docker-Healthcheck mit internem /healthz-Endpunkt und SQLite-Prüfung ergänzt; selbstsigniertes HTTPS wird unterstützt.
-- Installations- und Updateskripte warten nicht mehr ausschließlich auf Host-Chown und prüfen nach dem Start den Health-Status.
+- Alle regulären Markdown-Dateien sind jetzt standardmäßig auf Englisch.
+- Deutsche Dokumentationsfassungen verwenden einheitlich die Endung *.de.md.
+- README.md/README.de.md sowie RELEASE_NOTES.md/RELEASE_NOTES.de.md und die übrigen Dokumentationspaare wurden ergänzt beziehungsweise vereinheitlicht.
+- Interne Dokumentationsverweise und Versionsbeispiele wurden aktualisiert.
 [en]
-- Fixed the restart loop on existing installations: a short-lived init service prepares data, certificate, log, SSH and backup directories while the web application continues to run unprivileged as UID/GID 10001.
-- Switched the container base from Debian Bookworm to Debian Trixie.
-- Added a Docker health check with an internal /healthz endpoint and SQLite probe, including support for self-signed HTTPS.
-- Installation and update scripts no longer depend solely on a host-side chown and check container health after startup.
+- All regular Markdown files now use English as the default language.
+- German documentation editions consistently use the *.de.md suffix.
+- Added or standardized README.md/README.de.md, RELEASE_NOTES.md/RELEASE_NOTES.de.md, and the remaining documentation pairs.
+- Updated internal documentation links and version examples.

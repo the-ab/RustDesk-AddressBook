@@ -41,7 +41,8 @@
   <div class="col-12 col-xl-9">
     <section id="overview" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Overview</h2>
-      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It provides central device management, local and OpenID Connect login, role- and group-based visibility, RustDesk links, import/export, backups, local 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems. Version 0.5.28 uses Debian Trixie, prepares persistent volume permissions through a dedicated init service and reports container health through an internal database-backed check.</p>
+      <p>RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It provides central device management, local and OpenID Connect login, role- and group-based visibility, RustDesk links, import/export, backups, local 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems. Version 0.5.29 uses Debian Trixie, prepares persistent volume permissions through a dedicated init service, reports container health through an internal database-backed check, and standardizes English/German Markdown documentation filenames.</p>
+      <p>Markdown documentation uses English in regular <code>*.md</code> files and German in matching <code>*.de.md</code> files.</p>
       <div class="row g-3">
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-pc-display-horizontal me-2"></i><strong>Device management</strong><br><span class="text-secondary small">Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-broadcast-pin me-2"></i><strong>Live status</strong><br><span class="text-secondary small">Online/offline checks using the RustDesk hbbs OnlineRequest/OnlineResponse flow.</span></div></div>
@@ -54,8 +55,8 @@
       <h2 class="h4">Installation and update</h2>
       <h3 class="h6 mt-3">Fresh installation</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0528.zip
-unzip rustdesk-addressbook-v0528.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0529.zip
+unzip rustdesk-addressbook-v0529.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -63,9 +64,9 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>The values are written to <code>.env</code>. When you run <code>./scripts/install.sh</code> again, the existing <code>.env</code> values are used as defaults.</p>
       <h3 class="h6 mt-3">Manual update with ZIP in <code>updates/</code></h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatic online update check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -251,7 +252,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update check and release notes</h2>
       <p>The Web UI checks <code>latest.txt</code> below <code>RAB_UPDATE_BASE_URL</code>. If an update is available, a badge appears next to Admin/Logout and links to Settings → Update check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0528.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0529.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -337,6 +338,7 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
     <section id="overview" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Überblick</h2>
       <p>RustDesk AddressBook ist ein eigenes Web-Adressbuch für selbstgehostete RustDesk-Installationen. Es bietet zentrale Geräteverwaltung, lokale und OpenID-Connect-Anmeldung, rollen- und gruppenbasierte Sichtbarkeit, direkte RustDesk-Links, Import/Export, Backups, lokale 2FA und Live-Online-Status über hbbs. Alle Seiten sind für Smartphone, Tablet und Desktop responsiv aufgebaut.</p>
+      <p>Markdown-Dokumentationen liegen standardmäßig englisch als <code>*.md</code> und deutsch als passende <code>*.de.md</code>-Dateien vor.</p>
       <div class="row g-3">
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-pc-display-horizontal me-2"></i><strong>Geräteverwaltung</strong><br><span class="text-secondary small">Name, RustDesk-ID, Passwort, Gruppe, Kunde, Standort, Gerätetyp, Tags und Notizen.</span></div></div>
         <div class="col-md-6"><div class="p-3 rounded border h-100"><i class="bi bi-broadcast-pin me-2"></i><strong>Live-Status</strong><br><span class="text-secondary small">Online/Offline-Abfrage über RustDesk hbbs OnlineRequest/OnlineResponse.</span></div></div>
@@ -349,8 +351,8 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
       <h2 class="h4">Installation und Update</h2>
       <h3 class="h6 mt-3">Neuinstallation mit Installationsscript</h3>
 <pre class="codebox"><code>cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0528.zip
-unzip rustdesk-addressbook-v0528.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0529.zip
+unzip rustdesk-addressbook-v0529.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -358,9 +360,9 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>Die gesetzten Werte werden in <code>.env</code> gespeichert. Beim erneuten Aufruf werden diese Werte als Default vorgeschlagen.</p>
       <h3 class="h6 mt-3">Update-ZIP manuell ablegen</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatischer Online-Check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -546,7 +548,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update-Check und Release-Notizen</h2>
       <p>Die WebUI prüft <code>latest.txt</code> unterhalb von <code>RAB_UPDATE_BASE_URL</code>. Wenn ein Update verfügbar ist, erscheint oben rechts ein Badge neben Admin/Logout und verlinkt zum Update-Check.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0528.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0529.zip
 [de]
 - Deutsche Änderung 1
 [en]

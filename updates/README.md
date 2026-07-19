@@ -1,10 +1,12 @@
 # Updates
 
-Kopiere neue Flat-Update-ZIP-Dateien hier hinein, zum Beispiel:
+Copy new flat update ZIP files and their verification sidecars into this directory, for example:
 
 ```bash
-cp rustdesk-addressbook-update-flat-v058.zip updates/
+cp rustdesk-addressbook-update-flat-v0529.zip* updates/
 ./scripts/update.sh
 ```
 
-Das Updatescript sucht automatisch die höchste `rustdesk-addressbook-update-flat-v*.zip`, vergleicht sie mit der aktuell installierten Version und führt das Update nur aus, wenn die ZIP neuer ist.
+The update script automatically selects the highest `rustdesk-addressbook-update-flat-v*.zip`, compares it with the installed version, verifies its Ed25519 signature and signed SHA-256 checksum, and installs it only when it is newer.
+
+The German edition is available as [`README.de.md`](README.de.md).

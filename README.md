@@ -1,28 +1,30 @@
 # RustDesk AddressBook
 
-Selfhosted RustDesk-Adressbuch als Docker-Projekt mit Flask, SQLite, lokaler Anmeldung und OpenID Connect, Benutzer-/Gruppenrechten, Geräteverwaltung, Import/Export, Backup/Restore, HTTPS, hbbs-Live-Status und SSH-Import der RustDesk-Serverdatenbank.
+Self-hosted RustDesk address book packaged as a Docker project with Flask, SQLite, local and OpenID Connect authentication, user/group permissions, device management, import/export, backup/restore, HTTPS, hbbs live status, and SSH import of the RustDesk server database.
 
-## Neu in 0.5.28
+> English is the default documentation language. The German edition is available as [`README.de.md`](README.de.md).
 
-- Neustartschleife bei bestehenden, root-eigenen Datenverzeichnissen behoben: Ein separater Init-Dienst korrigiert die Bind-Mount-Berechtigungen, bevor die weiterhin unprivilegierte Webanwendung startet.
-- Basisimage auf `python:3.13.14-slim-trixie` umgestellt.
-- Docker-Healthcheck mit `/healthz` und SQLite-Test ergänzt. `docker compose ps` zeigt dadurch `healthy` beziehungsweise `unhealthy`.
-- Update-Script kontrolliert nach dem Neustart den Health-Status und zeigt bei Fehlern die letzten Containerlogs.
+## New in 0.5.29
 
-## Neuinstallation
+- Standardized all Markdown documentation: every regular `*.md` file is now English.
+- Added matching German `*.de.md` editions for README, admin guide, release notes, security report, third-party notices, and the updates directory.
+- Added dedicated `RELEASE_NOTES.md` and `RELEASE_NOTES.de.md` files.
+- Updated internal documentation links and package contents to make the language convention explicit.
+
+## Fresh installation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0528.zip
-unzip rustdesk-addressbook-v0528.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-v0529.zip
+unzip rustdesk-addressbook-v0529.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
 ```
 
-Das Installationsscript fragt Zeitzone, Container-/Image-Name, Daten- und Backup-Pfad, HTTPS-Port, optionales HTTP, Zertifikatsnamen, Reverse-Proxy-Vertrauen, Update-URL, optionalen read-only RustDesk-DB-Mount sowie Brute-Force- und Auth-Logrotationswerte ab. Vorhandene Werte aus `.env` werden beim erneuten Aufruf als Defaults verwendet. Nach dem ersten Start zeigt es das einmalige Setup-Token für das erste Administratorkonto an.
+The installer asks for timezone, container/image name, data and backup paths, HTTPS port, optional HTTP, certificate names, reverse-proxy trust, update URL, an optional read-only RustDesk DB mount, and brute-force/auth-log rotation settings. Existing `.env` values are reused as defaults when the installer is run again. After the first start, the installer prints the one-time setup token for the initial administrator.
 
-Standardadresse:
+Default address:
 
 ```text
 https://SERVER-IP:5443
@@ -32,51 +34,51 @@ https://SERVER-IP:5443
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
+wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
 ./scripts/update.sh
 ```
 
-Ohne lokal abgelegte neue ZIP kann nur `./scripts/update.sh` gestartet werden. Das Script prüft zuerst `updates/`, danach `RAB_UPDATE_BASE_URL/latest.txt`, zeigt Änderungen an und fragt vor Download und Installation. Vor dem Update werden `data/`, `backups/`, `.env`, Compose-Dateien und `updates/` gesichert. Bei bestehenden Installationen bleibt das bisherige Konto erhalten. Beim Sprung von 0.5.26 wird die alte Benutzersignatur vor der Migration geprüft; ungültige Sicherheitszustände bleiben gesperrt.
+Without a local update ZIP, run only `./scripts/update.sh`. The script checks `updates/` first and then `RAB_UPDATE_BASE_URL/latest.txt`, displays the release notes, and asks before download and installation. Update packages are verified with an Ed25519 signature and signed SHA-256 checksum. Before installation, the script backs up `data/`, `backups/`, `.env`, Compose files, and `updates/`.
 
-## Rollen und Sichtbarkeit
+## Roles and visibility
 
-- **Administrator:** Zugriff auf alle Geräte und Gruppen, auch auf Geräte ohne Gruppe, sowie auf Benutzerverwaltung, Gruppen, Import/Export, Backups, Sicherheit, Einstellungen und Updates.
-- **Benutzer:** Zugriff auf Dashboard, Geräte, eigenes Konto und Anleitung. Sichtbar sind ausschließlich Geräte in zugewiesenen Gruppen. Verbindungen und die gezielte Anzeige gespeicherter Gerätepasswörter bleiben möglich; Änderungen an Geräten oder Systemdaten sind nicht erlaubt. Darstellung und Sprache kann jeder Benutzer nur für sein eigenes Konto ändern.
-- Gruppen werden in **Benutzer** einem Konto zugewiesen. Ein automatisch über OIDC angelegter Benutzer besitzt zunächst keine Gruppenzuweisung und sieht daher noch keine Geräte.
-- Rechte werden in den Backend-Routen geprüft. Ausgeblendete Menüpunkte allein sind nicht die Sicherheitsgrenze.
+- **Administrator:** full access to all devices and groups, including ungrouped devices, plus users, groups, import/export, backups, security, settings, and updates.
+- **User:** access to Dashboard, Devices, Account, and Help. Only devices in assigned groups are visible. Connections and explicit retrieval of stored device passwords remain available; users cannot create, edit, or delete devices or system data. Each user can change only their own appearance and language.
+- Groups are assigned to accounts under **Users**. An automatically provisioned OIDC user initially has no group assignments and therefore sees no devices.
+- Permissions are enforced in backend routes; hidden navigation entries are not the security boundary.
 
 ## OpenID Connect
 
-OIDC wird unter **Einstellungen → OpenID Connect** eingerichtet:
+Configure OIDC under **Settings → OpenID Connect**:
 
-- Issuer-URL mit Discovery unter `/.well-known/openid-configuration`
-- Client-ID und verschlüsselt gespeichertes Client-Secret
-- Redirect-URI aus der WebUI beim Provider hinterlegen
-- Scopes, Benutzername-Claim und Anzeigename des Providers
-- optionale automatische Benutzeranlage und eine Positivliste erlaubter E-Mail-Domains
-- optionales unsicheres HTTP nur für ausdrücklich aktivierte interne Testumgebungen
+- issuer URL with discovery at `/.well-known/openid-configuration`
+- client ID and encrypted client secret
+- redirect URI copied exactly to the provider
+- scopes, username claim, and provider display name
+- optional automatic user provisioning and allowed email-domain allowlist
+- optional insecure HTTP only for explicitly enabled internal test environments
 
-Für produktiven Betrieb HTTPS verwenden und hinter einem Reverse Proxy `TRUST_PROXY_HEADERS=true` nur setzen, wenn dessen Forwarded-Header vertrauenswürdig sind. Mindestens ein aktiver lokaler Administrator bleibt als Notfallzugang erhalten.
+Use HTTPS in production. Behind a reverse proxy, enable `TRUST_PROXY_HEADERS=true` only when its forwarded headers are trustworthy. Keep at least one active local administrator as an emergency login.
 
-## Funktionen
+## Features
 
-- **Geräte:** Anlegen, bearbeiten, löschen, suchen und nach Gruppe, Favorit oder Gerätetyp filtern; Sortierung nach Online-Status, Name, Favoriten oder Änderung. Felder: Name, RustDesk-ID, verschlüsseltes Passwort, Gruppe, Kunde, Standort, Gerätetyp/OS, Tags, Notizen, Favorit und Online-Status.
-- **Ansichten:** Karten, kompakte Liste und kleine Symbole; Auswahl gilt für Dashboard und Geräte-Seite.
-- **RustDesk-Verbindung:** `rustdesk://`-Direktlink; gespeichertes Passwort wird erst beim ausdrücklichen Abruf serverseitig entschlüsselt. Nach Ablauf des Sicherheitsfensters ist vorher eine erneute Anmeldung erforderlich; Abruf und Verbindungsstart werden protokolliert.
-- **Gruppen:** Name, Farbe und Icon; beim Löschen einer Gruppe bleiben Geräte erhalten und werden nur aus der Gruppe gelöst.
-- **Online-Status:** Manuell oder per hbbs OnlineRequest/OnlineResponse; frei wählbares Intervall in Minuten oder Stunden, solange eine Administrator-WebUI geöffnet ist.
-- **CSV:** Import erstellt neue Geräte, überspringt Zeilen ohne Name oder RustDesk-ID sowie gesperrte IDs aus der Import-Blockliste und legt angegebene Gruppen bei Bedarf an. Export ist mit oder ohne entschlüsselte Passwörter möglich.
-- **RustDesk-Server-DB:** Upload von `db_v2.sqlite3` plus optional WAL/SHM oder ZIP, read-only Mount, Diagnose sowie SSH-Snapshot. Alle Importwege berücksichtigen die persistente Import-Blockliste.
-- **Backups:** Unverschlüsselte SQLite-Sicherung, verschlüsseltes `.rabenc`-DB-Backup und verschlüsseltes `.rabfull`-Vollbackup. Vor jedem Restore wird automatisch ein Sicherheitsbackup erstellt. Vollbackup-Archive werden vor dem Schreiben strikt nach Pfaden, Dateitypen, Anzahl und entpackter Größe geprüft.
-- **Sicherheit:** lokale TOTP-2FA, einmalige gehashte Recovery-Codes, OIDC-Anmeldung, HMAC-Signatur von Benutzerzustand und Gruppenzuweisungen, Sitzungswiderruf, CSRF-Schutz, Auditlog, IP-basierte Brute-Force-Sperre und fail2ban/CrowdSec-kompatibles `auth.log` mit Rotation und Datenbankbegrenzung.
-- **Import-Blockliste:** Gelöschte Geräte-IDs werden automatisch gespeichert und bei allen Geräteimporten übersprungen; Administratoren können IDs manuell sperren oder freigeben.
-- **Responsive WebUI:** Login, Dashboard, Geräte, Benutzer, Gruppen, Import, Backup, OIDC, Konto, Einstellungen, Sicherheit, Anleitung und Release-Ansicht sind für Smartphone, Tablet und Desktop ausgelegt.
+- **Devices:** create, edit, delete, search, filter, and sort by online state, name, favorites, or modification time. Fields include name, RustDesk ID, encrypted password, group, customer, location, device type/OS, tags, notes, favorite, and online status.
+- **Views:** cards, compact list, and small icons; the selection applies to Dashboard and Devices.
+- **RustDesk connection:** direct `rustdesk://` links. Stored passwords are decrypted only after an explicit request. Sensitive actions require recent authentication and are audited.
+- **Groups:** name, color, and icon. Deleting a group removes assignments but preserves its devices as ungrouped administrator-visible devices.
+- **Online status:** manual or hbbs OnlineRequest/OnlineResponse checks with a configurable interval in minutes or hours.
+- **CSV:** import and export with optional decrypted passwords. Imports skip incomplete rows and IDs on the persistent import blocklist.
+- **RustDesk server DB:** SQLite/WAL/SHM upload, ZIP upload, read-only mount, diagnostics, and SSH snapshot import.
+- **Backups:** plain SQLite, encrypted `.rabenc` database backup, and encrypted `.rabfull` full backup. Restore archives are validated for paths, file types, member count, and extracted size.
+- **Security:** TOTP 2FA, hashed one-time recovery codes, OIDC, HMAC-protected user state and group assignments, session revocation, CSRF protection, audit logging, IP-based brute-force limiting, and fail2ban/CrowdSec-compatible auth logging.
+- **Import blocklist:** deleted RustDesk IDs are stored and skipped by every device import; administrators can block or unblock IDs manually.
+- **Responsive WebUI:** all major pages are designed for smartphone, tablet, and desktop use.
 
-## Backup-Hinweise
+## Backup notes
 
-Wichtige Daten liegen unter:
+Important data is stored under:
 
 ```text
 data/addressbook.db
@@ -87,35 +89,38 @@ data/logs/
 backups/
 ```
 
-`data/config.json` enthält Schlüsselmaterial für Gerätepasswörter und das OIDC-Client-Secret. Ein `.rabenc`-Backup enthält nur die Datenbank und benötigt weiterhin die passende `config.json`. Für Umzug oder Totalausfall ist ein verschlüsseltes `.rabfull`-Vollbackup empfohlen. Nach einem `.rabfull`-Restore den Container neu starten.
+`data/config.json` contains key material for device passwords and the OIDC client secret. A `.rabenc` file contains only the database and still requires the matching `config.json`. Use an encrypted `.rabfull` backup for migration or disaster recovery. Restart the container after restoring a `.rabfull` backup.
 
-## Download-Server / latest.txt
+## Download server / latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0528.zip
+rustdesk-addressbook-update-flat-v0529.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Neben der Update-ZIP müssen die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` veröffentlicht werden. `scripts/update.sh` lädt und prüft diese automatisch. Alternativ werden gleichnamige `.txt`-/`.md`-Dateien und sprachspezifische Dateien wie `release-notes-v0528.de.txt` oder `release-notes-v0528.en.txt` unterstützt. Der private Ed25519-Schlüssel gehört ausschließlich in eine offline beziehungsweise getrennt geschützte Release-Umgebung und niemals auf den Downloadserver.
+Publish the matching `.zip.sha256` and `.zip.sig` files next to the update ZIP. `scripts/update.sh` downloads and verifies them automatically. Matching `.txt`/`.md` files and language-specific release-note files are also supported. Keep the private Ed25519 signing key only in an offline or separately protected release environment, never on the download server.
 
-## Version prüfen
+## Check installed version
 
 ```bash
-docker exec -it rustdesk-addressbook grep -n "0.5.28-container-runtime-healthcheck-trixie" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.29-english-default-markdown-docs" /app/app/config.py
 ```
 
-## Dokumentation
+## Documentation
 
-Die vollständige Anleitung steht in der WebUI unter **Anleitung** und zusätzlich in `ADMIN-GUIDE.md`. Die Kernoberfläche, Anleitung und Release-Historie sind Deutsch/Englisch; technische Logs und importierte Inhalte werden nicht übersetzt.
+- English: [`ADMIN-GUIDE.md`](ADMIN-GUIDE.md), [`RELEASE_NOTES.md`](RELEASE_NOTES.md), [`SECURITY-REPORT.md`](SECURITY-REPORT.md)
+- German: [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md), [`RELEASE_NOTES.de.md`](RELEASE_NOTES.de.md), [`SECURITY-REPORT.de.md`](SECURITY-REPORT.de.md)
 
-## Sicherheitshinweis
+The WebUI help and release history remain available in German and English. Technical logs and imported content are not translated.
 
-Die SQLite-Datei ist nicht vollständig mit SQLCipher verschlüsselt. Gerätepasswörter und das OIDC-Client-Secret werden feldweise verschlüsselt; sensible Benutzer-Sicherheitsfelder einschließlich Rollen, OIDC-Identität, Sitzungsstand und Gruppenzuweisungen werden HMAC-signiert. Wer Datenbank und `data/config.json` zusammen erhält, muss als kompromittiert betrachtet werden. Öffentlichen Zugriff nur über abgesichertes HTTPS, starke lokale Notfall-Zugangsdaten, 2FA und restriktive Serverrechte bereitstellen.
+## Security note
 
-## Containerstatus prüfen
+The SQLite database is not fully encrypted with SQLCipher. Device passwords and the OIDC client secret are encrypted field by field. Sensitive user-security fields, including roles, OIDC identity, session state, and group assignments, are HMAC-signed. Treat access to both the database and `data/config.json` as a compromise. Expose the application only through hardened HTTPS with strong emergency credentials, 2FA, and restrictive server permissions.
+
+## Check container health
 
 ```bash
 docker compose ps
@@ -123,4 +128,4 @@ docker inspect --format '{{.State.Health.Status}}' rustdesk-addressbook
 docker logs --tail 100 rustdesk-addressbook
 ```
 
-Beim Start führt `rustdesk-addressbook-init` einmalig die Berechtigungsvorbereitung für Daten und Backups aus. Der eigentliche Container `rustdesk-addressbook` läuft anschließend weiterhin mit UID/GID 10001 und ohne Linux-Capabilities.
+At startup, `rustdesk-addressbook-init` prepares data and backup permissions once. The main `rustdesk-addressbook` container then runs as UID/GID 10001 without Linux capabilities.

@@ -1,34 +1,39 @@
-# Sicherheitsstatus RustDesk AddressBook 0.5.28
+# RustDesk AddressBook Security Status 0.5.29
 
-**Stand:** 19. Juli 2026  
-**Version:** `0.5.28-container-runtime-healthcheck-trixie`
+**Date:** July 19, 2026  
+**Version:** `0.5.29-english-default-markdown-docs`
 
-## Behobene Schwerpunkte
+> English is the default documentation language. The German edition is available as [`SECURITY-REPORT.de.md`](SECURITY-REPORT.de.md).
 
-- Updatepakete werden vor dem Entpacken über Ed25519 und eine signierte SHA-256-Prüfsumme verifiziert.
-- Der Vollbackup-Restore akzeptiert nur reguläre Dateien in erlaubten Pfaden und begrenzt Anzahl, Einzelgröße und entpackte Gesamtgröße.
-- Bestehende 0.5.26-Benutzersignaturen werden nur nach erfolgreicher Prüfung des alten Signaturformats migriert. Ab 0.5.27 umfasst die Signatur auch Gruppenzuweisungen und Sitzungsstand.
-- Sicherheitsrelevante Kontoänderungen widerrufen bereits bestehende Sitzungen.
-- OIDC-Identitäten werden ausschließlich über die Kombination aus Issuer und `sub` gebunden; Domain-Filter verlangen `email_verified=true`.
-- Die Ersteinrichtung benötigt ein serverseitig erzeugtes Setup-Token.
-- Passwortabruf, RustDesk-Verbindungsstart und CSV-Export mit Passwörtern erfordern eine aktuelle Authentifizierung und werden protokolliert.
-- SSH-Import verlangt einen vorab bekannten SHA-256-Hostschlüssel-Fingerprint und verwendet `StrictHostKeyChecking=yes`.
-- CSV-Formelinjektion, gespeicherte Icon-DOM-Injektion, unbegrenztes Auth-Ereigniswachstum und externe JavaScript-Abhängigkeiten wurden adressiert.
-- Der Container läuft als unprivilegierter Benutzer mit entfernten Capabilities, `no-new-privileges`, schreibgeschütztem Root-Dateisystem und begrenztem tmpfs.
-- Python-Abhängigkeiten und das Python-Basisimage sind auf konkrete Versionen festgelegt.
+## Addressed security areas
 
-## Bewusst erhaltene Betriebsoptionen
+- Update packages are verified before extraction using Ed25519 and a signed SHA-256 checksum.
+- Full-backup restore accepts only regular files in approved paths and limits member count, individual file size, and total extracted size.
+- Existing 0.5.26 user signatures are migrated only after successful validation of the old signature format. From 0.5.27 onward, signatures also cover group assignments and session state.
+- Security-relevant account changes revoke existing sessions.
+- OIDC identities are bound only by issuer and `sub`; domain filters require `email_verified=true`.
+- Initial setup requires a server-generated setup token.
+- Password retrieval, RustDesk connection start, and password CSV export require recent authentication and are audited.
+- SSH import requires a previously verified SHA-256 host-key fingerprint and uses `StrictHostKeyChecking=yes`.
+- CSV formula injection, stored icon DOM injection, unlimited authentication-event growth, and external JavaScript dependencies have been addressed.
+- The main container runs as an unprivileged user with dropped capabilities, `no-new-privileges`, a read-only root filesystem, and a limited tmpfs.
+- Python dependencies and the Python base image are pinned to explicit versions.
 
-- HTTP kann weiterhin ausdrücklich aktiviert werden, bleibt aber standardmäßig deaktiviert. Für produktiven Zugriff ist HTTPS erforderlich.
-- Interne OIDC-Provider bleiben möglich, müssen aber bewusst über `OIDC_ALLOW_PRIVATE_ISSUER=true` freigegeben werden.
-- Unsignierte lokale Updates sind nur als expliziter interaktiver Notfallweg über `RAB_ALLOW_UNSIGNED_LOCAL_UPDATES=true` möglich; automatisierte Nutzung bleibt gesperrt.
-- Die SQLite-Datenbank ist weiterhin nicht vollständig verschlüsselt. Gerätepasswörter und OIDC-Client-Secret werden feldweise verschlüsselt; `data/config.json` muss entsprechend geschützt und gesichert werden.
+## Intentionally retained operating options
 
-## Migrationshinweis
+- HTTP can still be enabled explicitly, but remains disabled by default. HTTPS is required for production access.
+- Private OIDC issuers remain possible but must be explicitly allowed with `OIDC_ALLOW_PRIVATE_ISSUER=true`.
+- Unsigned local updates are available only as an explicit interactive emergency path through `RAB_ALLOW_UNSIGNED_LOCAL_UPDATES=true`; automated unsigned updates remain blocked.
+- The SQLite database is not fully encrypted. Device passwords and the OIDC client secret are encrypted field by field. Protect and back up `data/config.json` accordingly.
 
-Das alte 0.5.26-Signaturformat enthielt noch keine Gruppenzuweisungen. Beim einmaligen Upgrade werden deshalb die vorhandenen Gruppenzuweisungen nach erfolgreicher Validierung der alten Benutzeridentität als Ausgangszustand übernommen und anschließend mit der neuen Signatur geschützt. Ab diesem Zeitpunkt werden direkte Änderungen an Rollen, Identität, Sitzungsstand oder Gruppenzuweisungen erkannt und die Anmeldung beziehungsweise Sitzung blockiert.
+## Migration note
 
+The old 0.5.26 signature format did not include group assignments. During the one-time upgrade, existing assignments are accepted only after the old user identity has been validated and are then protected by the new signature format. Direct changes to roles, identity, session state, or group assignments are detected after migration and block login or the active session.
 
-## 0.5.28 Betriebsstabilität
+## Container runtime and health
 
-Der eigentliche Webprozess bleibt unprivilegiert. Ein separater, kurzlebiger Init-Dienst erhält ausschließlich die für die Berechtigungsvorbereitung benötigten Capabilities. Der neue Healthcheck prüft Listener und SQLite-Verbindung. Das Basisimage verwendet Debian Trixie.
+The web process remains unprivileged. A separate short-lived init service receives only the capabilities required to prepare persistent directory permissions. The health check verifies the listener and SQLite connection. The base image uses Debian Trixie.
+
+## Documentation language layout
+
+Starting with 0.5.29, standard Markdown files are English and German editions use the `*.de.md` suffix. This change affects documentation only and does not modify runtime security behavior.

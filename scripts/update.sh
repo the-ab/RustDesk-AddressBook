@@ -36,9 +36,9 @@ Ablauf ohne Parameter:
   3. Bei verfügbarem Online-Update fragt es, ob heruntergeladen und installiert werden soll.
 
 Manuelles Update:
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip -O updates/rustdesk-addressbook-update-flat-v0528.zip
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0528.zip.sha256
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0528.zip.sig -O updates/rustdesk-addressbook-update-flat-v0528.zip.sig
+  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
+  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
+  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
   ./scripts/update.sh
 
 Standard-Aufruf:
@@ -49,17 +49,17 @@ Wenn dort keine neuere Version liegt, wird automatisch online unter RAB_UPDATE_B
 Bei verfügbarer Online-Version werden die Änderungen angezeigt und das Script fragt nach Download und Installation.
 
 Manuelles Update bleibt möglich:
-  cp rustdesk-addressbook-update-flat-v0528.zip* updates/
+  cp rustdesk-addressbook-update-flat-v0529.zip* updates/
   ./scripts/update.sh
 
 Direkte ZIP-Pfade bleiben unterstützt:
-  ./scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0528.zip
+  ./scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0529.zip
 
 Online-Manifest unter RAB_UPDATE_BASE_URL:
   Neben der ZIP: gleichnamige .zip.sha256 und .zip.sig
-  latest.txt  erste Zeile: rustdesk-addressbook-update-flat-v0528.zip
+  latest.txt  erste Zeile: rustdesk-addressbook-update-flat-v0529.zip
               Folgezeilen optional als Release-Notizen
-Alternativ kann neben der ZIP eine Datei rustdesk-addressbook-update-flat-v0528.txt oder release-notes-v0528.txt liegen.
+Alternativ kann neben der ZIP eine Datei rustdesk-addressbook-update-flat-v0529.txt oder release-notes-v0529.txt liegen.
 USAGE
 }
 
