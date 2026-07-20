@@ -19,6 +19,7 @@
 
 {% if app_language == 'en' %}
 {% set releases = [
+  ('0.5.30', ['Added Apache License 2.0, NOTICE, .gitignore, SECURITY.md and CONTRIBUTING.md for public repository publication.', 'Added GitHub Actions CI, Dependabot, a repository safety check and an initial automated test suite.', 'Added independence, trademark and AI-assistance disclosures.', 'Removed the hard-coded update source; RAB_UPDATE_BASE_URL is empty by default while local signed updates remain available.']),
   ('0.5.29', ['Standardized all regular Markdown files on English as the default documentation language.', 'Added matching German editions using the *.de.md suffix, including README, admin guide, release notes, security report, third-party notices and updates instructions.', 'Updated documentation links, version examples and package contents to follow the new language convention.']),
   ('0.5.28', ['Fixed the restart loop on existing installations by adding a short-lived permission init service while keeping the web application unprivileged as UID/GID 10001.', 'Switched the container base from Debian Bookworm to Debian Trixie.', 'Added a Docker health check with an internal /healthz endpoint and SQLite probe, including self-signed HTTPS support.']),
   ('0.5.27', ['Added Ed25519-signed update packages with signed SHA-256 verification; modified or unsigned updates are rejected by default.', 'Hardened full-backup restore against path traversal, links, special files and decompression/resource abuse.', 'Extended HMAC integrity protection to roles, OIDC identity, session state and group assignments; security changes revoke existing sessions.', 'Hardened OIDC account binding, setup, reauthentication, password access, SSH host-key validation, CSV export, authentication event retention, frontend delivery and the non-root Docker runtime.']),
@@ -37,7 +38,7 @@
   ('0.5.14', ['Update check now uses latest.txt only.', 'Technical latest.json errors were removed from the UI.', 'Yes/no prompts in update.sh use [J/n] or [j/N].']),
   ('0.5.13', ['WebUI and update script show release notes for available updates.', 'latest.txt can contain changelog lines below the ZIP filename.', 'Separate release note files next to the ZIP are supported.']),
   ('0.5.12', ['install.sh uses .env as preset source.', 'update.sh checks local ZIPs first and then the online server.', 'Online update messages are clearer.']),
-  ('0.5.11', ['Complete ZIP includes updates/.', 'Download path https://dl.ab-xnet.de added to docs.', 'Online update check based on latest.txt added.']),
+  ('0.5.11', ['Complete ZIP includes updates/.', 'Download path documentation added.', 'Online update check based on latest.txt added.']),
   ('0.5.10', ['Update documentation cleaned up.', 'update.sh removes existing containers with the same name before recreate.', 'Release view contains history back to the project start.']),
   ('0.5.9', ['Footer shows only the short version.', 'Clicking the version opens this release view.', 'Complete ZIP extracts to rustdesk-addressbook/.', 'CSV export removed from dashboard.']),
   ('0.5.8', ['Encrypted full backup .rabfull added with database, config.json, SSH, certificates and logs.', 'Full-backup restore added in the WebUI.']),
@@ -56,6 +57,7 @@
 ] %}
 {% else %}
 {% set releases = [
+  ('0.5.30', ['Apache License 2.0, NOTICE, .gitignore, SECURITY.md und CONTRIBUTING.md für eine öffentliche Repository-Veröffentlichung ergänzt.', 'GitHub Actions CI, Dependabot, Repository-Sicherheitsprüfung und erste automatisierte Tests ergänzt.', 'Unabhängigkeits-, Marken- und KI-Unterstützungshinweise ergänzt.', 'Fest eingetragene Updatequelle entfernt; RAB_UPDATE_BASE_URL ist standardmäßig leer, lokale signierte Updates bleiben verfügbar.']),
   ('0.5.29', ['Alle regulären Markdown-Dateien auf Englisch als Standard-Dokumentationssprache vereinheitlicht.', 'Passende deutsche Fassungen mit der Endung *.de.md für README, Admin-Anleitung, Release-Notizen, Sicherheitsbericht, Drittanbieterhinweise und Update-Anleitung ergänzt.', 'Dokumentationsverweise, Versionsbeispiele und Paketinhalt an das neue Sprachschema angepasst.']),
   ('0.5.28', ['Neustartschleife bestehender Installationen durch einen kurzlebigen Berechtigungs-Init-Dienst behoben; die Webanwendung läuft weiterhin unprivilegiert mit UID/GID 10001.', 'Container-Basis von Debian Bookworm auf Debian Trixie umgestellt.', 'Docker-Healthcheck mit internem /healthz-Endpunkt und SQLite-Prüfung einschließlich Unterstützung für selbstsigniertes HTTPS ergänzt.']),
   ('0.5.27', ['Ed25519-signierte Updatepakete mit signierter SHA-256-Prüfung ergänzt; manipulierte oder unsignierte Updates werden standardmäßig abgewiesen.', 'Vollbackup-Restore gegen Pfad-Traversal, Links, Spezialdateien sowie Dekompressions- und Ressourcenmissbrauch gehärtet.', 'HMAC-Integritätsschutz auf Rollen, OIDC-Identität, Sitzungsstand und Gruppenzuweisungen erweitert; Sicherheitsänderungen widerrufen bestehende Sitzungen.', 'OIDC-Kontobindung, Ersteinrichtung, erneute Authentifizierung, Passwortzugriff, SSH-Hostschlüsselprüfung, CSV-Export, Auth-Ereignisaufbewahrung, Frontend-Auslieferung und unprivilegierter Docker-Betrieb gehärtet.']),
@@ -74,7 +76,7 @@
   ('0.5.14', ['Update-Check nutzt nur noch latest.txt.', 'latest.json-Fehler wurden aus der WebUI entfernt.', 'Ja/Nein-Abfragen im Update-Script verwenden [J/n] bzw. [j/N].']),
   ('0.5.13', ['WebUI-Update-Check und Update-Script zeigen Änderungen der Zielversion.', 'latest.txt kann Änderungszeilen unterhalb der ZIP enthalten.', 'Separate Release-Notizdateien neben der ZIP werden unterstützt.']),
   ('0.5.12', ['install.sh nutzt .env als Preset-Datei.', 'update.sh prüft lokale ZIPs und anschließend online.', 'Online-Update-Meldungen wurden klarer formuliert.']),
-  ('0.5.11', ['Komplett-ZIP enthält updates/.', 'Download-Pfad https://dl.ab-xnet.de in Anleitung ergänzt.', 'Online-Update über latest.txt ergänzt.']),
+  ('0.5.11', ['Komplett-ZIP enthält updates/.', 'Download-Pfad in Anleitung ergänzt.', 'Online-Update über latest.txt ergänzt.']),
   ('0.5.10', ['Update-Anleitung bereinigt.', 'Update-Script entfernt vorhandene Container mit gleichem Namen.', 'Release-Ansicht enthält Historie bis zum Projektanfang.']),
   ('0.5.9', ['Footer zeigt nur noch die reine Versionsnummer.', 'Klick auf die Version öffnet diese Release-Ansicht.', 'Komplett-ZIP entpackt nach rustdesk-addressbook/.', 'CSV-Export vom Dashboard entfernt.']),
   ('0.5.8', ['Verschlüsseltes Vollbackup .rabfull mit Datenbank, config.json, SSH, Zertifikaten und Logs.', 'Restore von Vollbackups über die WebUI.']),
@@ -110,11 +112,9 @@
   <div class="card-body">
     <h2 class="h5">{{ t('release.update_note', 'Update-Hinweis') }}</h2>
     <p class="text-secondary mb-2">{{ t('release.option_a', 'Variante A: Kopiere die neue Flat-Update-ZIP in updates/ und starte das Script ohne Parameter.') }}</p>
-    <pre class="codebox">wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
+    <pre class="codebox">cp /path/to/rustdesk-addressbook-update-flat-v0530.zip* updates/
 ./scripts/update.sh</pre>
-    <p class="text-secondary mb-2 mt-3">{{ t('release.option_b', 'Variante B: Starte nur das Script. Es prüft lokale Updates, danach online, zeigt Änderungen an und fragt nach Download/Installation.') }}</p>
+    <p class="text-secondary mb-2 mt-3">{{ t('release.option_b', 'Variante B: Starte nur das Script. Es prüft lokale Updates und eine Online-Quelle nur, wenn RAB_UPDATE_BASE_URL gesetzt ist.') }}</p>
     <pre class="codebox">./scripts/update.sh</pre>
   </div>
 </div>

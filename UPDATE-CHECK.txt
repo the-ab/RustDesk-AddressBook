@@ -1,9 +1,11 @@
-rustdesk-addressbook-update-flat-v0529.zip
+rustdesk-addressbook-update-flat-v0530.zip
 [de]
-- Alle regulären Markdown-Dateien auf Englisch als Standardsprache vereinheitlicht.
-- Deutsche Dokumentationsfassungen mit der Endung *.de.md ergänzt.
-- README-, Release-Notes-, Admin-Guide-, Sicherheits- und weitere Dokumentationspaare vereinheitlicht.
+- Lizenz-, Repository-, Sicherheits- und Beitragsdateien für eine öffentliche GitHub-Veröffentlichung ergänzt.
+- CI, Dependabot und automatisierte Tests hinzugefügt.
+- Unabhängigkeits-, Marken- und KI-Unterstützungshinweise ergänzt.
+- Online-Updatequelle standardmäßig deaktiviert und vollständig konfigurierbar gemacht.
 [en]
-- Standardized all regular Markdown files on English as the default language.
-- Added German documentation editions using the *.de.md suffix.
-- Standardized README, release notes, admin guide, security, and other documentation pairs.
+- Added license, repository, security and contribution files for public GitHub publication.
+- Added CI, Dependabot and automated tests.
+- Added independence, trademark and AI-assistance disclosures.
+- Disabled the default online update source and made it fully configurable.

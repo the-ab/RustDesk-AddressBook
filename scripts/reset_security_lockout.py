@@ -8,10 +8,9 @@ migration:
 It clears authentication lockout events and re-signs existing user security state using
 the current data/config.json SECURITY_SIGNING_KEY. It does not change passwords or 2FA.
 """
-from app import create_app
+from app import _sign_user_security_state, create_app
 from app.extensions import db
 from app.models import AuthEvent, User
-from app import _sign_user_security_state
 
 app = create_app()
 with app.app_context():

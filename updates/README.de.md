@@ -1,12 +1,16 @@
-# Updates
+# Signierte Updates
 
-> Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`README.md`](README.md).
-
-Kopiere neue Flat-Update-ZIP-Dateien hier hinein, zum Beispiel:
+Kopiere ein Flat-Update-ZIP und beide passenden Prüfdateien in dieses Verzeichnis:
 
 ```bash
-cp rustdesk-addressbook-update-flat-v0529.zip updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0530.zip updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0530.zip.sha256 updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0530.zip.sig updates/
 ./scripts/update.sh
 ```
 
-Das Updatescript sucht automatisch die höchste `rustdesk-addressbook-update-flat-v*.zip`, vergleicht sie mit der aktuell installierten Version, prüft Ed25519-Signatur und signierte SHA-256-Prüfsumme und führt das Update nur aus, wenn die ZIP neuer ist.
+Der Updater wählt das höchste lokale `rustdesk-addressbook-update-flat-v*.zip`, prüft das signierte SHA-256-Manifest mit dem eingebetteten öffentlichen Ed25519-Schlüssel, kontrolliert die ZIP-Struktur, erstellt eine Rollback-Sicherung und installiert nur eine neuere Version.
+
+Online-Prüfungen sind optional und bei leerer `RAB_UPDATE_BASE_URL` deaktiviert. Eine konfigurierte Quelle muss `latest.txt`, das ZIP, `.zip.sha256` und `.zip.sig` bereitstellen. Der private Release-Signaturschlüssel darf niemals in diesem Verzeichnis oder im Repository gespeichert werden.
+
+Die englische Standardfassung befindet sich in [`README.md`](README.md).

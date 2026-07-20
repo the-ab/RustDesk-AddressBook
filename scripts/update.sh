@@ -27,39 +27,30 @@ usage() {
   cat <<'USAGE'
 RustDesk AddressBook Update
 
-Empfohlener Standard:
+Recommended:
   ./scripts/update.sh
 
-Ablauf ohne Parameter:
-  1. Prüft zuerst updates/ auf lokale Flat-Update-ZIPs.
-  2. Wenn lokal nichts Neues vorhanden ist, prüft es online per RAB_UPDATE_BASE_URL.
-  3. Bei verfügbarem Online-Update fragt es, ob heruntergeladen und installiert werden soll.
+Without parameters the script:
+  1. checks updates/ for newer signed flat-update ZIPs;
+  2. checks RAB_UPDATE_BASE_URL only when that variable is configured;
+  3. shows release notes and asks before installation.
 
-Manuelles Update:
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
-  wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
+Manual local update:
+  cp /path/to/rustdesk-addressbook-update-flat-v0530.zip* updates/
   ./scripts/update.sh
 
-Standard-Aufruf:
-  ./scripts/update.sh
+Direct ZIP paths remain supported:
+  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0530.zip
 
-Das Script prüft zuerst lokale Update-ZIPs in updates/.
-Wenn dort keine neuere Version liegt, wird automatisch online unter RAB_UPDATE_BASE_URL geprüft.
-Bei verfügbarer Online-Version werden die Änderungen angezeigt und das Script fragt nach Download und Installation.
+Optional online source:
+  Set RAB_UPDATE_BASE_URL in .env to a trusted location containing latest.txt,
+  the update ZIP, and its matching .zip.sha256 and .zip.sig files.
 
-Manuelles Update bleibt möglich:
-  cp rustdesk-addressbook-update-flat-v0529.zip* updates/
-  ./scripts/update.sh
+GitHub Releases example:
+  RAB_UPDATE_BASE_URL=https://github.com/OWNER/REPOSITORY/releases/latest/download
 
-Direkte ZIP-Pfade bleiben unterstützt:
-  ./scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0529.zip
-
-Online-Manifest unter RAB_UPDATE_BASE_URL:
-  Neben der ZIP: gleichnamige .zip.sha256 und .zip.sig
-  latest.txt  erste Zeile: rustdesk-addressbook-update-flat-v0529.zip
-              Folgezeilen optional als Release-Notizen
-Alternativ kann neben der ZIP eine Datei rustdesk-addressbook-update-flat-v0529.txt oder release-notes-v0529.txt liegen.
+Leaving RAB_UPDATE_BASE_URL empty disables online checks. Local signed updates
+remain fully supported.
 USAGE
 }
 
@@ -342,10 +333,19 @@ online_latest_file() {
 
 check_online_update() {
   local base latest file current_str current_num target_num
-  base="$(read_env_value RAB_UPDATE_BASE_URL 'https://dl.ab-xnet.de')"
-  latest="$(online_latest_file "$base")"
+  base="$(read_env_value RAB_UPDATE_BASE_URL '')"
   current_str="$(current_version_string)"
   current_num="$(extract_version_number "$current_str")"
+  if [ -z "${base//[[:space:]]/}" ]; then
+    echo "STATUS=disabled"
+    echo "MESSAGE=Online-Update-Prüfung ist deaktiviert, weil RAB_UPDATE_BASE_URL nicht gesetzt ist. Lokale signierte Updates bleiben verfügbar."
+    echo "BASE="
+    echo "CURRENT_STR=$current_str"
+    echo "CURRENT_NUM=$current_num"
+    echo "UPDATE_AVAILABLE=0"
+    return 0
+  fi
+  latest="$(online_latest_file "$base")"
   if [ -z "$latest" ]; then
     echo "STATUS=manifest_missing"
     echo "MESSAGE=Kein gültiges Online-Manifest gefunden. Erwartet wird ${base%/}/latest.txt mit einer Update-ZIP in der ersten nicht-leeren Zeile."
@@ -608,7 +608,11 @@ if [ -z "$ZIP_FILE" ]; then
       exit 0
     fi
   else
-    echo "Kein lokales oder online verfügbares neues Update gefunden."
+    if [ "$(value_from_check STATUS "$info")" = "disabled" ]; then
+      echo "Kein lokales neues Update gefunden."
+    else
+      echo "Kein lokales oder online verfügbares neues Update gefunden."
+    fi
     rm -f "$info"
     exit 0
   fi

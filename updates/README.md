@@ -1,12 +1,16 @@
-# Updates
+# Signed updates
 
-Copy new flat update ZIP files and their verification sidecars into this directory, for example:
+Copy a flat update ZIP and both matching verification sidecars into this directory:
 
 ```bash
-cp rustdesk-addressbook-update-flat-v0529.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0530.zip updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0530.zip.sha256 updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0530.zip.sig updates/
 ./scripts/update.sh
 ```
 
-The update script automatically selects the highest `rustdesk-addressbook-update-flat-v*.zip`, compares it with the installed version, verifies its Ed25519 signature and signed SHA-256 checksum, and installs it only when it is newer.
+The updater selects the highest local `rustdesk-addressbook-update-flat-v*.zip`, validates the signed SHA-256 manifest with the embedded Ed25519 public key, checks the ZIP structure, creates a rollback backup, and installs the package only when it is newer.
+
+Online checks are optional and disabled when `RAB_UPDATE_BASE_URL` is empty. A configured source must provide `latest.txt`, the ZIP, `.zip.sha256`, and `.zip.sig`. Never store the private release-signing key in this directory or in the repository.
 
 The German edition is available as [`README.de.md`](README.de.md).

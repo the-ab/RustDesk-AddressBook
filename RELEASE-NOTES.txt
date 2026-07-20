@@ -1,11 +1,11 @@
-0.5.29-english-default-markdown-docs
+0.5.30-github-publication-readiness
 [de]
-- Alle regulären Markdown-Dateien sind jetzt standardmäßig auf Englisch.
-- Deutsche Dokumentationsfassungen verwenden einheitlich die Endung *.de.md.
-- README.md/README.de.md sowie RELEASE_NOTES.md/RELEASE_NOTES.de.md und die übrigen Dokumentationspaare wurden ergänzt beziehungsweise vereinheitlicht.
-- Interne Dokumentationsverweise und Versionsbeispiele wurden aktualisiert.
+- Apache License 2.0, NOTICE, .gitignore, SECURITY.md und CONTRIBUTING.md für eine öffentliche Repository-Veröffentlichung ergänzt.
+- GitHub Actions, Dependabot, Repository-Sicherheitsprüfung und eine erste automatisierte Testreihe ergänzt.
+- Unabhängigkeits-, Marken- und KI-Unterstützungshinweise aufgenommen.
+- Fest eingetragene Updatequelle entfernt; RAB_UPDATE_BASE_URL ist standardmäßig leer, lokale signierte Updates bleiben verfügbar.
 [en]
-- All regular Markdown files now use English as the default language.
-- German documentation editions consistently use the *.de.md suffix.
-- Added or standardized README.md/README.de.md, RELEASE_NOTES.md/RELEASE_NOTES.de.md, and the remaining documentation pairs.
-- Updated internal documentation links and version examples.
+- Added Apache License 2.0, NOTICE, .gitignore, SECURITY.md and CONTRIBUTING.md for public repository publication.
+- Added GitHub Actions, Dependabot, a repository safety check and an initial automated test suite.
+- Added independence, trademark and AI-assistance disclosures.
+- Removed the hard-coded update source; RAB_UPDATE_BASE_URL is empty by default while local signed updates remain available.

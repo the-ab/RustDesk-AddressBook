@@ -1,0 +1,57 @@
+# Local installation and secrets
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+install-config.env
+
+# Persistent application data and backups
+data/
+backup/
+backups/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.log
+*.rabenc
+*.rabfull
+
+# Downloaded update artifacts
+updates/*.zip
+updates/*.zip.sha256
+updates/*.zip.sig
+updates/*.sha256
+updates/*.sig
+updates/*.tmp
+updates/.download.*/
+
+# Private signing and TLS keys
+scripts/keys/*.pem
+!scripts/keys/update-signing-public-v1.pem
+scripts/keys/*private*
+update-signing-private*.pem
+*update-signing-private*.pem
+*.key
+*.p12
+*.pfx
+
+# Python / test / editor artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.idea/
+.vscode/
+.DS_Store
+
+# Temporary files
+*.tmp
+*.swp
+*~

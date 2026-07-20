@@ -1,7 +1,7 @@
-# Sicherheitsstatus RustDesk AddressBook 0.5.29
+# Community Address Book for RustDesk – Sicherheitsstatus 0.5.30
 
 **Stand:** 19. Juli 2026  
-**Version:** `0.5.29-english-default-markdown-docs`
+**Version:** `0.5.30-github-publication-readiness`
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`SECURITY-REPORT.md`](SECURITY-REPORT.md).
 
@@ -37,4 +37,9 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater, kurzlebiger Ini
 
 ## Dokumentationssprachen
 
-Ab Version 0.5.29 sind reguläre Markdown-Dateien standardmäßig englisch. Deutsche Fassungen tragen einheitlich die Endung `*.de.md`. Diese Änderung betrifft nur die Dokumentation und verändert keine Sicherheitsfunktion.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.5.30 ergänzt außerdem Repository-Sicherheitsprüfungen, automatisierte Sicherheitstests, Abhängigkeitsprüfungen und eine Richtlinie zur vertraulichen Meldung von Schwachstellen. Diese Veröffentlichungsanpassungen schwächen die bestehenden Laufzeitschutzmaßnahmen nicht.
+
+
+## Hinweis für öffentliche Repositorys
+
+Das Repository ist für eine öffentliche Quellcode-Veröffentlichung vorbereitet. Produktive Daten, `.env`-Dateien, Datenbanken, Backups, Protokolle, private TLS-Schlüssel und private Release-Signaturschlüssel dürfen jedoch niemals eingecheckt werden. Vor dem ersten Push und vor Releases sollte `python scripts/check_repository_safety.py` ausgeführt werden. Sicherheitsmeldungen erfolgen nach [`SECURITY.de.md`](SECURITY.de.md) und sollen vor einer koordinierten Behebung nicht öffentlich angelegt werden.

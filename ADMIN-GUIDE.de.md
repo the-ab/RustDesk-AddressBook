@@ -1,15 +1,16 @@
-# RustDesk AddressBook – Administratorhandbuch
+# Community-Adressbuch für RustDesk – Administratorhandbuch
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`ADMIN-GUIDE.md`](ADMIN-GUIDE.md).
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.29-english-default-markdown-docs`.
+> **Unabhängiges Projekt:** Dieses Community-Projekt ist nicht mit RustDesk oder Purslane Ltd. verbunden und wird von diesen weder unterstützt, gesponsert noch gepflegt. RustDesk ist eine Marke des jeweiligen Rechteinhabers.
+
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.30-github-publication-readiness`.
 
 ## 1. Installation
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0529.zip
-unzip rustdesk-addressbook-v0529.zip
+unzip /pfad/rustdesk-addressbook-v0530.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -40,8 +41,7 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0529.zip
-unzip rustdesk-addressbook-v0529.zip
+unzip /pfad/rustdesk-addressbook-v0530.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -55,9 +55,7 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
+cp /pfad/rustdesk-addressbook-update-flat-v0530.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -68,7 +66,7 @@ cd /opt/rustdesk-addressbook
 ./scripts/update.sh
 ```
 
-Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Vor dem Entpacken müssen eine gültige Ed25519-Signatur und die signierte SHA-256-Prüfsumme vorliegen; manipulierte oder unsignierte Pakete werden standardmäßig abgewiesen. Ist dort nichts Neueres vorhanden, liest es `RAB_UPDATE_BASE_URL/latest.txt`, zeigt die Release-Notizen und fragt vor Download und Installation. Vor der Installation wird eine Sicherung angelegt:
+Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Vor dem Entpacken müssen eine gültige Ed25519-Signatur und die signierte SHA-256-Prüfsumme vorliegen. Eine Online-Prüfung erfolgt nur bei gesetzter `RAB_UPDATE_BASE_URL`; ein leerer Wert deaktiviert den Online-Zugriff, ohne lokale signierte Updates einzuschränken. Vor der Installation wird eine Sicherung angelegt:
 
 ```text
 ../rustdesk-addressbook-preupdate-YYYYmmdd-HHMMSS/
@@ -79,14 +77,14 @@ Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-comp
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0529.zip
+rustdesk-addressbook-update-flat-v0530.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Neben der ZIP müssen auf dem Downloadserver die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0529.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
+Neben der ZIP müssen auf dem Downloadserver die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0530.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
 
 ### 2.4 Manueller Fallback
 
@@ -94,7 +92,7 @@ Der direkte manuelle Entpackweg umgeht die Sicherheitslogik des Updaters und ist
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0529.zip* updates/
+cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0530.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -446,3 +444,13 @@ docker logs --tail 100 rustdesk-addressbook
 ```
 
 Der Healthcheck ruft intern je nach aktivierter Konfiguration `https://127.0.0.1:5443/healthz` oder `http://127.0.0.1:5000/healthz` auf und prüft dabei zusätzlich die SQLite-Verbindung. Selbstsignierte lokale Zertifikate werden für diesen ausschließlich internen Test akzeptiert.
+
+
+## 16. Öffentliches Repository und rechtliche Hinweise
+
+- Das Projekt steht unter Apache License 2.0; siehe `LICENSE` und `NOTICE`.
+- Nicht aus einem produktiven Installationsverzeichnis committen. Vor dem Push `python scripts/check_repository_safety.py` ausführen.
+- `.env`, Datenbanken, Logs, Backups, heruntergeladene Release-Dateien, private TLS-Schlüssel und private Update-Signaturschlüssel werden über `.gitignore` ausgeschlossen.
+- `scripts/keys/update-signing-public-v1.pem` ist der öffentliche Prüfschlüssel und soll versioniert bleiben.
+- Teile wurden mit Unterstützung von OpenAI ChatGPT entwickelt; Prüfung, Anpassung, Wartung und Verantwortung liegen beim menschlichen Maintainer.
+- Sicherheitsprobleme entsprechend `SECURITY.de.md` privat melden.

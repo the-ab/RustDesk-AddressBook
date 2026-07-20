@@ -4,38 +4,43 @@ import base64
 import csv
 import hashlib
 import hmac
-import json
 import ipaddress
+import json
 import os
 import re
-import urllib.error
-import urllib.parse
-import urllib.request
 import secrets
 import shutil
 import socket
 import sqlite3
 import subprocess
+import tarfile
 import tempfile
 import time
-import tarfile
+import urllib.error
+import urllib.parse
+import urllib.request
 import zipfile
 from collections import Counter
 from contextlib import contextmanager
-from functools import wraps
 from datetime import datetime, timedelta
+from functools import wraps
 from io import BytesIO, StringIO
 from pathlib import Path
 
+import pyotp
+import qrcode
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from flask import (
     Flask,
     Response,
     abort,
-    jsonify,
     current_app,
+    flash,
     g,
     has_request_context,
-    flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -44,11 +49,6 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required, login_user, logout_user
-import pyotp
-import qrcode
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from sqlalchemy import bindparam, false, or_, text
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -60,7 +60,6 @@ from .extensions import db, login_manager, oauth
 from .helpers import csrf_token, normalize_bool, parse_csv_upload, rustdesk_link, validate_csrf
 from .models import AuthEvent, Device, Group, ImportBlocklistEntry, Setting, TransientSecret, User, utcnow
 from .rustdesk_live import RustDeskLiveStatusError, query_hbbs_online_status
-
 
 DEFAULT_OS_CHOICES = [
     "Windows",
@@ -255,7 +254,8 @@ TRANSLATIONS = {
         "settings.bruteforce.window": "Window minutes",
         "settings.bruteforce.save": "Save lockout settings",
         "settings.update.title": "Update check",
-        "settings.update.help": "Checks the configured download server through latest.txt and shows available changes.",
+        "settings.update.help": "Checks the configured release source through latest.txt and shows available changes.",
+        "settings.update.disabled": "Online update checks are disabled because RAB_UPDATE_BASE_URL is not configured. Local signed updates remain available.",
         "settings.update.now": "Check now",
         "settings.update.checking": "Checking...",
         "settings.update.failed": "Update check failed",
@@ -271,7 +271,7 @@ TRANSLATIONS = {
         "settings.update.auto": "Check automatically",
         "settings.update.interval": "Interval",
         "settings.update.save": "Save update check",
-        "settings.update.install_hint": "Updates are installed with ./scripts/update.sh. The script checks local ZIP files in updates/ and then the download server automatically.",
+        "settings.update.install_hint": "Updates are installed with ./scripts/update.sh. The script always checks local signed ZIP files in updates/ and checks an online release source only when RAB_UPDATE_BASE_URL is configured.",
         "settings.security.title": "Security notes",
         "settings.security.https": "Run the app through HTTPS when it is reachable outside your LAN.",
         "settings.security.fernet": "Device passwords in the database are encrypted with Fernet. The key is stored in ./data/config.json.",
@@ -4458,7 +4458,18 @@ def _fetch_remote_release_notes(base: str, file_name: str, lang: str | None = No
 
 
 def _online_update_manifest() -> dict:
-    base = str(current_app.config.get("RAB_UPDATE_BASE_URL", "https://dl.ab-xnet.de") or "https://dl.ab-xnet.de").rstrip("/")
+    base = str(current_app.config.get("RAB_UPDATE_BASE_URL", "") or "").strip().rstrip("/")
+    if not base:
+        return {
+            "ok": False,
+            "disabled": True,
+            "base_url": "",
+            "file": "",
+            "version": "",
+            "source": "",
+            "release_notes": [],
+            "errors": [_t("settings.update.disabled", "Online-Update-Prüfungen sind deaktiviert, weil RAB_UPDATE_BASE_URL nicht konfiguriert ist.")],
+        }
     errors: list[str] = []
 
     try:
@@ -4490,6 +4501,7 @@ def _check_online_update_available() -> dict:
     result = {
         "checked_at": checked_at,
         "ok": bool(manifest.get("ok")),
+        "disabled": bool(manifest.get("disabled")),
         "current_version": _short_app_version(str(current_version)),
         "current_version_full": str(current_version),
         "current_num": current_num,
@@ -4504,6 +4516,9 @@ def _check_online_update_available() -> dict:
         "release_notes": manifest.get("release_notes", []),
         "errors": manifest.get("errors", []),
     }
+    if manifest.get("disabled"):
+        result["message"] = _t("settings.update.disabled", "Online-Update-Prüfungen sind deaktiviert, weil RAB_UPDATE_BASE_URL nicht konfiguriert ist.")
+        return result
     if not manifest.get("ok"):
         result["message"] = _t("update.message.no_manifest", "Kein gültiges Online-Manifest gefunden.")
         return result
@@ -4539,7 +4554,9 @@ def _get_update_check_info() -> dict:
     except ValueError:
         checked_ts = 0
     auto_settings = _get_update_auto_check_settings(checked_ts=checked_ts)
+    configured = bool(str(current_app.config.get("RAB_UPDATE_BASE_URL", "") or "").strip())
     return {
+        "configured": configured,
         "checked_at": _get_setting("update_last_checked_at", ""),
         "checked_ts": checked_ts,
         "ok": True if ok_raw == "1" else False if ok_raw == "0" else None,
@@ -4554,7 +4571,8 @@ def _get_update_check_info() -> dict:
 
 
 def _get_update_auto_check_settings(checked_ts: int | None = None) -> dict:
-    enabled = normalize_bool(_get_setting("update_auto_check_enabled", "1"))
+    configured = bool(str(current_app.config.get("RAB_UPDATE_BASE_URL", "") or "").strip())
+    enabled = configured and normalize_bool(_get_setting("update_auto_check_enabled", "0"))
     try:
         interval_seconds = int(_get_setting("update_auto_check_interval_seconds", "21600") or "21600")
     except ValueError:
@@ -4568,6 +4586,7 @@ def _get_update_auto_check_settings(checked_ts: int | None = None) -> dict:
     age_seconds = int(time.time()) - checked_ts if checked_ts else 999999999
     return {
         "enabled": enabled,
+        "configured": configured,
         "interval_seconds": interval_seconds,
         "interval_hours": max(1, int(interval_seconds // 3600)),
         "stale": bool(enabled and age_seconds >= interval_seconds),

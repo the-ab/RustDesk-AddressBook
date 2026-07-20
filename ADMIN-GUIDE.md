@@ -1,12 +1,12 @@
-# RustDesk AddressBook Admin Guide
+# Community Address Book for RustDesk – Admin Guide
 
-This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.5.29-english-default-markdown-docs`.
+This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.5.30-github-publication-readiness`.
 
 > English is the default documentation language. The German edition is available as [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md).
 
 ## Overview
 
-RustDesk AddressBook is an independent web address book for self-hosted RustDesk environments. It provides central device management, local and OpenID Connect login, role- and group-based visibility, RustDesk links, import/export, backups, local 2FA and live online status via hbbs. All pages are responsive for smartphones, tablets and desktop systems. Version 0.5.29 uses Debian Trixie, prepares persistent volume permissions through a dedicated init service, reports container health through an internal database-backed check, and standardizes English/German Markdown documentation filenames.
+Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.5.30 adds repository publication safeguards, CI, automated tests, project licensing, and an optional rather than hard-coded online update source.
 
 **Device management**  
 Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.
@@ -26,8 +26,7 @@ Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force locko
 
 ```
 cd /opt
-wget https://dl.ab-xnet.de/rustdesk-addressbook-v0529.zip
-unzip rustdesk-addressbook-v0529.zip
+unzip /path/to/rustdesk-addressbook-v0530.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -41,9 +40,7 @@ The values are written to `.env`. When you run `./scripts/install.sh` again, the
 
 ```
 cd /opt/rustdesk-addressbook
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip -O updates/rustdesk-addressbook-update-flat-v0529.zip
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sha256 -O updates/rustdesk-addressbook-update-flat-v0529.zip.sha256
-wget https://dl.ab-xnet.de/rustdesk-addressbook-update-flat-v0529.zip.sig -O updates/rustdesk-addressbook-update-flat-v0529.zip.sig
+cp /path/to/rustdesk-addressbook-update-flat-v0530.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -54,7 +51,7 @@ cd /opt/rustdesk-addressbook
 ./scripts/update.sh
 ```
 
-The update script first checks local ZIP files in `updates/`. Every package is verified with an Ed25519 signature and a signed SHA-256 checksum before extraction. If none is newer, it reads `latest.txt` from `RAB_UPDATE_BASE_URL`, downloads the ZIP and its `.sha256`/`.sig` sidecars, shows release notes and asks before installing.
+The update script first checks local ZIP files in `updates/`. Every package is verified with an Ed25519 signature and a signed SHA-256 checksum before extraction. Online checking is performed only when `RAB_UPDATE_BASE_URL` is configured. A blank value disables online access without affecting local signed updates.
 
 ### Web UI
 
@@ -262,10 +259,10 @@ The settings page uses a category navigation and a detail area. On small screens
 
 ## Update check and release notes
 
-The Web UI checks `latest.txt` below `RAB_UPDATE_BASE_URL`. If an update is available, a badge appears next to Admin/Logout and links to Settings → Update check.
+When `RAB_UPDATE_BASE_URL` is configured, the Web UI checks `latest.txt` at that trusted release location. If it is empty, online checks are disabled and local signed updates remain available.
 
 ```
-rustdesk-addressbook-update-flat-v0529.zip
+rustdesk-addressbook-update-flat-v0530.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -304,7 +301,7 @@ Example files are included under `contrib/fail2ban/`. The application rotates `a
 ```
 docker compose ps
 docker compose logs -f
-docker exec -it rustdesk-addressbook grep -n "0.5.29-english-default-markdown-docs" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.30-github-publication-readiness" /app/app/config.py
 docker exec -it rustdesk-addressbook ls -lh /rustdesk-server/db_v2.sqlite3* 2>/dev/null || true
 docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```
@@ -312,3 +309,13 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
 - **Update conflict:** current update script removes an existing container with the same name before recreating it.
 - **SSH import:** use the built-in SSH test first and check transfer size, integrity and peer count.
 - **Online status:** test TCP access to hbbs port `21115`.
+
+
+## Public repository and legal notices
+
+- The project is licensed under Apache License 2.0; see `LICENSE` and `NOTICE`.
+- Do not commit from a productive installation directory. Run `python scripts/check_repository_safety.py` before pushing.
+- `.env`, databases, logs, backups, downloaded release assets, TLS private keys, and private update-signing keys are excluded by `.gitignore`.
+- `scripts/keys/update-signing-public-v1.pem` is the public verification key and is intentionally versioned.
+- Portions were developed with assistance from OpenAI ChatGPT; all code remains reviewed, adapted, and maintained under human responsibility.
+- Security issues must be reported privately as described in `SECURITY.md`.
