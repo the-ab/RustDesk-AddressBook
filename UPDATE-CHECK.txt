@@ -1,11 +1,9 @@
-rustdesk-addressbook-update-flat-v0530.zip
+rustdesk-addressbook-update-flat-v0531.zip
 [de]
-- Lizenz-, Repository-, Sicherheits- und Beitragsdateien für eine öffentliche GitHub-Veröffentlichung ergänzt.
-- CI, Dependabot und automatisierte Tests hinzugefügt.
-- Unabhängigkeits-, Marken- und KI-Unterstützungshinweise ergänzt.
-- Online-Updatequelle standardmäßig deaktiviert und vollständig konfigurierbar gemacht.
+- Dependabot-Konfiguration und GitHub-CI-/Container-Build-Workflows entfernt.
+- Zugehörige Hinweise auf automatische GitHub-Prüfungen bereinigt.
+- Lokale Tests und manuell ausführbare Prüfungen bleiben erhalten.
 [en]
-- Added license, repository, security and contribution files for public GitHub publication.
-- Added CI, Dependabot and automated tests.
-- Added independence, trademark and AI-assistance disclosures.
-- Disabled the default online update source and made it fully configurable.
+- Removed Dependabot configuration and GitHub CI/container-build workflows.
+- Cleaned up related references to automatic GitHub checks.
+- Local tests and manually executable checks remain available.

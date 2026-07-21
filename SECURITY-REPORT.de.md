@@ -1,7 +1,7 @@
-# Community Address Book for RustDesk – Sicherheitsstatus 0.5.30
+# Community Address Book for RustDesk – Sicherheitsstatus 0.5.31
 
-**Stand:** 19. Juli 2026  
-**Version:** `0.5.30-github-publication-readiness`
+**Stand:** 21. Juli 2026  
+**Version:** `0.5.31-github-automation-removal`
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`SECURITY-REPORT.md`](SECURITY-REPORT.md).
 
@@ -37,7 +37,7 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater, kurzlebiger Ini
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.5.30 ergänzt außerdem Repository-Sicherheitsprüfungen, automatisierte Sicherheitstests, Abhängigkeitsprüfungen und eine Richtlinie zur vertraulichen Meldung von Schwachstellen. Diese Veröffentlichungsanpassungen schwächen die bestehenden Laufzeitschutzmaßnahmen nicht.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.5.31 entfernt GitHub-basierte Automatisierungen. Repository-Sicherheitsprüfung, lokale Testreihe, Werkzeuge zur Abhängigkeitsprüfung und die Richtlinie zur vertraulichen Meldung von Schwachstellen bleiben zur manuellen Nutzung erhalten. Diese Repository-Änderung schwächt die bestehenden Laufzeitschutzmaßnahmen nicht.
 
 
 ## Hinweis für öffentliche Repositorys

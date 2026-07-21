@@ -8,7 +8,7 @@ Contributions are welcome when they preserve the project's security model, upgra
 
 1. Create a focused branch and keep unrelated changes separate.
 2. Never commit production data, `.env`, databases, logs, backups, private keys, tokens, or downloaded update artifacts.
-3. Add or update automated tests for functional changes.
+3. Add or update local tests for functional changes.
 4. Update both the English `*.md` documentation and the matching German `*.de.md` edition when behavior changes.
 5. Update `RELEASE_NOTES.md`, `RELEASE_NOTES.de.md`, and the WebUI release history when preparing a release.
 6. Run the checks below.

@@ -36,11 +36,11 @@ Without parameters the script:
   3. shows release notes and asks before installation.
 
 Manual local update:
-  cp /path/to/rustdesk-addressbook-update-flat-v0530.zip* updates/
+  cp /path/to/rustdesk-addressbook-update-flat-v0531.zip* updates/
   ./scripts/update.sh
 
 Direct ZIP paths remain supported:
-  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0530.zip
+  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0531.zip
 
 Optional online source:
   Set RAB_UPDATE_BASE_URL in .env to a trusted location containing latest.txt,

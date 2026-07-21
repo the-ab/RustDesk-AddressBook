@@ -1,12 +1,12 @@
 # Community Address Book for RustDesk – Admin Guide
 
-This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.5.30-github-publication-readiness`.
+This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.5.31-github-automation-removal`.
 
 > English is the default documentation language. The German edition is available as [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md).
 
 ## Overview
 
-Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.5.30 adds repository publication safeguards, CI, automated tests, project licensing, and an optional rather than hard-coded online update source.
+Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.5.31 removes GitHub-hosted dependency-update, test, and container-build automation while retaining all local checks and manual release workflows.
 
 **Device management**  
 Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.
@@ -26,7 +26,7 @@ Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force locko
 
 ```
 cd /opt
-unzip /path/to/rustdesk-addressbook-v0530.zip
+unzip /path/to/rustdesk-addressbook-v0531.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -40,7 +40,7 @@ The values are written to `.env`. When you run `./scripts/install.sh` again, the
 
 ```
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0530.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0531.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -262,7 +262,7 @@ The settings page uses a category navigation and a detail area. On small screens
 When `RAB_UPDATE_BASE_URL` is configured, the Web UI checks `latest.txt` at that trusted release location. If it is empty, online checks are disabled and local signed updates remain available.
 
 ```
-rustdesk-addressbook-update-flat-v0530.zip
+rustdesk-addressbook-update-flat-v0531.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -301,7 +301,7 @@ Example files are included under `contrib/fail2ban/`. The application rotates `a
 ```
 docker compose ps
 docker compose logs -f
-docker exec -it rustdesk-addressbook grep -n "0.5.30-github-publication-readiness" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.31-github-automation-removal" /app/app/config.py
 docker exec -it rustdesk-addressbook ls -lh /rustdesk-server/db_v2.sqlite3* 2>/dev/null || true
 docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```

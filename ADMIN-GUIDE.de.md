@@ -4,13 +4,13 @@
 
 > **Unabhängiges Projekt:** Dieses Community-Projekt ist nicht mit RustDesk oder Purslane Ltd. verbunden und wird von diesen weder unterstützt, gesponsert noch gepflegt. RustDesk ist eine Marke des jeweiligen Rechteinhabers.
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.30-github-publication-readiness`.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.31-github-automation-removal`.
 
 ## 1. Installation
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0530.zip
+unzip /pfad/rustdesk-addressbook-v0531.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -41,7 +41,7 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0530.zip
+unzip /pfad/rustdesk-addressbook-v0531.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -55,7 +55,7 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0530.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0531.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -77,14 +77,14 @@ Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-comp
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0530.zip
+rustdesk-addressbook-update-flat-v0531.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Neben der ZIP müssen auf dem Downloadserver die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0530.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
+Neben der ZIP müssen auf dem Downloadserver die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0531.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
 
 ### 2.4 Manueller Fallback
 
@@ -92,7 +92,7 @@ Der direkte manuelle Entpackweg umgeht die Sicherheitslogik des Updaters und ist
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0530.zip* updates/
+cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0531.zip* updates/
 ./scripts/update.sh
 ```
 

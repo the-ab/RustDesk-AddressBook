@@ -6,13 +6,12 @@ Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt
 
 > Die englische Dokumentation ist die Standardfassung. Deutsche Dateien tragen die Endung `*.de.md`.
 
-## Neu in 0.5.30
+## Neu in 0.5.31
 
-- Apache License 2.0, `NOTICE`, Beitrags- und Sicherheitsrichtlinien ergänzt.
-- `.gitignore` für Installationsdaten, Backups, Datenbanken, Logs, Update-Artefakte, TLS-Schlüssel und private Release-Signaturschlüssel ergänzt.
-- GitHub-Actions-CI, Dependabot, Repository-Sicherheitsprüfung und automatisierte Anwendungs-/Sicherheitstests ergänzt.
-- Fest eingetragene öffentliche Updatequelle entfernt. `RAB_UPDATE_BASE_URL` ist optional und standardmäßig leer; lokale signierte Updates funktionieren weiterhin.
-- Klare Unabhängigkeits-, Marken- und KI-Unterstützungshinweise ergänzt.
+- GitHub-basierte automatische Abhängigkeitsupdates sowie CI-/Container-Build-Workflows entfernt.
+- Dokumentationshinweise auf automatisch bei GitHub ausgeführte Tests, Updates oder Container-Builds entfernt.
+- Lokale Testreihe, Repository-Sicherheitsprüfung und alle manuell ausführbaren Prüfkommandos bleiben erhalten.
+- GitHub dient weiterhin zur manuellen Quellcodebereitstellung und für manuell erstellte Releases.
 
 ## Installation
 
@@ -20,7 +19,7 @@ Ein aktuelles Release-Archiv von der Releases-Seite des Repositorys herunterlade
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0530.zip
+unzip rustdesk-addressbook-v0531.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -40,7 +39,7 @@ Signierte Update-Dateien nach `updates/` kopieren:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0530.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0531.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -85,7 +84,7 @@ python scripts/check_repository_safety.py
 
 Die Prüfung weist typische Laufzeitdateien und privates Schlüsselmaterial ab. `.gitignore` schließt `.env`, Datenbanken, Logs, Backups, heruntergeladene Release-Dateien sowie private Signatur-/TLS-Schlüssel aus. Der öffentliche Prüfschlüssel `scripts/keys/update-signing-public-v1.pem` wird absichtlich versioniert.
 
-## Entwicklung und CI
+## Lokale Entwicklung und Prüfungen
 
 ```bash
 python -m pip install -r requirements.txt -r requirements-dev.txt
@@ -98,7 +97,7 @@ node --check app/static/js/app.js
 bash -n entrypoint.sh scripts/*.sh
 ```
 
-GitHub Actions führt Repository-Prüfung, Syntax-/statische Analyse, Tests, Abhängigkeitsprüfung und Docker-Build aus. Dependabot überwacht Python-, Docker- und GitHub-Actions-Abhängigkeiten.
+Diese Prüfungen werden vom Maintainer oder von Mitwirkenden manuell ausgeführt. Das Repository enthält keine GitHub-basierte CI, keine automatischen Abhängigkeitsupdates und keine automatischen Container-Builds.
 
 ## Dokumentation
 

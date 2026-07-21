@@ -6,13 +6,12 @@ A self-hosted web address book for RustDesk environments, packaged as a Docker p
 
 > English is the default documentation language. The German edition is available as [`README.de.md`](README.de.md).
 
-## New in 0.5.30
+## New in 0.5.31
 
-- Added the Apache License 2.0, `NOTICE`, contribution and security policies.
-- Added `.gitignore` rules for installation data, backups, databases, logs, update artifacts, TLS keys, and private release-signing keys.
-- Added GitHub Actions CI, Dependabot configuration, repository safety checks, and automated application/security tests.
-- Disabled the hard-coded public update server default. `RAB_UPDATE_BASE_URL` is now optional and empty by default; local signed updates continue to work.
-- Added clear independence, trademark, and AI-assistance disclosures.
+- Removed GitHub-hosted dependency update automation and CI/container-build workflows.
+- Removed documentation claims that GitHub automatically runs tests, dependency updates, or container builds.
+- Kept the local test suite, repository safety scanner, and all manually executable validation commands.
+- GitHub remains suitable for manual source publication and manually created releases.
 
 ## Installation
 
@@ -20,7 +19,7 @@ Download a current release archive from the repository's Releases page, then:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0530.zip
+unzip rustdesk-addressbook-v0531.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -40,7 +39,7 @@ Place the signed update assets in `updates/`:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0530.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0531.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -85,7 +84,7 @@ python scripts/check_repository_safety.py
 
 The policy rejects common runtime artifacts and private-key material. `.gitignore` excludes `.env`, database files, logs, backups, downloaded release assets, and private signing/TLS keys. The public verification key at `scripts/keys/update-signing-public-v1.pem` is intentionally versioned.
 
-## Development and CI
+## Local development and checks
 
 ```bash
 python -m pip install -r requirements.txt -r requirements-dev.txt
@@ -98,7 +97,7 @@ node --check app/static/js/app.js
 bash -n entrypoint.sh scripts/*.sh
 ```
 
-GitHub Actions runs the repository policy check, syntax/static analysis, tests, dependency audit, and Docker build. Dependabot monitors Python, Docker, and GitHub Actions dependencies.
+These checks are run manually by the maintainer or contributors. The repository does not contain GitHub-hosted CI, automatic dependency-update, or automatic container-build configuration.
 
 ## Documentation
 
