@@ -6,12 +6,12 @@ A self-hosted web address book for RustDesk environments, packaged as a Docker p
 
 > English is the default documentation language. The German edition is available as [`README.de.md`](README.de.md).
 
-## New in 0.5.31
+## New in 0.5.32
 
-- Removed GitHub-hosted dependency update automation and CI/container-build workflows.
-- Removed documentation claims that GitHub automatically runs tests, dependency updates, or container builds.
-- Kept the local test suite, repository safety scanner, and all manually executable validation commands.
-- GitHub remains suitable for manual source publication and manually created releases.
+- Uses the project GitHub Releases endpoint as the default signed online-update source.
+- Reads `latest.txt` from the latest published release and downloads the named ZIP plus `.sha256` and `.sig` sidecars from the same release.
+- Existing custom non-empty `RAB_UPDATE_BASE_URL` values remain supported. Use `RAB_UPDATE_BASE_URL=disabled` to turn online checks off explicitly.
+- Adds a ready-to-upload `latest.txt` asset to the release output.
 
 ## Installation
 
@@ -19,13 +19,13 @@ Download a current release archive from the repository's Releases page, then:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0531.zip
+unzip rustdesk-addressbook-v0532.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
 ```
 
-The installer asks for timezone, container/image name, data and backup paths, HTTPS port, optional HTTP, certificate names, reverse-proxy trust, optional update URL, an optional read-only RustDesk DB mount, and brute-force/auth-log rotation settings. Existing `.env` values are reused as defaults when the installer is run again. After the first start, the installer prints the one-time setup token for the initial administrator.
+The installer asks for timezone, container/image name, data and backup paths, HTTPS port, optional HTTP, certificate names, reverse-proxy trust, signed update source, an optional read-only RustDesk DB mount, and brute-force/auth-log rotation settings. Existing `.env` values are reused as defaults when the installer is run again. After the first start, the installer prints the one-time setup token for the initial administrator.
 
 Default address:
 
@@ -39,19 +39,19 @@ Place the signed update assets in `updates/`:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0531.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0532.zip* updates/
 ./scripts/update.sh
 ```
 
 The update ZIP requires its matching `.zip.sha256` and `.zip.sig` files. Packages are checked with the embedded Ed25519 public key before extraction.
 
-Online checks are optional. Set a trusted release asset base in `.env`, for example:
+Online checks use the project GitHub Releases endpoint by default:
 
 ```dotenv
-RAB_UPDATE_BASE_URL=https://github.com/OWNER/REPOSITORY/releases/latest/download
+RAB_UPDATE_BASE_URL=https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download
 ```
 
-That location must expose `latest.txt`, the update ZIP, and the matching signature sidecars. Leaving `RAB_UPDATE_BASE_URL` empty disables online checks while local signed updates remain fully available. Existing installations keep their current `.env` value during an update.
+The latest published release must expose `latest.txt`, the update ZIP, and the matching `.zip.sha256` and `.zip.sig` assets. The first valid line in `latest.txt` names the update ZIP. Existing custom non-empty URLs remain supported. To disable online checks explicitly, set `RAB_UPDATE_BASE_URL=disabled`; local signed updates remain fully available.
 
 ## Roles and visibility
 

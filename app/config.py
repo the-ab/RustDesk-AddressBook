@@ -44,7 +44,7 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
 
 
 class Config:
-    APP_VERSION = "0.5.31-github-automation-removal"
+    APP_VERSION = "0.5.32-github-release-update-default"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -84,4 +84,5 @@ class Config:
     FULL_BACKUP_MAX_TOTAL_BYTES = int(os.environ.get("FULL_BACKUP_MAX_TOTAL_BYTES", str(512 * 1024 * 1024)))
     FULL_BACKUP_MAX_FILE_BYTES = int(os.environ.get("FULL_BACKUP_MAX_FILE_BYTES", str(128 * 1024 * 1024)))
     OIDC_ALLOW_PRIVATE_ISSUER = os.environ.get("OIDC_ALLOW_PRIVATE_ISSUER", "false").lower() in {"1", "true", "yes", "on"}
-    RAB_UPDATE_BASE_URL = os.environ.get("RAB_UPDATE_BASE_URL", "").strip()
+    DEFAULT_UPDATE_BASE_URL = "https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download"
+    RAB_UPDATE_BASE_URL = os.environ.get("RAB_UPDATE_BASE_URL", DEFAULT_UPDATE_BASE_URL).strip() or DEFAULT_UPDATE_BASE_URL

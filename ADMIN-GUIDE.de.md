@@ -4,13 +4,13 @@
 
 > **Unabhängiges Projekt:** Dieses Community-Projekt ist nicht mit RustDesk oder Purslane Ltd. verbunden und wird von diesen weder unterstützt, gesponsert noch gepflegt. RustDesk ist eine Marke des jeweiligen Rechteinhabers.
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.31-github-automation-removal`.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.32-github-release-update-default`.
 
 ## 1. Installation
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0531.zip
+unzip /pfad/rustdesk-addressbook-v0532.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -41,7 +41,7 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0531.zip
+unzip /pfad/rustdesk-addressbook-v0532.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -55,7 +55,7 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0531.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0532.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -66,7 +66,7 @@ cd /opt/rustdesk-addressbook
 ./scripts/update.sh
 ```
 
-Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Vor dem Entpacken müssen eine gültige Ed25519-Signatur und die signierte SHA-256-Prüfsumme vorliegen. Eine Online-Prüfung erfolgt nur bei gesetzter `RAB_UPDATE_BASE_URL`; ein leerer Wert deaktiviert den Online-Zugriff, ohne lokale signierte Updates einzuschränken. Vor der Installation wird eine Sicherung angelegt:
+Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Vor dem Entpacken müssen eine gültige Ed25519-Signatur und die signierte SHA-256-Prüfsumme vorliegen. Online-Prüfungen verwenden standardmäßig `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download`. Mit `RAB_UPDATE_BASE_URL=disabled` werden sie ausdrücklich abgeschaltet; lokale signierte Updates bleiben weiterhin nutzbar. Vor der Installation wird eine Sicherung angelegt:
 
 ```text
 ../rustdesk-addressbook-preupdate-YYYYmmdd-HHMMSS/
@@ -77,14 +77,14 @@ Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-comp
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0531.zip
+rustdesk-addressbook-update-flat-v0532.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Neben der ZIP müssen auf dem Downloadserver die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0531.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
+Beim GitHub-Release müssen `latest.txt`, die darin genannte ZIP sowie die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` gemeinsam als Release Assets hochgeladen werden. Der feste Pfad `/releases/latest/download` wird von GitHub auf das neueste veröffentlichte Release weitergeleitet. Neben der ZIP müssen an jeder benutzerdefinierten Updatequelle ebenfalls die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0532.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
 
 ### 2.4 Manueller Fallback
 
@@ -92,7 +92,7 @@ Der direkte manuelle Entpackweg umgeht die Sicherheitslogik des Updaters und ist
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0531.zip* updates/
+cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0532.zip* updates/
 ./scripts/update.sh
 ```
 

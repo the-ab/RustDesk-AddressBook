@@ -6,7 +6,15 @@ import tarfile
 
 import pytest
 
-from app import _check_online_update_available, _csv_safe_cell, _safe_extract_full_backup, _sign_user_security_state
+import app as app_module
+from app import (
+    _check_online_update_available,
+    _csv_safe_cell,
+    _online_update_manifest,
+    _safe_extract_full_backup,
+    _sign_user_security_state,
+)
+from app.config import Config
 from app.extensions import db
 from app.models import Device, Group, User
 from tests.conftest import set_csrf
@@ -114,6 +122,25 @@ def test_restore_rejects_symbolic_links(clean_app, tmp_path):
     with clean_app.app_context(), pytest.raises(ValueError, match="Nicht unterstützter Dateityp"):
         _safe_extract_full_backup(archive.getvalue(), tmp_path)
 
+
+def test_github_release_update_default():
+    assert Config.DEFAULT_UPDATE_BASE_URL == "https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download"
+
+
+
+
+def test_latest_manifest_selects_github_release_asset(clean_app, monkeypatch):
+    monkeypatch.setitem(clean_app.config, "RAB_UPDATE_BASE_URL", Config.DEFAULT_UPDATE_BASE_URL)
+    monkeypatch.setattr(
+        app_module,
+        "_fetch_text_url",
+        lambda url, timeout=5.0: "rustdesk-addressbook-update-flat-v0532.zip\n[en]\n- GitHub update source enabled.\n",
+    )
+    with clean_app.app_context():
+        result = _online_update_manifest()
+    assert result["ok"] is True
+    assert result["file"] == "rustdesk-addressbook-update-flat-v0532.zip"
+    assert result["base_url"] == Config.DEFAULT_UPDATE_BASE_URL
 
 def test_csv_formula_protection_and_disabled_online_updates(clean_app):
     assert _csv_safe_cell("=2+2").startswith("'")

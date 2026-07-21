@@ -1,7 +1,7 @@
-# Community Address Book for RustDesk — Security Status 0.5.31
+# Community Address Book for RustDesk — Security Status 0.5.32
 
 **Date:** July 21, 2026  
-**Version:** `0.5.31-github-automation-removal`
+**Version:** `0.5.32-github-release-update-default`
 
 > English is the default documentation language. The German edition is available as [`SECURITY-REPORT.de.md`](SECURITY-REPORT.de.md).
 
@@ -36,7 +36,7 @@ The web process remains unprivileged. A separate short-lived init service receiv
 
 ## Documentation language layout
 
-Standard Markdown files are English and German editions use the `*.de.md` suffix. Version 0.5.31 removes GitHub-hosted automation. Repository safety checks, the local test suite, dependency auditing tools, and the private vulnerability-reporting policy remain available for manual use. This repository change does not weaken the existing runtime controls.
+Standard Markdown files are English and German editions use the `*.de.md` suffix. Version 0.5.32 configures the project GitHub Releases endpoint as the default signed update source while keeping GitHub-hosted automation absent. Repository safety checks, the local test suite, dependency auditing tools, and the private vulnerability-reporting policy remain available for manual use. This repository change does not weaken the existing runtime controls.
 
 
 ## Public repository note

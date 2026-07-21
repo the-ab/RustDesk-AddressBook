@@ -254,8 +254,8 @@ TRANSLATIONS = {
         "settings.bruteforce.window": "Window minutes",
         "settings.bruteforce.save": "Save lockout settings",
         "settings.update.title": "Update check",
-        "settings.update.help": "Checks the configured release source through latest.txt and shows available changes.",
-        "settings.update.disabled": "Online update checks are disabled because RAB_UPDATE_BASE_URL is not configured. Local signed updates remain available.",
+        "settings.update.help": "Checks the project GitHub Releases source through latest.txt and shows available changes.",
+        "settings.update.disabled": "Online update checks are explicitly disabled through RAB_UPDATE_BASE_URL=disabled. Local signed updates remain available.",
         "settings.update.now": "Check now",
         "settings.update.checking": "Checking...",
         "settings.update.failed": "Update check failed",
@@ -271,7 +271,7 @@ TRANSLATIONS = {
         "settings.update.auto": "Check automatically",
         "settings.update.interval": "Interval",
         "settings.update.save": "Save update check",
-        "settings.update.install_hint": "Updates are installed with ./scripts/update.sh. The script always checks local signed ZIP files in updates/ and checks an online release source only when RAB_UPDATE_BASE_URL is configured.",
+        "settings.update.install_hint": "Updates are installed with ./scripts/update.sh. The script checks local signed ZIP files first and then the project GitHub Releases source by default.",
         "settings.security.title": "Security notes",
         "settings.security.https": "Run the app through HTTPS when it is reachable outside your LAN.",
         "settings.security.fernet": "Device passwords in the database are encrypted with Fernet. The key is stored in ./data/config.json.",
@@ -4457,8 +4457,15 @@ def _fetch_remote_release_notes(base: str, file_name: str, lang: str | None = No
     return []
 
 
+def _configured_update_base_url() -> str:
+    value = str(current_app.config.get("RAB_UPDATE_BASE_URL", "") or "").strip().rstrip("/")
+    if value.lower() in {"disabled", "off", "none"}:
+        return ""
+    return value
+
+
 def _online_update_manifest() -> dict:
-    base = str(current_app.config.get("RAB_UPDATE_BASE_URL", "") or "").strip().rstrip("/")
+    base = _configured_update_base_url()
     if not base:
         return {
             "ok": False,
@@ -4468,7 +4475,7 @@ def _online_update_manifest() -> dict:
             "version": "",
             "source": "",
             "release_notes": [],
-            "errors": [_t("settings.update.disabled", "Online-Update-Prüfungen sind deaktiviert, weil RAB_UPDATE_BASE_URL nicht konfiguriert ist.")],
+            "errors": [_t("settings.update.disabled", "Online-Update-Prüfungen wurden über RAB_UPDATE_BASE_URL=disabled deaktiviert.")],
         }
     errors: list[str] = []
 
@@ -4517,7 +4524,7 @@ def _check_online_update_available() -> dict:
         "errors": manifest.get("errors", []),
     }
     if manifest.get("disabled"):
-        result["message"] = _t("settings.update.disabled", "Online-Update-Prüfungen sind deaktiviert, weil RAB_UPDATE_BASE_URL nicht konfiguriert ist.")
+        result["message"] = _t("settings.update.disabled", "Online-Update-Prüfungen wurden über RAB_UPDATE_BASE_URL=disabled deaktiviert.")
         return result
     if not manifest.get("ok"):
         result["message"] = _t("update.message.no_manifest", "Kein gültiges Online-Manifest gefunden.")
@@ -4554,7 +4561,7 @@ def _get_update_check_info() -> dict:
     except ValueError:
         checked_ts = 0
     auto_settings = _get_update_auto_check_settings(checked_ts=checked_ts)
-    configured = bool(str(current_app.config.get("RAB_UPDATE_BASE_URL", "") or "").strip())
+    configured = bool(_configured_update_base_url())
     return {
         "configured": configured,
         "checked_at": _get_setting("update_last_checked_at", ""),
@@ -4571,7 +4578,7 @@ def _get_update_check_info() -> dict:
 
 
 def _get_update_auto_check_settings(checked_ts: int | None = None) -> dict:
-    configured = bool(str(current_app.config.get("RAB_UPDATE_BASE_URL", "") or "").strip())
+    configured = bool(_configured_update_base_url())
     enabled = configured and normalize_bool(_get_setting("update_auto_check_enabled", "0"))
     try:
         interval_seconds = int(_get_setting("update_auto_check_interval_seconds", "21600") or "21600")

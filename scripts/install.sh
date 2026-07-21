@@ -92,7 +92,7 @@ BANNER
 
 TZ_DEFAULT="$(saved_default TZ 'Europe/Berlin')"
 CONTAINER_DEFAULT="$(saved_default RAB_CONTAINER_NAME 'rustdesk-addressbook')"
-IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0531')"
+IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0532')"
 DATA_DEFAULT="$(saved_default RAB_DATA_DIR './data')"
 BACKUP_DEFAULT="$(saved_default RAB_BACKUP_DIR './backups')"
 HTTPS_BIND_DEFAULT="$(saved_default RAB_HTTPS_BIND '0.0.0.0')"
@@ -113,7 +113,7 @@ LOGIN_FAIL_WINDOW_SECONDS_DEFAULT="$(saved_default LOGIN_FAIL_WINDOW_SECONDS '90
 LOGIN_FAIL_WINDOW_MINUTES_DEFAULT="$((LOGIN_FAIL_WINDOW_SECONDS_DEFAULT / 60))"
 AUTH_LOG_ROTATE_DAYS_DEFAULT="$(saved_default AUTH_LOG_ROTATE_DAYS '7')"
 AUTH_LOG_ROTATE_KEEP_DEFAULT="$(saved_default AUTH_LOG_ROTATE_KEEP '8')"
-UPDATE_BASE_URL_DEFAULT="$(saved_default RAB_UPDATE_BASE_URL '')"
+UPDATE_BASE_URL_DEFAULT="$(saved_default RAB_UPDATE_BASE_URL 'https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download')"
 
 TZ_VALUE="$(prompt 'Zeitzone' "$TZ_DEFAULT")"
 CONTAINER_NAME="$(prompt 'Container-Name' "$CONTAINER_DEFAULT")"
@@ -137,7 +137,7 @@ COMMON_NAME="$(prompt 'HTTPS Common Name' "$COMMON_NAME_DEFAULT")"
 ALT_NAMES="$(prompt 'HTTPS SubjectAltNames' "$ALT_NAMES_DEFAULT")"
 HSTS="$(prompt_yes_no 'HSTS aktivieren? Nur mit gültigem HTTPS-Zertifikat empfohlen' "$HSTS_DEFAULT")"
 TRUST_PROXY="$(prompt_yes_no 'Reverse-Proxy Header vertrauen? Nur hinter vertrauenswürdigem Proxy aktivieren' "$TRUST_PROXY_DEFAULT")"
-UPDATE_BASE_URL="$(prompt 'Optionale Update-Release-Basis-URL (leer = deaktiviert)' "$UPDATE_BASE_URL_DEFAULT")"
+UPDATE_BASE_URL="$(prompt 'Update-Release-Basis-URL (disabled = deaktiviert)' "$UPDATE_BASE_URL_DEFAULT")"
 
 ENABLE_DB_MOUNT="$(prompt_yes_no 'Optionalen read-only Zugriff auf RustDesk db_v2.sqlite3 aktivieren?' "$RUSTDESK_MOUNT_DEFAULT")"
 RUSTDESK_DIR=""

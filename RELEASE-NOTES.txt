@@ -1,9 +1,9 @@
-0.5.31-github-automation-removal
+0.5.32-github-release-update-default
 [de]
-- Dependabot-Konfiguration und GitHub-CI-/Container-Build-Workflows vollständig entfernt.
-- Zugehörige Dokumentationshinweise auf automatische GitHub-Prüfungen entfernt.
-- Lokale Tests, Repository-Sicherheitsprüfung und manuell ausführbare Prüfkommandos beibehalten.
+- GitHub-Releases des Projekts als feste Standardquelle für signierte Online-Updates eingerichtet.
+- latest.txt aus dem neuesten veröffentlichten Release bestimmt die Update-ZIP; SHA-256-Manifest und Ed25519-Signatur werden aus demselben Release geladen.
+- Eigene Updatequellen bleiben unterstützt; RAB_UPDATE_BASE_URL=disabled schaltet Online-Prüfungen ausdrücklich ab.
 [en]
-- Completely removed Dependabot configuration and GitHub CI/container-build workflows.
-- Removed related documentation claims about automatic GitHub checks.
-- Retained local tests, repository safety checks, and manually executable validation commands.
+- Configured the project GitHub Releases endpoint as the default signed online-update source.
+- latest.txt from the latest published release selects the update ZIP; the SHA-256 manifest and Ed25519 signature are downloaded from the same release.
+- Custom update sources remain supported; RAB_UPDATE_BASE_URL=disabled explicitly disables online checks.

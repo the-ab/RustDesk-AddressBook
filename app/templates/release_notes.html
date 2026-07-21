@@ -19,6 +19,7 @@
 
 {% if app_language == 'en' %}
 {% set releases = [
+  ('0.5.32', ['Configured the project GitHub Releases endpoint as the default signed online-update source.', 'latest.txt from the latest published release selects the update ZIP; the matching SHA-256 manifest and Ed25519 signature are downloaded from the same release.', 'Custom release sources remain supported; RAB_UPDATE_BASE_URL=disabled explicitly disables online checks.']),
   ('0.5.31', ['Removed GitHub-hosted dependency-update, test and container-build automation.', 'Removed related documentation claims about automatic GitHub checks.', 'Retained the local test suite, repository safety scanner and manually executable validation commands.']),
   ('0.5.30', ['Added Apache License 2.0, NOTICE, .gitignore, SECURITY.md and CONTRIBUTING.md for public repository publication.', 'Added a repository safety check and an initial local test suite.', 'Added independence, trademark and AI-assistance disclosures.', 'Removed the hard-coded update source; RAB_UPDATE_BASE_URL is empty by default while local signed updates remain available.']),
   ('0.5.29', ['Standardized all regular Markdown files on English as the default documentation language.', 'Added matching German editions using the *.de.md suffix, including README, admin guide, release notes, security report, third-party notices and updates instructions.', 'Updated documentation links, version examples and package contents to follow the new language convention.']),
@@ -58,6 +59,7 @@
 ] %}
 {% else %}
 {% set releases = [
+  ('0.5.32', ['GitHub-Releases des Projekts als feste Standardquelle für signierte Online-Updates eingerichtet.', 'latest.txt aus dem neuesten veröffentlichten Release bestimmt die Update-ZIP; das passende SHA-256-Manifest und die Ed25519-Signatur werden aus demselben Release geladen.', 'Eigene Release-Quellen bleiben unterstützt; RAB_UPDATE_BASE_URL=disabled schaltet Online-Prüfungen ausdrücklich ab.']),
   ('0.5.31', ['GitHub-basierte Abhängigkeitsupdate-, Test- und Container-Build-Automatisierungen entfernt.', 'Zugehörige Dokumentationshinweise auf automatische GitHub-Prüfungen entfernt.', 'Lokale Testreihe, Repository-Sicherheitsprüfung und manuell ausführbare Prüfkommandos beibehalten.']),
   ('0.5.30', ['Apache License 2.0, NOTICE, .gitignore, SECURITY.md und CONTRIBUTING.md für eine öffentliche Repository-Veröffentlichung ergänzt.', 'Repository-Sicherheitsprüfung und erste lokale Testreihe ergänzt.', 'Unabhängigkeits-, Marken- und KI-Unterstützungshinweise ergänzt.', 'Fest eingetragene Updatequelle entfernt; RAB_UPDATE_BASE_URL ist standardmäßig leer, lokale signierte Updates bleiben verfügbar.']),
   ('0.5.29', ['Alle regulären Markdown-Dateien auf Englisch als Standard-Dokumentationssprache vereinheitlicht.', 'Passende deutsche Fassungen mit der Endung *.de.md für README, Admin-Anleitung, Release-Notizen, Sicherheitsbericht, Drittanbieterhinweise und Update-Anleitung ergänzt.', 'Dokumentationsverweise, Versionsbeispiele und Paketinhalt an das neue Sprachschema angepasst.']),
@@ -114,9 +116,9 @@
   <div class="card-body">
     <h2 class="h5">{{ t('release.update_note', 'Update-Hinweis') }}</h2>
     <p class="text-secondary mb-2">{{ t('release.option_a', 'Variante A: Kopiere die neue Flat-Update-ZIP in updates/ und starte das Script ohne Parameter.') }}</p>
-    <pre class="codebox">cp /path/to/rustdesk-addressbook-update-flat-v0531.zip* updates/
+    <pre class="codebox">cp /path/to/rustdesk-addressbook-update-flat-v0532.zip* updates/
 ./scripts/update.sh</pre>
-    <p class="text-secondary mb-2 mt-3">{{ t('release.option_b', 'Variante B: Starte nur das Script. Es prüft lokale Updates und eine Online-Quelle nur, wenn RAB_UPDATE_BASE_URL gesetzt ist.') }}</p>
+    <p class="text-secondary mb-2 mt-3">{{ t('release.option_b', 'Variante B: Starte nur das Script. Es prüft lokale Updates und danach standardmäßig das neueste GitHub-Release des Projekts.') }}</p>
     <pre class="codebox">./scripts/update.sh</pre>
   </div>
 </div>

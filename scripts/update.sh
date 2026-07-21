@@ -16,6 +16,7 @@ require_compose() {
 }
 
 CURRENT_VERSION_FILE="app/config.py"
+DEFAULT_UPDATE_BASE_URL="https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download"
 UPDATES_DIR="updates"
 UPDATE_PUBLIC_KEY="scripts/keys/update-signing-public-v1.pem"
 mkdir -p "$UPDATES_DIR"
@@ -32,25 +33,23 @@ Recommended:
 
 Without parameters the script:
   1. checks updates/ for newer signed flat-update ZIPs;
-  2. checks RAB_UPDATE_BASE_URL only when that variable is configured;
+  2. checks the configured release source (GitHub Releases by default);
   3. shows release notes and asks before installation.
 
 Manual local update:
-  cp /path/to/rustdesk-addressbook-update-flat-v0531.zip* updates/
+  cp /path/to/rustdesk-addressbook-update-flat-v0532.zip* updates/
   ./scripts/update.sh
 
 Direct ZIP paths remain supported:
-  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0531.zip
+  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0532.zip
 
-Optional online source:
-  Set RAB_UPDATE_BASE_URL in .env to a trusted location containing latest.txt,
-  the update ZIP, and its matching .zip.sha256 and .zip.sig files.
+Online source:
+  The default is the project GitHub Releases endpoint:
+  RAB_UPDATE_BASE_URL=https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download
 
-GitHub Releases example:
-  RAB_UPDATE_BASE_URL=https://github.com/OWNER/REPOSITORY/releases/latest/download
-
-Leaving RAB_UPDATE_BASE_URL empty disables online checks. Local signed updates
-remain fully supported.
+  The release must contain latest.txt, the update ZIP, and its matching
+  .zip.sha256 and .zip.sig files. Set RAB_UPDATE_BASE_URL=disabled to disable
+  online checks explicitly. Local signed updates remain fully supported.
 USAGE
 }
 
@@ -333,18 +332,20 @@ online_latest_file() {
 
 check_online_update() {
   local base latest file current_str current_num target_num
-  base="$(read_env_value RAB_UPDATE_BASE_URL '')"
+  base="$(read_env_value RAB_UPDATE_BASE_URL "$DEFAULT_UPDATE_BASE_URL")"
   current_str="$(current_version_string)"
   current_num="$(extract_version_number "$current_str")"
-  if [ -z "${base//[[:space:]]/}" ]; then
+  case "$(printf '%s' "$base" | tr '[:upper:]' '[:lower:]')" in
+    disabled|off|none)
     echo "STATUS=disabled"
-    echo "MESSAGE=Online-Update-Prüfung ist deaktiviert, weil RAB_UPDATE_BASE_URL nicht gesetzt ist. Lokale signierte Updates bleiben verfügbar."
+    echo "MESSAGE=Online-Update-Prüfung wurde über RAB_UPDATE_BASE_URL=disabled deaktiviert. Lokale signierte Updates bleiben verfügbar."
     echo "BASE="
     echo "CURRENT_STR=$current_str"
     echo "CURRENT_NUM=$current_num"
     echo "UPDATE_AVAILABLE=0"
     return 0
-  fi
+    ;;
+  esac
   latest="$(online_latest_file "$base")"
   if [ -z "$latest" ]; then
     echo "STATUS=manifest_missing"
@@ -416,6 +417,17 @@ remove_known_containers() {
   for name in "$configured" "$default_name"; do
     remove_existing_container_if_needed "$name"
   done
+}
+
+maybe_update_release_source() {
+  local current_source
+  current_source="$(read_env_value RAB_UPDATE_BASE_URL '')"
+  if [ -z "${current_source//[[:space:]]/}" ]; then
+    set_env_value RAB_UPDATE_BASE_URL "$DEFAULT_UPDATE_BASE_URL"
+    echo "Online-Updatequelle gesetzt: $DEFAULT_UPDATE_BASE_URL"
+  else
+    echo "Konfigurierte Online-Updatequelle bleibt erhalten: $current_source"
+  fi
 }
 
 maybe_update_image_name() {
@@ -503,6 +515,9 @@ INFO
   # Lokale Konfiguration wiederherstellen, falls die ZIP Defaults überschrieben hat.
   copy_if_exists "$backup_root/.env" .env
   copy_if_exists "$backup_root/docker-compose.override.yml" docker-compose.override.yml
+
+  # Leere/fehlende Alt-Konfigurationen auf die GitHub-Release-Standardquelle migrieren.
+  maybe_update_release_source
 
   # Automatischen Image-Namen auf Zielversion aktualisieren, aber benutzerdefinierte Namen nicht überschreiben.
   maybe_update_image_name "$target_num"

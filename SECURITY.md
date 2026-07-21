@@ -23,7 +23,7 @@ The maintainer will confirm receipt, assess severity, coordinate a fix, and publ
 - Store `data/config.json`, database backups, and the private release-signing key separately and securely.
 - Never commit `.env`, databases, logs, backups, TLS private keys, or release-signing private keys.
 - Signed update packages are verified using `scripts/keys/update-signing-public-v1.pem`.
-- Configure `RAB_UPDATE_BASE_URL` only to a release location you control and trust. Leaving it empty disables online update checks while local signed updates remain available.
+- The default signed update source is `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download`. If you configure another source, it must be controlled and trusted. Set `RAB_UPDATE_BASE_URL=disabled` to disable online checks explicitly; local signed updates remain available.
 
 ## Scope
 

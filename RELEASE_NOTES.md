@@ -1,20 +1,16 @@
-# Community Address Book for RustDesk 0.5.31 – GitHub automation removal
+# Community Address Book for RustDesk 0.5.32 – GitHub Releases as update default
 
 German edition: [`RELEASE_NOTES.de.md`](RELEASE_NOTES.de.md)
 
-## Removed
+## Changed
 
-- `.github/dependabot.yml` and all automatic dependency-update configuration.
-- `.github/workflows/ci.yml` and all GitHub-hosted test and container-build automation.
-- Documentation statements that implied tests, dependency audits, or container builds run automatically on GitHub.
-
-## Retained
-
-- The local pytest test suite.
-- `scripts/check_repository_safety.py`.
-- Ruff, Bandit, pip-audit, Python, JavaScript, and Shell checks that can be run manually.
-- Manual source publication and manually created GitHub releases.
+- Set `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` as the default signed online-update source.
+- `latest.txt` in the latest published GitHub release selects the current flat update ZIP.
+- The updater downloads the selected ZIP and its matching `.zip.sha256` and `.zip.sig` assets from the same release.
+- Existing custom non-empty `RAB_UPDATE_BASE_URL` values remain supported.
+- `RAB_UPDATE_BASE_URL=disabled` explicitly disables online checks while preserving local signed updates.
+- A ready-to-upload `latest.txt` is provided with the release assets.
 
 ## Compatibility
 
-No application behavior, database schema, authentication, import, backup, or update-verification behavior was changed. Existing installations can update normally.
+No database, authentication, import, backup, or permission behavior was changed. Existing installations with an empty update URL automatically use the project GitHub Releases endpoint after updating.

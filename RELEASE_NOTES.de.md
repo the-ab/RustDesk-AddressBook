@@ -1,20 +1,16 @@
-# Community-Adressbuch für RustDesk 0.5.31 – GitHub-Automatisierungen entfernt
+# Community-Adressbuch für RustDesk 0.5.32 – GitHub Releases als Update-Standard
 
 Englische Standardfassung: [`RELEASE_NOTES.md`](RELEASE_NOTES.md)
 
-## Entfernt
+## Geändert
 
-- `.github/dependabot.yml` und alle automatischen Vorschläge für Abhängigkeitsupdates.
-- `.github/workflows/ci.yml` und alle bei GitHub ausgeführten automatischen Tests und Container-Builds.
-- Dokumentationshinweise, die automatische Tests, Abhängigkeitsprüfungen oder Container-Builds bei GitHub beschrieben haben.
-
-## Beibehalten
-
-- Die lokale pytest-Testreihe.
-- `scripts/check_repository_safety.py`.
-- Ruff-, Bandit-, pip-audit-, Python-, JavaScript- und Shell-Prüfungen zur manuellen Ausführung.
-- Manuelle Quellcodebereitstellung und manuell erstellte GitHub-Releases.
+- `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` als feste Standardquelle für signierte Online-Updates gesetzt.
+- Die `latest.txt` im neuesten veröffentlichten GitHub-Release bestimmt die aktuelle Flat-Update-ZIP.
+- Der Updater lädt die gewählte ZIP sowie die passenden Dateien `.zip.sha256` und `.zip.sig` aus demselben Release.
+- Bestehende eigene, nicht leere `RAB_UPDATE_BASE_URL`-Werte bleiben unterstützt.
+- `RAB_UPDATE_BASE_URL=disabled` schaltet Online-Prüfungen ausdrücklich ab; lokale signierte Updates bleiben verfügbar.
+- Eine fertig vorbereitete `latest.txt` wird zusammen mit den Release-Dateien bereitgestellt.
 
 ## Kompatibilität
 
-An Anwendung, Datenbankschema, Anmeldung, Import, Backup und Update-Verifikation wurde nichts geändert. Bestehende Installationen können normal aktualisiert werden.
+Datenbank, Anmeldung, Import, Backup und Berechtigungen bleiben unverändert. Bestehende Installationen mit leerer Update-URL verwenden nach dem Update automatisch die GitHub-Releases des Projekts.

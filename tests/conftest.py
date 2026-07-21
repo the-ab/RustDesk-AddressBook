@@ -10,7 +10,7 @@ TEST_ROOT = Path(tempfile.mkdtemp(prefix="rab-tests-"))
 os.environ.setdefault("APP_DATA_DIR", str(TEST_ROOT / "data"))
 os.environ.setdefault("BACKUP_DIR", str(TEST_ROOT / "backups"))
 os.environ.setdefault("SESSION_COOKIE_SECURE", "false")
-os.environ.setdefault("RAB_UPDATE_BASE_URL", "")
+os.environ.setdefault("RAB_UPDATE_BASE_URL", "disabled")
 os.environ.setdefault("AUTH_LOG_FILE", str(TEST_ROOT / "data" / "logs" / "auth.log"))
 
 from app import create_app  # noqa: E402

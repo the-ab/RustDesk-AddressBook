@@ -23,7 +23,7 @@ Der Maintainer bestätigt den Eingang, bewertet die Schwere, koordiniert eine Ko
 - `data/config.json`, Datenbanksicherungen und den privaten Release-Signaturschlüssel getrennt und sicher verwahren.
 - `.env`, Datenbanken, Logs, Backups, private TLS-Schlüssel und private Release-Schlüssel niemals committen.
 - Signierte Updatepakete werden über `scripts/keys/update-signing-public-v1.pem` geprüft.
-- `RAB_UPDATE_BASE_URL` nur auf eine selbst kontrollierte und vertrauenswürdige Release-Quelle setzen. Ein leerer Wert deaktiviert Online-Prüfungen; lokale signierte Updates bleiben möglich.
+- Die Standardquelle für signierte Updates ist `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download`. Eine abweichende `RAB_UPDATE_BASE_URL` darf nur auf eine selbst kontrollierte und vertrauenswürdige Release-Quelle zeigen. Mit `RAB_UPDATE_BASE_URL=disabled` werden Online-Prüfungen ausdrücklich abgeschaltet; lokale signierte Updates bleiben möglich.
 
 ## Geltungsbereich
 
