@@ -1,7 +1,7 @@
-# Community Address Book for RustDesk – Sicherheitsstatus 0.5.32
+# Community Address Book for RustDesk – Sicherheitsstatus 0.5.33
 
-**Stand:** 21. Juli 2026  
-**Version:** `0.5.32-github-release-update-default`
+**Stand:** 23. Juli 2026  
+**Version:** `0.5.33-v0533-update-cleanup-installed-archive`
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`SECURITY-REPORT.md`](SECURITY-REPORT.md).
 
@@ -33,11 +33,11 @@ Das alte 0.5.26-Signaturformat enthielt noch keine Gruppenzuweisungen. Beim einm
 
 ## 0.5.28 Betriebsstabilität
 
-Der eigentliche Webprozess bleibt unprivilegiert. Ein separater, kurzlebiger Init-Dienst erhält ausschließlich die für die Berechtigungsvorbereitung benötigten Capabilities. Der neue Healthcheck prüft Listener und SQLite-Verbindung. Das Basisimage verwendet Debian Trixie.
+Der eigentliche Webprozess bleibt unprivilegiert. Ein separater profilierter Init-Dienst erhält ausschließlich die für die Berechtigungsvorbereitung benötigten Capabilities und wird über `docker compose run --rm` ausgeführt, sodass Docker ihn direkt nach Abschluss entfernt. Der Healthcheck prüft Listener und SQLite-Verbindung. Das Basisimage verwendet Debian Trixie.
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.5.32 setzt die GitHub-Releases des Projekts als Standardquelle für signierte Updates, ohne GitHub-Automatisierungen wieder einzuführen. Repository-Sicherheitsprüfung, lokale Testreihe, Werkzeuge zur Abhängigkeitsprüfung und die Richtlinie zur vertraulichen Meldung von Schwachstellen bleiben zur manuellen Nutzung erhalten. Diese Repository-Änderung schwächt die bestehenden Laufzeitschutzmaßnahmen nicht.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.5.33 behält die signierte GitHub-Release-Updatequelle bei und führt den isolierten Dienst zur Berechtigungsvorbereitung als automatisch entfernten Einmal-Container aus und archiviert erfolgreich installierte Updatedateien kontrolliert. Repository-Sicherheitsprüfung, lokale Testreihe, Werkzeuge zur Abhängigkeitsprüfung und die Richtlinie zur vertraulichen Meldung von Schwachstellen bleiben zur manuellen Nutzung erhalten. Diese Repository-Änderung schwächt die bestehenden Laufzeitschutzmaßnahmen nicht.
 
 
 ## Hinweis für öffentliche Repositorys

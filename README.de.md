@@ -6,12 +6,13 @@ Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt
 
 > Die englische Dokumentation ist die Standardfassung. Deutsche Dateien tragen die Endung `*.de.md`.
 
-## Neu in 0.5.32
+## Neu in 0.5.33
 
-- GitHub Releases des Projekts sind jetzt die feste Standardquelle für signierte Online-Updates.
-- Der Updater liest `latest.txt` aus dem neuesten veröffentlichten Release und lädt die dort genannte ZIP sowie `.sha256` und `.sig` aus demselben Release.
-- Bestehende eigene, nicht leere `RAB_UPDATE_BASE_URL`-Werte bleiben unterstützt. Mit `RAB_UPDATE_BASE_URL=disabled` lassen sich Online-Prüfungen ausdrücklich abschalten.
-- Eine fertig vorbereitete `latest.txt` wird als eigene Release-Datei mitgeliefert.
+- Führt `rustdesk-addressbook-init` als einmaligen Wartungsdienst über `docker compose run --rm` aus, sodass nach Installation und Updates kein beendeter Init-Container zurückbleibt.
+- Verschiebt erfolgreich installierte Update-ZIPs samt `.sha256` und `.sig` aus `updates/` nach `updates/installed/`.
+- Zeigt das Release-Datum neben der Versionsnummer in der Fußzeile an.
+- Hält automatische Docker-Image-Namen beim Upgrade konsistent mit dem Paket-Tag (`v0533`).
+- Entfernt die veraltete, nicht referenzierte Datei `UPDATE-CHECK.txt` nach einer Prüfung auf verwaiste Paketdateien.
 
 ## Installation
 
@@ -19,7 +20,7 @@ Ein aktuelles Release-Archiv von der Releases-Seite des Repositorys herunterlade
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0532.zip
+unzip rustdesk-addressbook-v0533.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -39,7 +40,7 @@ Signierte Update-Dateien nach `updates/` kopieren:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0532.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0533.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -66,6 +67,7 @@ Im neuesten veröffentlichten Release müssen `latest.txt`, Update-ZIP sowie die
 - Lokale Konten, Admin-/Benutzerrollen, TOTP-2FA, Recovery-Codes und OIDC
 - Benutzerindividuelle Sprache und Hell-/Dunkelmodus
 - CSV- und RustDesk-Serverdatenbank-Import einschließlich SSH-Snapshots
+- Bearbeitbare CSV-Beispieldatei: [`sample-import.csv`](sample-import.csv)
 - Persistente Blockliste für gelöschte RustDesk-IDs
 - hbbs-Online-Statusabfragen
 - Unverschlüsselte, verschlüsselte DB- und verschlüsselte Vollbackups

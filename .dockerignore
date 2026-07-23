@@ -15,6 +15,7 @@ backups
 updates/*.zip
 updates/*.sha256
 updates/*.sig
+updates/installed
 *.db
 *.db-*
 *.sqlite

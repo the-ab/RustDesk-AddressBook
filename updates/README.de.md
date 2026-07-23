@@ -3,11 +3,13 @@
 Kopiere ein Flat-Update-ZIP und beide passenden Prüfdateien in dieses Verzeichnis:
 
 ```bash
-cp /pfad/rustdesk-addressbook-update-flat-v0532.zip updates/
-cp /pfad/rustdesk-addressbook-update-flat-v0532.zip.sha256 updates/
-cp /pfad/rustdesk-addressbook-update-flat-v0532.zip.sig updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0533.zip updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0533.zip.sha256 updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0533.zip.sig updates/
 ./scripts/update.sh
 ```
+
+Nach erfolgreicher Installation und bestätigtem Container-Healthcheck werden ZIP, Prüfsummenmanifest und Signatur nach `updates/installed/` verschoben. Fehlgeschlagene oder nicht eindeutig bestätigte Updates bleiben zur Diagnose in `updates/`. Die Berechtigungsvorbereitung läuft als `docker compose run --rm rustdesk-addressbook-init`, sodass kein beendeter Init-Container zurückbleibt.
 
 Der Updater wählt das höchste lokale `rustdesk-addressbook-update-flat-v*.zip`, prüft das signierte SHA-256-Manifest mit dem eingebetteten öffentlichen Ed25519-Schlüssel, kontrolliert die ZIP-Struktur, erstellt eine Rollback-Sicherung und installiert nur eine neuere Version.
 

@@ -1,9 +1,0 @@
-rustdesk-addressbook-update-flat-v0532.zip
-[de]
-- GitHub-Releases des Projekts als feste Standardquelle für signierte Online-Updates eingerichtet.
-- latest.txt aus dem neuesten veröffentlichten Release bestimmt die Update-ZIP und deren Signaturdateien.
-- Eigene Updatequellen bleiben unterstützt; mit RAB_UPDATE_BASE_URL=disabled können Online-Prüfungen abgeschaltet werden.
-[en]
-- Configured the project GitHub Releases endpoint as the default signed online-update source.
-- latest.txt from the latest published release selects the update ZIP and its signature sidecars.
-- Custom update sources remain supported; RAB_UPDATE_BASE_URL=disabled can disable online checks.

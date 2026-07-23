@@ -1,12 +1,12 @@
 # Community Address Book for RustDesk – Admin Guide
 
-This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.5.32-github-release-update-default`.
+This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.5.33-v0533-update-cleanup-installed-archive`.
 
 > English is the default documentation language. The German edition is available as [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md).
 
 ## Overview
 
-Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.5.32 uses the project GitHub Releases endpoint as the default signed online-update source while retaining local signed updates and custom release sources.
+Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.5.33 uses the project GitHub Releases endpoint as the default signed online-update source while retaining local signed updates and custom release sources.
 
 **Device management**  
 Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.
@@ -26,7 +26,7 @@ Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force locko
 
 ```
 cd /opt
-unzip /path/to/rustdesk-addressbook-v0532.zip
+unzip /path/to/rustdesk-addressbook-v0533.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -40,7 +40,7 @@ The values are written to `.env`. When you run `./scripts/install.sh` again, the
 
 ```
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0532.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0533.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -51,7 +51,7 @@ cd /opt/rustdesk-addressbook
 ./scripts/update.sh
 ```
 
-The update script first checks local ZIP files in `updates/`. Every package is verified with an Ed25519 signature and a signed SHA-256 checksum before extraction. Online checking uses `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` by default. Set `RAB_UPDATE_BASE_URL=disabled` to turn it off explicitly; local signed updates remain available.
+The update script first checks local ZIP files in `updates/`. Every package is verified with an Ed25519 signature and a signed SHA-256 checksum before extraction. Online checking uses `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` by default. Set `RAB_UPDATE_BASE_URL=disabled` to turn it off explicitly; local signed updates remain available. After a confirmed healthy start, the installed ZIP, checksum, and signature are moved to `updates/installed/`. Failed or inconclusive updates remain in `updates/`. Permission preparation is executed as `docker compose run --rm rustdesk-addressbook-init`, so the one-shot container is removed by Docker immediately after it exits.
 
 ### Web UI
 
@@ -262,7 +262,7 @@ The settings page uses a category navigation and a detail area. On small screens
 The Web UI checks `latest.txt` at `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` by default. Custom non-empty sources remain supported. Set `RAB_UPDATE_BASE_URL=disabled` to disable online checks explicitly; local signed updates remain available.
 
 ```
-rustdesk-addressbook-update-flat-v0532.zip
+rustdesk-addressbook-update-flat-v0533.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -301,7 +301,7 @@ Example files are included under `contrib/fail2ban/`. The application rotates `a
 ```
 docker compose ps
 docker compose logs -f
-docker exec -it rustdesk-addressbook grep -n "0.5.32-github-release-update-default" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.5.33-v0533-update-cleanup-installed-archive" /app/app/config.py
 docker exec -it rustdesk-addressbook ls -lh /rustdesk-server/db_v2.sqlite3* 2>/dev/null || true
 docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```
@@ -309,6 +309,17 @@ docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.
 - **Update conflict:** current update script removes an existing container with the same name before recreating it.
 - **SSH import:** use the built-in SSH test first and check transfer size, integrity and peer count.
 - **Online status:** test TCP access to hbbs port `21115`.
+
+
+## Container init and health check
+
+The Web process runs as UID/GID 10001. The profiled service `rustdesk-addressbook-init` prepares only the persistent data and backup directory permissions. Installation and update scripts invoke it explicitly with:
+
+```bash
+docker compose run --rm --no-deps rustdesk-addressbook-init
+```
+
+Docker removes this one-shot container immediately after it exits. The normal Web container is started separately and remains unprivileged. The health check probes the configured loopback listener and the SQLite connection. Self-signed certificates are accepted only for this internal probe.
 
 
 ## Public repository and legal notices

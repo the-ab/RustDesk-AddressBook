@@ -4,13 +4,13 @@
 
 > **Unabhängiges Projekt:** Dieses Community-Projekt ist nicht mit RustDesk oder Purslane Ltd. verbunden und wird von diesen weder unterstützt, gesponsert noch gepflegt. RustDesk ist eine Marke des jeweiligen Rechteinhabers.
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.32-github-release-update-default`.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.5.33-v0533-update-cleanup-installed-archive`.
 
 ## 1. Installation
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0532.zip
+unzip /pfad/rustdesk-addressbook-v0533.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -41,7 +41,7 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0532.zip
+unzip /pfad/rustdesk-addressbook-v0533.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -55,7 +55,7 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0532.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0533.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -72,19 +72,19 @@ Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Vor dem Entpacken m
 ../rustdesk-addressbook-preupdate-YYYYmmdd-HHMMSS/
 ```
 
-Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-compose.override.yml` und `updates/`. Nach dem Update Browser mit `Strg+F5` neu laden.
+Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-compose.override.yml` und `updates/`. Nach einem bestätigten erfolgreichen Healthcheck werden die installierte ZIP, die SHA-256-Datei und die Signatur nach `updates/installed/` verschoben. Bei Fehlern oder nicht eindeutig bestätigtem Health-Status bleiben sie in `updates/`. Nach dem Update Browser mit `Strg+F5` neu laden.
 
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0532.zip
+rustdesk-addressbook-update-flat-v0533.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Beim GitHub-Release müssen `latest.txt`, die darin genannte ZIP sowie die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` gemeinsam als Release Assets hochgeladen werden. Der feste Pfad `/releases/latest/download` wird von GitHub auf das neueste veröffentlichte Release weitergeleitet. Neben der ZIP müssen an jeder benutzerdefinierten Updatequelle ebenfalls die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0532.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
+Beim GitHub-Release müssen `latest.txt`, die darin genannte ZIP sowie die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` gemeinsam als Release Assets hochgeladen werden. Der feste Pfad `/releases/latest/download` wird von GitHub auf das neueste veröffentlichte Release weitergeleitet. Neben der ZIP müssen an jeder benutzerdefinierten Updatequelle ebenfalls die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0533.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
 
 ### 2.4 Manueller Fallback
 
@@ -92,7 +92,7 @@ Der direkte manuelle Entpackweg umgeht die Sicherheitslogik des Updaters und ist
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0532.zip* updates/
+cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0533.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -443,7 +443,7 @@ docker inspect --format '{{.State.Health.Status}}' rustdesk-addressbook
 docker logs --tail 100 rustdesk-addressbook
 ```
 
-Der Healthcheck ruft intern je nach aktivierter Konfiguration `https://127.0.0.1:5443/healthz` oder `http://127.0.0.1:5000/healthz` auf und prüft dabei zusätzlich die SQLite-Verbindung. Selbstsignierte lokale Zertifikate werden für diesen ausschließlich internen Test akzeptiert.
+Der Healthcheck ruft intern je nach aktivierter Konfiguration `https://127.0.0.1:5443/healthz` oder `http://127.0.0.1:5000/healthz` auf und prüft dabei zusätzlich die SQLite-Verbindung. Selbstsignierte lokale Zertifikate werden für diesen ausschließlich internen Test akzeptiert. Installations- und Updatescript führen den profilierten Init-Dienst über `docker compose run --rm --no-deps rustdesk-addressbook-init` aus. Docker entfernt diesen einmaligen Container unmittelbar nach erfolgreichem Abschluss; der Webcontainer bleibt separat und unprivilegiert.
 
 
 ## 16. Öffentliches Repository und rechtliche Hinweise

@@ -24,6 +24,10 @@ node --check app/static/js/app.js
 bash -n entrypoint.sh scripts/*.sh
 ```
 
+## Manual release signing
+
+The maintainer utility [`scripts/sign-release.sh`](scripts/sign-release.sh) creates the signed SHA-256 manifest and Ed25519 signature for release ZIP files. The private signing key must remain outside the repository and release archives.
+
 ## Security-sensitive changes
 
 Changes to authentication, OIDC, encryption, backup/restore, update verification, SSH import, permissions, or session handling require tests for both allowed and denied behavior. Security vulnerabilities must be reported privately according to [`SECURITY.md`](SECURITY.md).

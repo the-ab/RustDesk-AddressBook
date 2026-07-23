@@ -102,7 +102,7 @@
   };
 </script>
 {% endif %}
-<footer class="container-fluid px-3 px-lg-4 pb-3 text-secondary small app-footer">Community Address Book for RustDesk <a class="text-secondary" href="{{ url_for('release_notes') }}" title="{{ t('release.title', 'Release-Änderungen anzeigen') }}">{{ app_version_short }}</a> · <a class="text-secondary" href="{{ url_for('help_page') }}#legal">Apache-2.0 / independent project</a></footer>
+<footer class="container-fluid px-3 px-lg-4 pb-3 text-secondary small app-footer">Community Address Book for RustDesk <a class="text-secondary" href="{{ url_for('release_notes') }}" title="{{ t('release.title', 'Release-Änderungen anzeigen') }}">{{ app_version_short }}{% if app_release_date %} · {{ app_release_date }}{% endif %}</a> · <a class="text-secondary" href="{{ url_for('help_page') }}#legal">Apache-2.0 / independent project</a></footer>
 <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='js/app.js', v=app_version) }}"></script>
 </body>
 </html>

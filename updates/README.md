@@ -3,11 +3,13 @@
 Copy a flat update ZIP and both matching verification sidecars into this directory:
 
 ```bash
-cp /path/to/rustdesk-addressbook-update-flat-v0532.zip updates/
-cp /path/to/rustdesk-addressbook-update-flat-v0532.zip.sha256 updates/
-cp /path/to/rustdesk-addressbook-update-flat-v0532.zip.sig updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0533.zip updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0533.zip.sha256 updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0533.zip.sig updates/
 ./scripts/update.sh
 ```
+
+After a successful installation and a healthy container check, the ZIP, checksum manifest, and signature are moved to `updates/installed/`. Failed or inconclusive updates remain in `updates/` for diagnosis. The permission preparation runs as `docker compose run --rm rustdesk-addressbook-init`, so no stopped init container is retained.
 
 The updater selects the highest local `rustdesk-addressbook-update-flat-v*.zip`, validates the signed SHA-256 manifest with the embedded Ed25519 public key, checks the ZIP structure, creates a rollback backup, and installs the package only when it is newer.
 

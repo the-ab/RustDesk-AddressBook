@@ -37,11 +37,11 @@ Without parameters the script:
   3. shows release notes and asks before installation.
 
 Manual local update:
-  cp /path/to/rustdesk-addressbook-update-flat-v0532.zip* updates/
+  cp /path/to/rustdesk-addressbook-update-flat-v0533.zip* updates/
   ./scripts/update.sh
 
 Direct ZIP paths remain supported:
-  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0532.zip
+  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0533.zip
 
 Online source:
   The default is the project GitHub Releases endpoint:
@@ -81,7 +81,7 @@ extract_version_number() {
     return 0
   fi
   if [[ "$input" =~ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-    printf '%d%02d%02d\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
+    printf '%d%d%02d\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
     return 0
   fi
   echo "000"
@@ -419,6 +419,34 @@ remove_known_containers() {
   done
 }
 
+cleanup_init_container() {
+  # Der einmalige Init-Dienst wird nach erfolgreicher Vorbereitung nicht mehr benötigt.
+  # Compose behält seinen beendeten Container sonst dauerhaft zurück.
+  $COMPOSE rm -f -s rustdesk-addressbook-init >/dev/null 2>&1 || true
+}
+
+archive_installed_update() {
+  local zip_file="$1" updates_abs zip_abs installed_dir item target
+  updates_abs="$(readlink -f "$UPDATES_DIR")"
+  zip_abs="$(readlink -f "$zip_file" 2>/dev/null || true)"
+
+  [ -n "$zip_abs" ] || return 0
+  case "$zip_abs" in
+    "$updates_abs"/installed/*) return 0 ;;
+    "$updates_abs"/*) ;;
+    *) return 0 ;;
+  esac
+
+  installed_dir="$UPDATES_DIR/installed"
+  mkdir -p "$installed_dir"
+  for item in "$zip_file" "${zip_file}.sha256" "${zip_file}.sig"; do
+    [ -f "$item" ] || continue
+    target="$installed_dir/$(basename "$item")"
+    mv -f "$item" "$target"
+  done
+  echo "Installierte Updatedateien verschoben nach: $installed_dir/"
+}
+
 maybe_update_release_source() {
   local current_source
   current_source="$(read_env_value RAB_UPDATE_BASE_URL '')"
@@ -451,6 +479,18 @@ copy_if_exists() {
   if [ -e "$src" ]; then cp -a "$src" "$dst"; fi
 }
 
+backup_updates_without_installed() {
+  local destination="$1" item
+  [ -d "$UPDATES_DIR" ] || return 0
+  mkdir -p "$destination"
+  shopt -s dotglob nullglob
+  for item in "$UPDATES_DIR"/*; do
+    [ "$(basename "$item")" = "installed" ] && continue
+    cp -a "$item" "$destination/"
+  done
+  shopt -u dotglob nullglob
+}
+
 perform_update() {
   local zip_file="$1" current_str current_num target_str target_num target_num_from_cfg ts backup_root
   if [ ! -f "$zip_file" ]; then
@@ -465,7 +505,12 @@ perform_update() {
   target_num="$(extract_version_number "$(basename "$zip_file")")"
   if [ -n "$target_str" ]; then
     target_num_from_cfg="$(extract_version_number "$target_str")"
-    if (( 10#$target_num_from_cfg > 0 )); then target_num="$target_num_from_cfg"; fi
+    if (( 10#$target_num <= 0 && 10#$target_num_from_cfg > 0 )); then
+      target_num="$target_num_from_cfg"
+    elif (( 10#$target_num_from_cfg > 0 && 10#$target_num_from_cfg != 10#$target_num )); then
+      echo "FEHLER: Versionsnummer im Paketnamen und in app/config.py stimmt nicht überein." >&2
+      exit 1
+    fi
   else
     target_str="$(basename "$zip_file")"
   fi
@@ -500,7 +545,7 @@ INFO
   copy_if_exists install-config.env "$backup_root/install-config.env"
   copy_if_exists docker-compose.override.yml "$backup_root/docker-compose.override.yml"
   copy_if_exists docker-compose.yml "$backup_root/docker-compose.yml"
-  copy_if_exists updates "$backup_root/updates"
+  backup_updates_without_installed "$backup_root/updates"
 
   cat <<INFO
 Pre-Update-Sicherung erstellt:
@@ -533,6 +578,8 @@ INFO
   fi
 
   $COMPOSE build --no-cache
+  echo "Bereite persistente Verzeichnisse mit einem automatisch entfernten Init-Lauf vor ..."
+  $COMPOSE run --rm --no-deps rustdesk-addressbook-init
   $COMPOSE up -d --force-recreate --remove-orphans
 
   container_name="$(read_env_value RAB_CONTAINER_NAME 'rustdesk-addressbook')"
@@ -545,14 +592,22 @@ INFO
       unhealthy)
         echo "FEHLER: Container ist laut Healthcheck nicht funktionsfähig." >&2
         docker logs --tail 100 "$container_name" >&2 || true
+        cleanup_init_container
         exit 1
         ;;
     esac
     sleep 2
   done
+  cleanup_init_container
   if [ "$health" != "healthy" ]; then
     echo "WARNUNG: Healthcheck wurde innerhalb des Prüfzeitraums nicht 'healthy' (Status: ${health:-unbekannt})." >&2
     docker logs --tail 50 "$container_name" >&2 || true
+  fi
+
+  if [ "$health" = "healthy" ]; then
+    archive_installed_update "$zip_file"
+  else
+    echo "Hinweis: Updatedateien bleiben wegen des nicht bestätigten Health-Status in $UPDATES_DIR/."
   fi
 
   echo

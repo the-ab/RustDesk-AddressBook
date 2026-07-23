@@ -1,16 +1,16 @@
-# Community Address Book for RustDesk 0.5.32 – GitHub Releases as update default
+# Community Address Book for RustDesk 0.5.33 – Update cleanup and installed archive
 
 German edition: [`RELEASE_NOTES.de.md`](RELEASE_NOTES.de.md)
 
 ## Changed
 
-- Set `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` as the default signed online-update source.
-- `latest.txt` in the latest published GitHub release selects the current flat update ZIP.
-- The updater downloads the selected ZIP and its matching `.zip.sha256` and `.zip.sig` assets from the same release.
-- Existing custom non-empty `RAB_UPDATE_BASE_URL` values remain supported.
-- `RAB_UPDATE_BASE_URL=disabled` explicitly disables online checks while preserving local signed updates.
-- A ready-to-upload `latest.txt` is provided with the release assets.
+- Runs `rustdesk-addressbook-init` explicitly as a one-shot `docker compose run --rm` maintenance service, so no stopped init container remains after installation or updates.
+- Moves successfully installed update ZIPs, SHA-256 manifests, and Ed25519 signatures from `updates/` to `updates/installed/` after a confirmed healthy start.
+- Leaves update files in `updates/` when installation fails or the health status cannot be confirmed.
+- Displays the release date next to the version number in the footer.
+- Corrected package-tag normalization so managed Docker image names stay aligned with `v0533`.
+- Removed the obsolete, unreferenced `UPDATE-CHECK.txt` artifact after auditing the package for orphaned files.
 
 ## Compatibility
 
-No database, authentication, import, backup, or permission behavior was changed. Existing installations with an empty update URL automatically use the project GitHub Releases endpoint after updating.
+Database, authentication, imports, backups, permissions, OIDC, signed online updates, and custom update sources remain unchanged.

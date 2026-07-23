@@ -1,7 +1,7 @@
-# Community Address Book for RustDesk — Security Status 0.5.32
+# Community Address Book for RustDesk — Security Status 0.5.33
 
-**Date:** July 21, 2026  
-**Version:** `0.5.32-github-release-update-default`
+**Date:** July 23, 2026  
+**Version:** `0.5.33-v0533-update-cleanup-installed-archive`
 
 > English is the default documentation language. The German edition is available as [`SECURITY-REPORT.de.md`](SECURITY-REPORT.de.md).
 
@@ -32,11 +32,11 @@ The old 0.5.26 signature format did not include group assignments. During the on
 
 ## Container runtime and health
 
-The web process remains unprivileged. A separate short-lived init service receives only the capabilities required to prepare persistent directory permissions. The health check verifies the listener and SQLite connection. The base image uses Debian Trixie.
+The web process remains unprivileged. A separate profiled init service receives only the capabilities required to prepare persistent directory permissions and is invoked as `docker compose run --rm`, so Docker removes it immediately after completion. The health check verifies the listener and SQLite connection. The base image uses Debian Trixie.
 
 ## Documentation language layout
 
-Standard Markdown files are English and German editions use the `*.de.md` suffix. Version 0.5.32 configures the project GitHub Releases endpoint as the default signed update source while keeping GitHub-hosted automation absent. Repository safety checks, the local test suite, dependency auditing tools, and the private vulnerability-reporting policy remain available for manual use. This repository change does not weaken the existing runtime controls.
+Standard Markdown files are English and German editions use the `*.de.md` suffix. Version 0.5.33 keeps the signed GitHub Releases update source and runs the isolated permission-preparation service as an automatically removed one-shot container and deterministically archives successfully installed update assets. Repository safety checks, the local test suite, dependency auditing tools, and the private vulnerability-reporting policy remain available for manual use. This repository change does not weaken the existing runtime controls.
 
 
 ## Public repository note

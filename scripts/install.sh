@@ -92,7 +92,7 @@ BANNER
 
 TZ_DEFAULT="$(saved_default TZ 'Europe/Berlin')"
 CONTAINER_DEFAULT="$(saved_default RAB_CONTAINER_NAME 'rustdesk-addressbook')"
-IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0532')"
+IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0533')"
 DATA_DEFAULT="$(saved_default RAB_DATA_DIR './data')"
 BACKUP_DEFAULT="$(saved_default RAB_BACKUP_DIR './backups')"
 HTTPS_BIND_DEFAULT="$(saved_default RAB_HTTPS_BIND '0.0.0.0')"
@@ -242,7 +242,9 @@ SUMMARY
 START_NOW="$(prompt_yes_no 'Container jetzt bauen und starten?' 'ja')"
 if [ "$START_NOW" = "true" ]; then
   $COMPOSE build --no-cache
-  $COMPOSE up -d --force-recreate
+  echo "Bereite persistente Verzeichnisse mit einem automatisch entfernten Init-Lauf vor ..."
+  $COMPOSE run --rm --no-deps rustdesk-addressbook-init
+  $COMPOSE up -d --force-recreate --remove-orphans
   echo "Warte auf Container-Healthcheck ..."
   health=""
   for _ in $(seq 1 30); do
@@ -252,11 +254,13 @@ if [ "$START_NOW" = "true" ]; then
       unhealthy)
         echo "FEHLER: Container ist laut Healthcheck nicht funktionsfähig." >&2
         docker logs --tail 100 "$CONTAINER_NAME" >&2 || true
+        $COMPOSE rm -f -s rustdesk-addressbook-init >/dev/null 2>&1 || true
         exit 1
         ;;
     esac
     sleep 2
   done
+  $COMPOSE rm -f -s rustdesk-addressbook-init >/dev/null 2>&1 || true
   if [ "$health" != "healthy" ]; then
     echo "WARNUNG: Healthcheck wurde innerhalb des Prüfzeitraums nicht 'healthy' (Status: ${health:-unbekannt})." >&2
     docker logs --tail 50 "$CONTAINER_NAME" >&2 || true

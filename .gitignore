@@ -25,6 +25,7 @@ updates/*.sha256
 updates/*.sig
 updates/*.tmp
 updates/.download.*/
+updates/installed/
 
 # Private signing and TLS keys
 scripts/keys/*.pem

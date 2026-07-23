@@ -6,12 +6,13 @@ A self-hosted web address book for RustDesk environments, packaged as a Docker p
 
 > English is the default documentation language. The German edition is available as [`README.de.md`](README.de.md).
 
-## New in 0.5.32
+## New in 0.5.33
 
-- Uses the project GitHub Releases endpoint as the default signed online-update source.
-- Reads `latest.txt` from the latest published release and downloads the named ZIP plus `.sha256` and `.sig` sidecars from the same release.
-- Existing custom non-empty `RAB_UPDATE_BASE_URL` values remain supported. Use `RAB_UPDATE_BASE_URL=disabled` to turn online checks off explicitly.
-- Adds a ready-to-upload `latest.txt` asset to the release output.
+- Runs `rustdesk-addressbook-init` as a one-shot `docker compose run --rm` maintenance service, so no stopped init container remains after installation or updates.
+- Moves successfully installed update ZIPs and their `.sha256`/`.sig` files from `updates/` to `updates/installed/`.
+- Shows the release date next to the application version in the footer.
+- Keeps automatic Docker image names aligned with the package tag (`v0533`) during upgrades.
+- Removes the obsolete, unreferenced `UPDATE-CHECK.txt` file after a package orphan-file audit.
 
 ## Installation
 
@@ -19,7 +20,7 @@ Download a current release archive from the repository's Releases page, then:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0532.zip
+unzip rustdesk-addressbook-v0533.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -39,7 +40,7 @@ Place the signed update assets in `updates/`:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0532.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0533.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -66,6 +67,7 @@ The latest published release must expose `latest.txt`, the update ZIP, and the m
 - Local accounts, administrator/user roles, TOTP 2FA, recovery codes, and OIDC
 - Per-user language and light/dark appearance settings
 - CSV and RustDesk server database import, including SSH snapshots
+- Editable CSV example: [`sample-import.csv`](sample-import.csv)
 - Persistent blocklist for deleted RustDesk IDs
 - hbbs online-state checks
 - Plain, encrypted database, and encrypted full backups

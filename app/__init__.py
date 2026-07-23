@@ -1289,6 +1289,7 @@ def register_template_helpers(app: Flask) -> None:
     app.jinja_env.globals["now"] = lambda: datetime.now()
     app.jinja_env.globals["app_version"] = app.config.get("APP_VERSION", "dev")
     app.jinja_env.globals["app_version_short"] = _short_app_version(app.config.get("APP_VERSION", "dev"))
+    app.jinja_env.globals["app_release_date"] = app.config.get("APP_RELEASE_DATE", "")
     app.jinja_env.filters["decrypt"] = decrypt_value
     app.jinja_env.globals["os_icon_class"] = _os_icon_class
     app.jinja_env.globals["get_os_choices"] = _get_os_choices

@@ -1,16 +1,16 @@
-# Community-Adressbuch für RustDesk 0.5.32 – GitHub Releases als Update-Standard
+# Community-Adressbuch für RustDesk 0.5.33 – Update-Bereinigung und Installed-Archiv
 
 Englische Standardfassung: [`RELEASE_NOTES.md`](RELEASE_NOTES.md)
 
 ## Geändert
 
-- `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` als feste Standardquelle für signierte Online-Updates gesetzt.
-- Die `latest.txt` im neuesten veröffentlichten GitHub-Release bestimmt die aktuelle Flat-Update-ZIP.
-- Der Updater lädt die gewählte ZIP sowie die passenden Dateien `.zip.sha256` und `.zip.sig` aus demselben Release.
-- Bestehende eigene, nicht leere `RAB_UPDATE_BASE_URL`-Werte bleiben unterstützt.
-- `RAB_UPDATE_BASE_URL=disabled` schaltet Online-Prüfungen ausdrücklich ab; lokale signierte Updates bleiben verfügbar.
-- Eine fertig vorbereitete `latest.txt` wird zusammen mit den Release-Dateien bereitgestellt.
+- `rustdesk-addressbook-init` wird ausdrücklich als einmaliger Wartungsdienst über `docker compose run --rm` ausgeführt, sodass nach Installation und Updates kein beendeter Init-Container zurückbleibt.
+- Erfolgreich installierte Update-ZIPs, SHA-256-Manifeste und Ed25519-Signaturen werden nach bestätigtem Healthcheck aus `updates/` nach `updates/installed/` verschoben.
+- Bei fehlgeschlagenen Updates oder nicht bestätigtem Health-Status bleiben die Dateien zur Diagnose in `updates/` liegen.
+- Das Release-Datum wird neben der Versionsnummer in der Fußzeile angezeigt.
+- Paket-Tag-Normalisierung korrigiert, damit automatisch verwaltete Docker-Image-Namen mit `v0533` übereinstimmen.
+- Die veraltete, nicht referenzierte Datei `UPDATE-CHECK.txt` wurde nach einer Prüfung auf verwaiste Paketdateien entfernt.
 
 ## Kompatibilität
 
-Datenbank, Anmeldung, Import, Backup und Berechtigungen bleiben unverändert. Bestehende Installationen mit leerer Update-URL verwenden nach dem Update automatisch die GitHub-Releases des Projekts.
+Datenbank, Anmeldung, Import, Backup, Berechtigungen, OIDC, signierte Online-Updates und eigene Updatequellen bleiben unverändert.

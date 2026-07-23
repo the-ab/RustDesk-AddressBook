@@ -26,6 +26,7 @@ def test_health_and_security_headers(client):
     assert response.get_json() == {"status": "ok"}
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+    assert Config.APP_RELEASE_DATE == "2026-07-23"
 
 
 def test_setup_requires_the_server_token(client, clean_app):
@@ -134,12 +135,12 @@ def test_latest_manifest_selects_github_release_asset(clean_app, monkeypatch):
     monkeypatch.setattr(
         app_module,
         "_fetch_text_url",
-        lambda url, timeout=5.0: "rustdesk-addressbook-update-flat-v0532.zip\n[en]\n- GitHub update source enabled.\n",
+        lambda url, timeout=5.0: "rustdesk-addressbook-update-flat-v0533.zip\n[en]\n- GitHub update source enabled.\n",
     )
     with clean_app.app_context():
         result = _online_update_manifest()
     assert result["ok"] is True
-    assert result["file"] == "rustdesk-addressbook-update-flat-v0532.zip"
+    assert result["file"] == "rustdesk-addressbook-update-flat-v0533.zip"
     assert result["base_url"] == Config.DEFAULT_UPDATE_BASE_URL
 
 def test_csv_formula_protection_and_disabled_online_updates(clean_app):
@@ -185,3 +186,6 @@ def test_administrator_pages_render(client, clean_app):
     ):
         page = client.get(path)
         assert page.status_code == 200, path
+        if path == "/":
+            assert b"0.5.33" in page.data
+            assert b"2026-07-23" in page.data

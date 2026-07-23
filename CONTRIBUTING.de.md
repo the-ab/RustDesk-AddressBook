@@ -24,6 +24,10 @@ node --check app/static/js/app.js
 bash -n entrypoint.sh scripts/*.sh
 ```
 
+## Manuelle Release-Signierung
+
+Das Maintainer-Werkzeug [`scripts/sign-release.sh`](scripts/sign-release.sh) erstellt das signierte SHA-256-Manifest und die Ed25519-Signatur für Release-ZIP-Dateien. Der private Signaturschlüssel muss außerhalb des Repositorys und der Release-Archive bleiben.
+
 ## Sicherheitsrelevante Änderungen
 
 Änderungen an Anmeldung, OIDC, Verschlüsselung, Backup/Restore, Updateprüfung, SSH-Import, Berechtigungen oder Sitzungen benötigen Tests für erlaubte und abgewiesene Abläufe. Schwachstellen müssen entsprechend [`SECURITY.md`](SECURITY.md) privat gemeldet werden.

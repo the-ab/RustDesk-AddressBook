@@ -1,7 +1,8 @@
 services:
   rustdesk-addressbook-init:
+    profiles: ["maintenance"]
     build: .
-    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0532}
+    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0533}
     user: "0:0"
     entrypoint:
       - /app/scripts/prepare_runtime_dirs.sh
@@ -23,14 +24,11 @@ services:
 
   rustdesk-addressbook:
     build: .
-    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0532}
+    image: ${RAB_IMAGE_NAME:-rustdesk-addressbook-v0533}
     container_name: ${RAB_CONTAINER_NAME:-rustdesk-addressbook}
     restart: unless-stopped
     init: true
     user: "10001:10001"
-    depends_on:
-      rustdesk-addressbook-init:
-        condition: service_completed_successfully
     read_only: true
     cap_drop:
       - ALL

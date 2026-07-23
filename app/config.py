@@ -44,7 +44,8 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
 
 
 class Config:
-    APP_VERSION = "0.5.32-github-release-update-default"
+    APP_VERSION = "0.5.33-v0533-update-cleanup-installed-archive"
+    APP_RELEASE_DATE = "2026-07-23"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
