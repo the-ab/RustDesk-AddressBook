@@ -1,7 +1,7 @@
-# Community Address Book for RustDesk – Sicherheitsstatus 0.5.33
+# Community Address Book for RustDesk – Sicherheitsstatus 0.6.0
 
 **Stand:** 23. Juli 2026  
-**Version:** `0.5.33-v0533-update-cleanup-installed-archive`
+**Version:** `0.6.0-ghcr-compose-version-setup-token-cleanup`
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`SECURITY-REPORT.md`](SECURITY-REPORT.md).
 
@@ -37,7 +37,7 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater profilierter Ini
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.5.33 behält die signierte GitHub-Release-Updatequelle bei und führt den isolierten Dienst zur Berechtigungsvorbereitung als automatisch entfernten Einmal-Container aus und archiviert erfolgreich installierte Updatedateien kontrolliert. Repository-Sicherheitsprüfung, lokale Testreihe, Werkzeuge zur Abhängigkeitsprüfung und die Richtlinie zur vertraulichen Meldung von Schwachstellen bleiben zur manuellen Nutzung erhalten. Diese Repository-Änderung schwächt die bestehenden Laufzeitschutzmaßnahmen nicht.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.6.0 ergänzt ein eigenes Compose-Paket für das GHCR-Image und behält gleichzeitig den gehärteten Betrieb mit lokalem Build bei. Das einmalige Setup-Token wird nach dem ersten Administrator aus `config.json` entfernt und damit nicht unnötig dauerhaft gespeichert. Repository-Sicherheitsprüfung, lokale Testreihe, Werkzeuge zur Abhängigkeitsprüfung und die Richtlinie zur vertraulichen Meldung von Schwachstellen bleiben zur manuellen Nutzung erhalten.
 
 
 ## Hinweis für öffentliche Repositorys

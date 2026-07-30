@@ -1,0 +1,150 @@
+name: rustdesk-addressbook
+
+services:
+  rustdesk-addressbook:
+    image: ghcr.io/the-ab/rustdesk-addressbook:${RAB_IMAGE_TAG:-latest}
+    pull_policy: always
+    container_name: ${RAB_CONTAINER_NAME:-rustdesk-addressbook}
+    hostname: ${RAB_HOSTNAME:-rustdesk-addressbook}
+    restart: unless-stopped
+    init: true
+
+    # Der Container bereitet die Bind-Mounts kurz als Root vor, wechselt danach
+    # dauerhaft auf die unprivilegierte Projekt-UID/GID 10001:10001 und startet
+    # den originalen Entrypoint aus dem Image.
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -ec
+    command:
+      - |
+        exec python - <<'PYTHON'
+        import os
+        import subprocess
+
+        uid = int(os.environ.get("RAB_RUNTIME_UID", "10001"))
+        gid = int(os.environ.get("RAB_RUNTIME_GID", "10001"))
+
+        if uid <= 0 or gid <= 0:
+            raise SystemExit(
+                "RAB_RUNTIME_UID und RAB_RUNTIME_GID müssen positive "
+                "numerische Werte sein."
+            )
+
+        subprocess.run(
+            ["/app/scripts/prepare_runtime_dirs.sh"],
+            check=True,
+            env=os.environ,
+        )
+
+        os.setgroups([])
+        os.setgid(gid)
+        os.setuid(uid)
+
+        os.execve(
+            "/app/entrypoint.sh",
+            ["/app/entrypoint.sh"],
+            os.environ,
+        )
+        PYTHON
+
+    read_only: true
+
+    cap_drop:
+      - ALL
+
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    security_opt:
+      - no-new-privileges:true
+
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=128m,mode=1777
+
+    ports:
+      - "${RAB_HTTPS_BIND:-0.0.0.0}:${RAB_HTTPS_PUBLISH_PORT:-5443}:5443"
+      # Das Mapping bleibt vorhanden, auch wenn APP_ENABLE_HTTP=false ist.
+      # Ohne aktivierten HTTP-Listener nimmt der Container dort keine Verbindung an.
+      - "${RAB_HTTP_BIND:-0.0.0.0}:${RAB_HTTP_PUBLISH_PORT:-5055}:5000"
+
+    environment:
+      TZ: "${TZ:-Europe/Berlin}"
+
+      RAB_RUNTIME_UID: "${RAB_RUNTIME_UID:-10001}"
+      RAB_RUNTIME_GID: "${RAB_RUNTIME_GID:-10001}"
+
+      APP_DATA_DIR: "/data"
+      BACKUP_DIR: "/backups"
+
+      APP_ENABLE_HTTP: "${APP_ENABLE_HTTP:-false}"
+      APP_ENABLE_HTTPS: "${APP_ENABLE_HTTPS:-true}"
+      APP_HTTP_PORT: "5000"
+      APP_HTTPS_PORT: "5443"
+
+      APP_WORKERS: "${APP_WORKERS:-1}"
+      APP_THREADS: "${APP_THREADS:-4}"
+      APP_TIMEOUT: "${APP_TIMEOUT:-60}"
+
+      HTTPS_CERT_FILE: "${HTTPS_CERT_FILE:-/data/certs/addressbook.crt}"
+      HTTPS_KEY_FILE: "${HTTPS_KEY_FILE:-/data/certs/addressbook.key}"
+      HTTPS_COMMON_NAME: "${HTTPS_COMMON_NAME:-rustdesk-addressbook.local}"
+      HTTPS_ALT_NAMES: "${HTTPS_ALT_NAMES:-localhost,127.0.0.1,rustdesk-addressbook.local}"
+
+      SESSION_COOKIE_SECURE: "${SESSION_COOKIE_SECURE:-true}"
+      APP_HSTS: "${APP_HSTS:-false}"
+      TRUST_PROXY_HEADERS: "${TRUST_PROXY_HEADERS:-false}"
+
+      LOG_DIR: "/data/logs"
+      AUTH_LOG_FILE: "/data/logs/auth.log"
+      LOGIN_FAIL_LIMIT: "${LOGIN_FAIL_LIMIT:-5}"
+      LOGIN_FAIL_WINDOW_SECONDS: "${LOGIN_FAIL_WINDOW_SECONDS:-900}"
+      AUTH_LOG_ROTATE_DAYS: "${AUTH_LOG_ROTATE_DAYS:-7}"
+      AUTH_LOG_ROTATE_KEEP: "${AUTH_LOG_ROTATE_KEEP:-8}"
+
+      USER_SIGNATURE_POLICY: "strict"
+      AUTH_EVENT_RETENTION_DAYS: "${AUTH_EVENT_RETENTION_DAYS:-90}"
+      AUTH_EVENT_MAX_ROWS: "${AUTH_EVENT_MAX_ROWS:-50000}"
+      SENSITIVE_ACTION_REAUTH_SECONDS: "${SENSITIVE_ACTION_REAUTH_SECONDS:-1800}"
+
+      MAX_CONTENT_LENGTH: "${MAX_CONTENT_LENGTH:-104857600}"
+      FULL_BACKUP_MAX_MEMBERS: "${FULL_BACKUP_MAX_MEMBERS:-5000}"
+      FULL_BACKUP_MAX_TOTAL_BYTES: "${FULL_BACKUP_MAX_TOTAL_BYTES:-536870912}"
+      FULL_BACKUP_MAX_FILE_BYTES: "${FULL_BACKUP_MAX_FILE_BYTES:-134217728}"
+
+      OIDC_ALLOW_PRIVATE_ISSUER: "${OIDC_ALLOW_PRIVATE_ISSUER:-false}"
+
+      # Optionaler read-only Zugriff auf eine RustDesk-Serverdatenbank.
+      # Zur Aktivierung zusätzlich RUSTDESK_SERVER_DB_HOST_PATH auf die
+      # vorhandene Hostdatei setzen.
+      RUSTDESK_SERVER_DB: "${RUSTDESK_SERVER_DB:-}"
+
+      # ZIP-basierter Update-Check bleibt zusätzlich zur Image-Verteilung erhalten.
+      # Mit "disabled" kann nur der Online-Check abgeschaltet werden.
+      RAB_UPDATE_BASE_URL: "${RAB_UPDATE_BASE_URL:-https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download}"
+
+    volumes:
+      - "${RAB_DATA_DIR:-/docker_data/rustdesk-addressbook/data}:/data"
+      - "${RAB_BACKUP_DIR:-/docker_data/rustdesk-addressbook/backups}:/backups"
+
+      # Standardmäßig wird /dev/null eingebunden und von der Anwendung ignoriert,
+      # weil RUSTDESK_SERVER_DB leer ist. Für den optionalen Direktzugriff:
+      # RUSTDESK_SERVER_DB_HOST_PATH=/pfad/zu/db_v2.sqlite3
+      # RUSTDESK_SERVER_DB=/rustdesk-server/db_v2.sqlite3
+      - "${RUSTDESK_SERVER_DB_HOST_PATH:-/dev/null}:/rustdesk-server/db_v2.sqlite3:ro"
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - /app/scripts/healthcheck.py
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    stop_grace_period: 30s

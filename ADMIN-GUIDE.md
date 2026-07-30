@@ -1,12 +1,12 @@
 # Community Address Book for RustDesk – Admin Guide
 
-This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.5.33-v0533-update-cleanup-installed-archive`.
+This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.6.0-ghcr-compose-version-setup-token-cleanup`.
 
 > English is the default documentation language. The German edition is available as [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md).
 
 ## Overview
 
-Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.5.33 uses the project GitHub Releases endpoint as the default signed online-update source while retaining local signed updates and custom release sources.
+Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.6.0 adds a dedicated GHCR image installation, the root-level VERSION file, and setup-token cleanup while retaining the signed ZIP update path and custom release sources.
 
 **Device management**  
 Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.
@@ -22,17 +22,31 @@ Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force locko
 
 ## Installation and update
 
-### Fresh installation
+### GHCR image installation
+
+The published image is available as `ghcr.io/the-ab/rustdesk-addressbook:latest` and as the fixed tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.0`. The dedicated files are stored under `docker-compose/`:
+
+```bash
+cd docker-compose
+cp .env.example .env
+docker compose pull
+docker compose up -d
+docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
+```
+
+Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.0` to pin this release. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
+
+### Source/release archive installation
 
 ```
 cd /opt
-unzip /path/to/rustdesk-addressbook-v0533.zip
+unzip /path/to/rustdesk-addressbook-v0600.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
 ```
 
-The installer asks for timezone, container/image name, data and backup directories, HTTPS port, optional HTTP port, certificate names, reverse-proxy trust, optional read-only RustDesk DB mount, brute-force values and the update download base URL. After the first start it prints the one-time setup token for the initial administrator.
+The installer asks for timezone, container/image name, data and backup directories, HTTPS port, optional HTTP port, certificate names, reverse-proxy trust, optional read-only RustDesk DB mount, brute-force values and the update download base URL. After the first start it prints the one-time setup token for the initial administrator. After the administrator is created successfully, the token is removed from `data/config.json`; existing installations are cleaned on the next application start.
 
 The values are written to `.env`. When you run `./scripts/install.sh` again, the existing `.env` values are used as defaults.
 
@@ -40,7 +54,7 @@ The values are written to `.env`. When you run `./scripts/install.sh` again, the
 
 ```
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0533.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0600.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -64,7 +78,7 @@ HTTP is disabled by default. If no own certificate is configured, a self-signed 
 ## First setup
 
 1. Open the Web UI.
-2. Enter the one-time setup token printed by the installer and create the first local administrator.
+2. Enter the one-time setup token printed by the installer and create the first local administrator. After the account is created, the token is removed from `data/config.json`.
 3. Enable TOTP under **Account** and store recovery codes offline.
 4. Configure appearance, language and hbbs under **Settings**.
 5. Create local or OIDC users under **Users** and assign groups.
@@ -262,7 +276,7 @@ The settings page uses a category navigation and a detail area. On small screens
 The Web UI checks `latest.txt` at `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` by default. Custom non-empty sources remain supported. Set `RAB_UPDATE_BASE_URL=disabled` to disable online checks explicitly; local signed updates remain available.
 
 ```
-rustdesk-addressbook-update-flat-v0533.zip
+rustdesk-addressbook-update-flat-v0600.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -301,7 +315,7 @@ Example files are included under `contrib/fail2ban/`. The application rotates `a
 ```
 docker compose ps
 docker compose logs -f
-docker exec -it rustdesk-addressbook grep -n "0.5.33-v0533-update-cleanup-installed-archive" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.6.0-ghcr-compose-version-setup-token-cleanup" /app/app/config.py
 docker exec -it rustdesk-addressbook ls -lh /rustdesk-server/db_v2.sqlite3* 2>/dev/null || true
 docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```

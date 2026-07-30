@@ -1,16 +1,10 @@
-# Community Address Book for RustDesk 0.5.33 – Update cleanup and installed archive
+# Community Address Book for RustDesk 0.6.0 – GHCR image installation and setup-token cleanup
 
-German edition: [`RELEASE_NOTES.de.md`](RELEASE_NOTES.de.md)
+Release date: 2026-07-30
 
-## Changed
-
-- Runs `rustdesk-addressbook-init` explicitly as a one-shot `docker compose run --rm` maintenance service, so no stopped init container remains after installation or updates.
-- Moves successfully installed update ZIPs, SHA-256 manifests, and Ed25519 signatures from `updates/` to `updates/installed/` after a confirmed healthy start.
-- Leaves update files in `updates/` when installation fails or the health status cannot be confirmed.
-- Displays the release date next to the version number in the footer.
-- Corrected package-tag normalization so managed Docker image names stay aligned with `v0533`.
-- Removed the obsolete, unreferenced `UPDATE-CHECK.txt` artifact after auditing the package for orphaned files.
-
-## Compatibility
-
-Database, authentication, imports, backups, permissions, OIDC, signed online updates, and custom update sources remain unchanged.
+- Added the root-level `VERSION` file with value `0.6.0`.
+- Added `docker-compose/compose.yaml` and `docker-compose/.env.example` for installation from `ghcr.io/the-ab/rustdesk-addressbook:latest` or the fixed `0.6.0` image tag without project source files.
+- Updated README, Admin Guide and Web UI help with the GHCR image installation path.
+- Kept the existing source-build installation and signed ZIP update path unchanged.
+- Removed the one-time `SETUP_TOKEN` from `data/config.json` after the first administrator account is created successfully.
+- Existing installations with an administrator automatically remove the legacy setup token on application startup.

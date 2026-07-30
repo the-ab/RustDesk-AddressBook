@@ -56,3 +56,5 @@ htmlcov/
 *.tmp
 *.swp
 *~
+
+!docker-compose/.env.example

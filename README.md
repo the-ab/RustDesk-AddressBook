@@ -6,27 +6,53 @@ A self-hosted web address book for RustDesk environments, packaged as a Docker p
 
 > English is the default documentation language. The German edition is available as [`README.de.md`](README.de.md).
 
-## New in 0.5.33
+## New in 0.6.0
 
-- Runs `rustdesk-addressbook-init` as a one-shot `docker compose run --rm` maintenance service, so no stopped init container remains after installation or updates.
-- Moves successfully installed update ZIPs and their `.sha256`/`.sig` files from `updates/` to `updates/installed/`.
-- Shows the release date next to the application version in the footer.
-- Keeps automatic Docker image names aligned with the package tag (`v0533`) during upgrades.
-- Removes the obsolete, unreferenced `UPDATE-CHECK.txt` file after a package orphan-file audit.
+- Adds a root-level `VERSION` file containing the release version.
+- Adds a dedicated `docker-compose/` directory for source-free installation from `ghcr.io/the-ab/rustdesk-addressbook:latest` or a fixed image version.
+- Documents both the GHCR image installation and the classic source-build installation.
+- Removes the one-time setup token from `data/config.json` immediately after the first administrator account has been created successfully. Existing installations are cleaned automatically on startup.
 
 ## Installation
+
+### GHCR image installation
+
+The published container image is available as:
+
+```text
+ghcr.io/the-ab/rustdesk-addressbook:latest
+ghcr.io/the-ab/rustdesk-addressbook:0.6.0
+```
+
+The `docker-compose/` directory contains the dedicated image-based `compose.yaml` and `.env.example`. No project source files are required for this installation method:
+
+```bash
+cd docker-compose
+cp .env.example .env
+docker compose pull
+docker compose up -d
+docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
+```
+
+The final command prints the one-time setup token. After the first administrator is created successfully, the token is removed from `config.json`.
+
+Use `RAB_IMAGE_TAG=latest` to track the newest published image or `RAB_IMAGE_TAG=0.6.0` to pin this release. Persistent data and backups are stored in the host paths configured in `.env`.
+
+### Source/release archive installation
 
 Download a current release archive from the repository's Releases page, then:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0533.zip
+unzip rustdesk-addressbook-v0600.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
 ```
 
-The installer asks for timezone, container/image name, data and backup paths, HTTPS port, optional HTTP, certificate names, reverse-proxy trust, signed update source, an optional read-only RustDesk DB mount, and brute-force/auth-log rotation settings. Existing `.env` values are reused as defaults when the installer is run again. After the first start, the installer prints the one-time setup token for the initial administrator.
+The installer asks for timezone, container/image name, data and backup paths, HTTPS port, optional HTTP, certificate names, reverse-proxy trust, signed update source, an optional read-only RustDesk DB mount, and brute-force/auth-log rotation settings. Existing `.env` values are reused as defaults when the installer is run again.
+
+There are no fixed initial credentials. After the first start, read the one-time setup token printed by the installer or from `/data/config.json`, create the first administrator, and then the application removes the token from `config.json` automatically.
 
 Default address:
 
@@ -40,7 +66,7 @@ Place the signed update assets in `updates/`:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0533.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0600.zip* updates/
 ./scripts/update.sh
 ```
 

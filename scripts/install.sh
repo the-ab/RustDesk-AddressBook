@@ -92,7 +92,7 @@ BANNER
 
 TZ_DEFAULT="$(saved_default TZ 'Europe/Berlin')"
 CONTAINER_DEFAULT="$(saved_default RAB_CONTAINER_NAME 'rustdesk-addressbook')"
-IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0533')"
+IMAGE_DEFAULT="$(saved_default RAB_IMAGE_NAME 'rustdesk-addressbook-v0600')"
 DATA_DEFAULT="$(saved_default RAB_DATA_DIR './data')"
 BACKUP_DEFAULT="$(saved_default RAB_BACKUP_DIR './backups')"
 HTTPS_BIND_DEFAULT="$(saved_default RAB_HTTPS_BIND '0.0.0.0')"
@@ -268,13 +268,23 @@ if [ "$START_NOW" = "true" ]; then
   echo
   echo "Fertig. Öffne: https://SERVER-IP:${HTTPS_PORT}"
   echo
-  SETUP_TOKEN_VALUE="$(docker exec "$CONTAINER_NAME" python -c 'import json; print(json.load(open("/data/config.json", encoding="utf-8"))["SETUP_TOKEN"])' 2>/dev/null || true)"
-  if [ -n "$SETUP_TOKEN_VALUE" ]; then
-    echo "Einmaliges Setup-Token für das erste Administratorkonto:"
-    echo "  $SETUP_TOKEN_VALUE"
-    echo "Das Token wird nur benötigt, solange noch kein Benutzerkonto existiert."
-  else
-    echo "Hinweis: Das Setup-Token konnte nicht automatisch ausgelesen werden."
-    echo "Abruf: docker exec $CONTAINER_NAME python -c 'import json; print(json.load(open(\"/data/config.json\"))[\"SETUP_TOKEN\"])'"
-  fi
+  SETUP_STATE="$(docker exec "$CONTAINER_NAME" python -c 'import json; cfg=json.load(open("/data/config.json", encoding="utf-8")); print("COMPLETE" if cfg.get("SETUP_COMPLETED") else "TOKEN:" + str(cfg.get("SETUP_TOKEN", "")))' 2>/dev/null || true)"
+  case "$SETUP_STATE" in
+    TOKEN:*)
+      SETUP_TOKEN_VALUE="${SETUP_STATE#TOKEN:}"
+      if [ -n "$SETUP_TOKEN_VALUE" ]; then
+        echo "Einmaliges Setup-Token für das erste Administratorkonto:"
+        echo "  $SETUP_TOKEN_VALUE"
+        echo "Nach erfolgreicher Erstellung des ersten Administrators wird das Token aus config.json entfernt."
+      else
+        echo "WARNUNG: Es existiert noch kein abgeschlossenes Setup, aber es konnte kein Setup-Token ausgelesen werden." >&2
+      fi
+      ;;
+    COMPLETE)
+      echo "Die Ersteinrichtung ist bereits abgeschlossen; in config.json wird kein Setup-Token mehr gespeichert."
+      ;;
+    *)
+      echo "Hinweis: Der Setup-Status konnte nicht automatisch ausgelesen werden."
+      ;;
+  esac
 fi

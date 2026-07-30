@@ -6,6 +6,57 @@ from pathlib import Path
 from cryptography.fernet import Fernet
 
 
+def _write_runtime_config(config_file: Path, cfg: dict) -> None:
+    tmp = config_file.with_suffix(".json.tmp")
+    with tmp.open("w", encoding="utf-8") as fh:
+        json.dump(cfg, fh, indent=2)
+        fh.write("\n")
+    tmp.replace(config_file)
+    try:
+        config_file.chmod(0o600)
+    except PermissionError:
+        pass
+
+
+def mark_setup_completed(data_dir: Path) -> bool:
+    """Remove the one-time setup token after the first admin exists."""
+    config_file = data_dir / "config.json"
+    if not config_file.exists():
+        return False
+    with config_file.open("r", encoding="utf-8") as fh:
+        cfg = json.load(fh)
+
+    changed = False
+    if "SETUP_TOKEN" in cfg:
+        cfg.pop("SETUP_TOKEN", None)
+        changed = True
+    if cfg.get("SETUP_COMPLETED") is not True:
+        cfg["SETUP_COMPLETED"] = True
+        changed = True
+    if changed:
+        _write_runtime_config(config_file, cfg)
+    return changed
+
+
+
+
+def ensure_setup_token(data_dir: Path) -> str:
+    """Ensure setup remains recoverable when no administrator exists."""
+    config_file = data_dir / "config.json"
+    with config_file.open("r", encoding="utf-8") as fh:
+        cfg = json.load(fh)
+    token = str(cfg.get("SETUP_TOKEN") or "").strip()
+    changed = False
+    if not token:
+        token = secrets.token_urlsafe(32)
+        cfg["SETUP_TOKEN"] = token
+        changed = True
+    if cfg.pop("SETUP_COMPLETED", None) is not None:
+        changed = True
+    if changed:
+        _write_runtime_config(config_file, cfg)
+    return token
+
 def _read_or_create_runtime_config(data_dir: Path) -> dict:
     data_dir.mkdir(parents=True, exist_ok=True)
     config_file = data_dir / "config.json"
@@ -26,26 +77,28 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
     if not cfg.get("SECURITY_SIGNING_KEY"):
         cfg["SECURITY_SIGNING_KEY"] = secrets.token_hex(64)
         changed = True
-    if not cfg.get("SETUP_TOKEN"):
+    if cfg.get("SETUP_COMPLETED") is True:
+        if "SETUP_TOKEN" in cfg:
+            cfg.pop("SETUP_TOKEN", None)
+            changed = True
+    elif not cfg.get("SETUP_TOKEN"):
         cfg["SETUP_TOKEN"] = secrets.token_urlsafe(32)
         changed = True
 
     if changed:
-        tmp = config_file.with_suffix(".json.tmp")
-        with tmp.open("w", encoding="utf-8") as fh:
-            json.dump(cfg, fh, indent=2)
-        tmp.replace(config_file)
-    try:
-        config_file.chmod(0o600)
-    except PermissionError:
-        pass
+        _write_runtime_config(config_file, cfg)
+    else:
+        try:
+            config_file.chmod(0o600)
+        except PermissionError:
+            pass
 
     return cfg
 
 
 class Config:
-    APP_VERSION = "0.5.33-v0533-update-cleanup-installed-archive"
-    APP_RELEASE_DATE = "2026-07-23"
+    APP_VERSION = "0.6.0-ghcr-compose-version-setup-token-cleanup"
+    APP_RELEASE_DATE = "2026-07-30"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
@@ -55,7 +108,7 @@ class Config:
     SECRET_KEY = runtime_config["SECRET_KEY"]
     FERNET_KEY = runtime_config["FERNET_KEY"]
     SECURITY_SIGNING_KEY = runtime_config["SECURITY_SIGNING_KEY"]
-    SETUP_TOKEN = os.environ.get("RAB_SETUP_TOKEN", runtime_config["SETUP_TOKEN"])
+    SETUP_TOKEN = "" if runtime_config.get("SETUP_COMPLETED") else os.environ.get("RAB_SETUP_TOKEN", runtime_config.get("SETUP_TOKEN", ""))
 
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{DATA_DIR / 'addressbook.db'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False

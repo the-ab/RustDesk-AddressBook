@@ -54,7 +54,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from .config import Config
+from .config import Config, ensure_setup_token, mark_setup_completed
 from .crypto import decrypt_value, encrypt_value
 from .extensions import db, login_manager, oauth
 from .helpers import csrf_token, normalize_bool, parse_csv_upload, rustdesk_link, validate_csrf
@@ -524,13 +524,13 @@ TRANSLATIONS["en"].update({
     "setup.title": "Initial setup",
     "setup.subtitle": "Create the first admin user.",
     "setup.token": "Setup token",
-    "setup.token_help": "Enter the one-time token printed by the installer or read it from /data/config.json on the server.",
+    "setup.token_help": "Enter the one-time token printed by the installer or read it from /data/config.json. It is removed automatically after the first administrator is created.",
     "setup.username": "Username",
     "setup.password": "Password",
     "setup.repeat_password": "Repeat password",
     "setup.create": "Create admin",
     "release.title": "Release notes",
-    "release.subtitle": "Change history of the stable 0.5.x line and earlier build versions.",
+    "release.subtitle": "Change history of the current 0.6.x line and earlier versions.",
     "release.installed": "Installed version",
     "release.internal": "Internal identifier",
     "release.help": "Help",
@@ -715,6 +715,22 @@ def _short_app_version(version: str) -> str:
     return raw
 
 
+def _finalize_setup_token_if_admin_exists() -> None:
+    """Keep setup recoverable before first admin and remove its token afterwards."""
+    data_dir = Path(current_app.config["DATA_DIR"])
+    admin_exists = db.session.query(User.id).filter(User.role == "admin").first() is not None
+    try:
+        if admin_exists:
+            mark_setup_completed(data_dir)
+            current_app.config["SETUP_TOKEN"] = ""
+        else:
+            current_app.config["SETUP_TOKEN"] = (
+                os.environ.get("RAB_SETUP_TOKEN", "").strip() or ensure_setup_token(data_dir)
+            )
+    except (OSError, ValueError, json.JSONDecodeError):
+        current_app.logger.exception("Setup-Token-Status konnte nicht synchronisiert werden")
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -730,6 +746,7 @@ def create_app() -> Flask:
         db.create_all()
         _migrate_schema()
         _ensure_user_security_signatures()
+        _finalize_setup_token_if_admin_exists()
         _create_default_groups()
 
     register_template_helpers(app)
@@ -1447,7 +1464,8 @@ def register_routes(app: Flask) -> None:
                 _sign_user_security_state(user)
                 db.session.add(user)
                 db.session.commit()
-                _record_auth_event("setup_login", username=username, success=True, message="Installation abgeschlossen und Admin angemeldet")
+                _finalize_setup_token_if_admin_exists()
+                _record_auth_event("setup_login", username=username, success=True, message="Installation abgeschlossen, Setup-Token entfernt und Admin angemeldet")
                 _start_user_session(user)
                 flash("Installation abgeschlossen.", "success")
                 return redirect(url_for("dashboard"))

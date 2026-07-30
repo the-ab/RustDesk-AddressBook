@@ -4,7 +4,7 @@
 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4 page-header">
   <div>
     <h1 class="h3 mb-1">{{ t('release.title', 'Release-Änderungen') }}</h1>
-    <div class="text-secondary">{{ t('release.subtitle', 'Änderungshistorie der stabilen 0.5.x-Linie und der vorherigen Aufbau-Versionen.') }}</div>
+    <div class="text-secondary">{{ t('release.subtitle', 'Änderungshistorie der aktuellen 0.6.x-Linie und der vorherigen Versionen.') }}</div>
   </div>
   <a class="btn btn-outline-secondary" href="{{ url_for('help_page') }}"><i class="bi bi-question-circle me-1"></i>{{ t('release.help', 'Anleitung') }}</a>
 </div>
@@ -19,6 +19,7 @@
 
 {% if app_language == 'en' %}
 {% set releases = [
+  ('0.6.0', ['Added a root-level VERSION file for release tooling.', 'Added docker-compose/compose.yaml and docker-compose/.env.example for source-free installation from ghcr.io/the-ab/rustdesk-addressbook:latest or the fixed 0.6.0 image tag.', 'Updated README, admin guide and Web UI help for the GHCR image installation.', 'Removed the one-time setup token from config.json after the first administrator is created and cleaned existing installations automatically.']),
   ('0.5.33', ['Runs the permission init service as an automatically removed docker compose run --rm task.', 'Moves successfully installed update ZIP, SHA-256 manifest and signature to updates/installed/.', 'Shows the release date next to the version in the footer.', 'Corrected managed Docker image-name normalization to match the package tag.', 'Removed the obsolete unreferenced UPDATE-CHECK.txt artifact after a package orphan-file audit.']),
   ('0.5.32', ['Configured the project GitHub Releases endpoint as the default signed online-update source.', 'latest.txt from the latest published release selects the update ZIP; the matching SHA-256 manifest and Ed25519 signature are downloaded from the same release.', 'Custom release sources remain supported; RAB_UPDATE_BASE_URL=disabled explicitly disables online checks.']),
   ('0.5.31', ['Removed GitHub-hosted dependency-update, test and container-build automation.', 'Removed related documentation claims about automatic GitHub checks.', 'Retained the local test suite, repository safety scanner and manually executable validation commands.']),
@@ -60,6 +61,7 @@
 ] %}
 {% else %}
 {% set releases = [
+  ('0.6.0', ['VERSION-Datei im Projektstamm für Release- und Build-Werkzeuge ergänzt.', 'docker-compose/compose.yaml und docker-compose/.env.example für die Installation ohne Projektquellcode über ghcr.io/the-ab/rustdesk-addressbook:latest oder den festen Image-Tag 0.6.0 ergänzt.', 'README, Administratorhandbuch und WebUI-Anleitung um die GHCR-Image-Installation erweitert.', 'Einmaliges Setup-Token nach Erstellung des ersten Administrators aus config.json entfernt und bestehende Installationen automatisch bereinigt.']),
   ('0.5.33', ['Berechtigungs-Init-Dienst als automatisch entfernten docker compose run --rm-Lauf umgesetzt.', 'Erfolgreich installierte Update-ZIP, SHA-256-Datei und Signatur nach updates/installed/ verschoben.', 'Release-Datum neben der Version in der Fußzeile ergänzt.', 'Automatisch verwaltete Docker-Image-Namen mit dem Paket-Tag vereinheitlicht.', 'Veraltete, nicht referenzierte Datei UPDATE-CHECK.txt nach einer Prüfung auf verwaiste Paketdateien entfernt.']),
   ('0.5.32', ['GitHub-Releases des Projekts als feste Standardquelle für signierte Online-Updates eingerichtet.', 'latest.txt aus dem neuesten veröffentlichten Release bestimmt die Update-ZIP; das passende SHA-256-Manifest und die Ed25519-Signatur werden aus demselben Release geladen.', 'Eigene Release-Quellen bleiben unterstützt; RAB_UPDATE_BASE_URL=disabled schaltet Online-Prüfungen ausdrücklich ab.']),
   ('0.5.31', ['GitHub-basierte Abhängigkeitsupdate-, Test- und Container-Build-Automatisierungen entfernt.', 'Zugehörige Dokumentationshinweise auf automatische GitHub-Prüfungen entfernt.', 'Lokale Testreihe, Repository-Sicherheitsprüfung und manuell ausführbare Prüfkommandos beibehalten.']),

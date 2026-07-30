@@ -1,13 +1,11 @@
-0.5.33-v0533-update-cleanup-installed-archive
+0.6.0-ghcr-compose-version-setup-token-cleanup
 [de]
-- Init-Dienst als automatisch entfernten docker compose run --rm-Wartungslauf umgesetzt.
-- Erfolgreich installierte Update-ZIP, SHA-256-Datei und Signatur nach updates/installed/ verschoben.
-- Release-Datum neben der Version in der Fußzeile ergänzt.
-- Automatischen Docker-Image-Namen mit dem Paket-Tag v0533 vereinheitlicht.
-- Veraltete, nicht referenzierte Datei UPDATE-CHECK.txt entfernt.
+- VERSION-Datei mit Version 0.6.0 ergänzt.
+- Eigenen docker-compose-Ordner für die Installation über das GHCR-Image ohne Projektquellcode ergänzt.
+- README, Administratorhandbuch und WebUI-Anleitung um den Image-Installationsweg erweitert.
+- Einmaliges Setup-Token nach Erstellung des ersten Administrators aus config.json entfernt; bestehende Installationen werden automatisch bereinigt.
 [en]
-- Runs the init service as an automatically removed docker compose run --rm maintenance task.
-- Moves successfully installed update ZIP, SHA-256 manifest and signature to updates/installed/.
-- Shows the release date next to the version in the footer.
-- Keeps the managed Docker image name aligned with package tag v0533.
-- Removed the obsolete unreferenced UPDATE-CHECK.txt file.
+- Added the VERSION file with version 0.6.0.
+- Added a dedicated docker-compose directory for source-free installation from the GHCR image.
+- Extended README, Admin Guide and Web UI help with the image installation path.
+- Removed the one-time setup token from config.json after the first administrator is created; existing installations are cleaned automatically.

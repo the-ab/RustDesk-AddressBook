@@ -37,11 +37,11 @@ Without parameters the script:
   3. shows release notes and asks before installation.
 
 Manual local update:
-  cp /path/to/rustdesk-addressbook-update-flat-v0533.zip* updates/
+  cp /path/to/rustdesk-addressbook-update-flat-v0600.zip* updates/
   ./scripts/update.sh
 
 Direct ZIP paths remain supported:
-  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0533.zip
+  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0600.zip
 
 Online source:
   The default is the project GitHub Releases endpoint:

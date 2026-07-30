@@ -37,3 +37,5 @@ venv
 tests
 coverage.xml
 htmlcov
+
+!docker-compose/.env.example
