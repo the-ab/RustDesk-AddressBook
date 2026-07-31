@@ -1,10 +1,9 @@
-# Community-Adressbuch für RustDesk 0.6.0 – GHCR-Image-Installation und Setup-Token-Bereinigung
+# Community-Adressbuch für RustDesk 0.6.1 – Compose-Umgebungsdokumentation und zentrierte Login-Fußzeile
 
-Release-Datum: 2026-07-30
+Release-Datum: 2026-07-31
 
-- Datei `VERSION` mit dem Wert `0.6.0` im Projektstamm ergänzt.
-- `docker-compose/compose.yaml` und `docker-compose/.env.example` für die Installation über `ghcr.io/the-ab/rustdesk-addressbook:latest` oder den festen Image-Tag `0.6.0` ohne Projektquellcode ergänzt.
-- README, Administratorhandbuch und WebUI-Anleitung um die GHCR-Image-Installation erweitert.
-- Bestehende Installation mit lokalem Build und der signierte ZIP-Updateweg bleiben unverändert nutzbar.
-- Einmaliges `SETUP_TOKEN` wird nach erfolgreicher Erstellung des ersten Administratorkontos aus `data/config.json` entfernt.
-- Bestehende Installationen mit Administrator entfernen das bisher gespeicherte Setup-Token beim Anwendungsstart automatisch.
+- `docker-compose/README.md` mit einer vollständigen Beschreibung aller Variablen aus `docker-compose/.env.example` ergänzt, einschließlich Pflichtwerten, Standards, Sicherheitsauswirkungen und Anwendungsbeispielen.
+- Passende deutsche Dokumentation als `docker-compose/README.de.md` ergänzt.
+- Beide Compose-Dokumentationen aus den zentralen README-Fassungen verlinkt.
+- Projekt-, Versions-, Release-Datums- und Lizenzhinweis auf nicht angemeldeten Seiten wie Login, Einrichtung und Zwei-Faktor-Anmeldung zentriert.
+- Aktuelle Release-Assets, Beispiele, Signaturen, Prüfsummen und `latest.txt` einheitlich auf das vollständige Dateinamensformat `v0.6.1` umgestellt.

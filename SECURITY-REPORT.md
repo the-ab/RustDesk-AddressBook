@@ -1,7 +1,7 @@
-# Community Address Book for RustDesk — Security Status 0.6.0
+# Community Address Book for RustDesk — Security Status 0.6.1
 
 **Date:** July 23, 2026  
-**Version:** `0.6.0-ghcr-compose-version-setup-token-cleanup`
+**Version:** `0.6.1-docker-compose-env-docs-login-footer-center`
 
 > English is the default documentation language. The German edition is available as [`SECURITY-REPORT.de.md`](SECURITY-REPORT.de.md).
 
@@ -36,7 +36,7 @@ The web process remains unprivileged. A separate profiled init service receives 
 
 ## Documentation language layout
 
-Standard Markdown files are English and German editions use the `*.de.md` suffix. Version 0.6.0 adds a dedicated GHCR image Compose bundle while preserving the hardened source-build runtime. The one-time setup token is removed from `config.json` after the first administrator exists, reducing unnecessary long-term secret retention. Repository safety checks, the local test suite, dependency auditing tools, and the private vulnerability-reporting policy remain available for manual use.
+Standard Markdown files are English and German editions use the `*.de.md` suffix. Version 0.6.1 adds complete bilingual documentation for all GHCR Compose environment variables and centers the footer notice on unauthenticated pages without changing authentication or authorization behavior. The hardened runtime, signed-update verification, setup-token cleanup, repository safety checks, local test suite, dependency-audit tooling, and private vulnerability-reporting policy remain unchanged.
 
 
 ## Public repository note

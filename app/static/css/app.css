@@ -389,6 +389,10 @@ html {
   scroll-behavior: smooth;
 }
 
+.app-footer-auth {
+  text-align: center;
+}
+
 body,
 .app-main,
 .app-footer,

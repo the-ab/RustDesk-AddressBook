@@ -4403,7 +4403,7 @@ def _normalize_release_notes(value, lang: str | None = None) -> list[str]:
         raw_lines = [line.strip() for line in str(value).replace("\r\n", "\n").split("\n")]
 
     # Supports bilingual latest.txt/release files:
-    #   rustdesk-addressbook-update-flat-v0519.zip
+    #   rustdesk-addressbook-update-flat-v0.6.1.zip
     #   [de]
     #   - Änderung ...
     #   [en]

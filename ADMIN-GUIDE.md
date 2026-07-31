@@ -1,12 +1,12 @@
 # Community Address Book for RustDesk – Admin Guide
 
-This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.6.0-ghcr-compose-version-setup-token-cleanup`.
+This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.6.1-docker-compose-env-docs-login-footer-center`.
 
 > English is the default documentation language. The German edition is available as [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md).
 
 ## Overview
 
-Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.6.0 adds a dedicated GHCR image installation, the root-level VERSION file, and setup-token cleanup while retaining the signed ZIP update path and custom release sources.
+Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.6.1 adds complete English and German documentation for the GHCR Compose environment, centers the footer notice on unauthenticated pages, and standardizes current release filenames on the dotted v0.6.1 format.
 
 **Device management**  
 Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.
@@ -24,7 +24,12 @@ Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force locko
 
 ### GHCR image installation
 
-The published image is available as `ghcr.io/the-ab/rustdesk-addressbook:latest` and as the fixed tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.0`. The dedicated files are stored under `docker-compose/`:
+The published image is available as `ghcr.io/the-ab/rustdesk-addressbook:latest` and as the fixed tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.1`. The dedicated files are stored under `docker-compose/`:
+
+- `compose.yaml` – image-based service definition
+- `.env.example` – configuration template
+- `README.md` – complete English variable reference
+- `README.de.md` – complete German variable reference
 
 ```bash
 cd docker-compose
@@ -34,13 +39,13 @@ docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
 ```
 
-Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.0` to pin this release. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
+Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.1` to pin this release. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
 
 ### Source/release archive installation
 
 ```
 cd /opt
-unzip /path/to/rustdesk-addressbook-v0600.zip
+unzip /path/to/rustdesk-addressbook-v0.6.1.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -54,7 +59,7 @@ The values are written to `.env`. When you run `./scripts/install.sh` again, the
 
 ```
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0600.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.1.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -276,7 +281,7 @@ The settings page uses a category navigation and a detail area. On small screens
 The Web UI checks `latest.txt` at `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` by default. Custom non-empty sources remain supported. Set `RAB_UPDATE_BASE_URL=disabled` to disable online checks explicitly; local signed updates remain available.
 
 ```
-rustdesk-addressbook-update-flat-v0600.zip
+rustdesk-addressbook-update-flat-v0.6.1.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -315,7 +320,7 @@ Example files are included under `contrib/fail2ban/`. The application rotates `a
 ```
 docker compose ps
 docker compose logs -f
-docker exec -it rustdesk-addressbook grep -n "0.6.0-ghcr-compose-version-setup-token-cleanup" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "0.6.1-docker-compose-env-docs-login-footer-center" /app/app/config.py
 docker exec -it rustdesk-addressbook ls -lh /rustdesk-server/db_v2.sqlite3* 2>/dev/null || true
 docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```

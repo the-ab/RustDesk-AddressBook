@@ -6,12 +6,12 @@ Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt
 
 > Die englische Dokumentation ist die Standardfassung. Deutsche Dateien tragen die Endung `*.de.md`.
 
-## Neu in 0.6.0
+## Neu in 0.6.1
 
-- Ergänzt im Projektstamm die Datei `VERSION` mit der aktuellen Release-Version.
-- Ergänzt den eigenen Ordner `docker-compose/` für eine Installation ohne Projektquellcode über `ghcr.io/the-ab/rustdesk-addressbook:latest` oder eine feste Image-Version.
-- Beschreibt sowohl die GHCR-Image-Installation als auch die bisherige Installation mit lokalem Build.
-- Entfernt das einmalige Setup-Token direkt nach erfolgreicher Erstellung des ersten Administratorkontos aus `data/config.json`. Bestehende Installationen werden beim Start automatisch bereinigt.
+- Ergänzt eine vollständige englische und deutsche Beschreibung aller Variablen aus `docker-compose/.env.example`.
+- Verlinkt die GHCR-Compose-Dokumentation direkt aus den zentralen README-Dateien.
+- Zentriert den Projekt-, Versions-, Release-Datums- und Lizenzhinweis unter nicht angemeldeten Seiten wie der Login-Seite.
+- Verwendet das vollständige Format `v0.6.1` einheitlich für Release-Archive, Signaturen, Prüfsummen, Beispiele und `latest.txt`.
 
 ## Installation
 
@@ -21,10 +21,10 @@ Das veröffentlichte Container-Image steht unter folgenden Tags bereit:
 
 ```text
 ghcr.io/the-ab/rustdesk-addressbook:latest
-ghcr.io/the-ab/rustdesk-addressbook:0.6.0
+ghcr.io/the-ab/rustdesk-addressbook:0.6.1
 ```
 
-Der Ordner `docker-compose/` enthält die dafür vorgesehene `compose.yaml` und `.env.example`. Für diese Installationsart werden keine Projektquellcode-Dateien benötigt:
+Der Ordner `docker-compose/` enthält die dafür vorgesehene `compose.yaml` und `.env.example`. Alle Umgebungsvariablen sind in [`docker-compose/README.de.md`](docker-compose/README.de.md) beschrieben; die englische Fassung liegt unter [`docker-compose/README.md`](docker-compose/README.md). Für diese Installationsart werden keine Projektquellcode-Dateien benötigt:
 
 ```bash
 cd docker-compose
@@ -36,7 +36,7 @@ docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/
 
 Der letzte Befehl zeigt das einmalige Setup-Token an. Nach erfolgreicher Erstellung des ersten Administrators wird es aus `config.json` entfernt.
 
-Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.0` bleibt die Installation auf dieser Version. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
+Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.1` bleibt die Installation auf dieser Version. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
 
 ### Installation aus dem Release-Archiv mit lokalem Build
 
@@ -44,7 +44,7 @@ Ein aktuelles Release-Archiv von der Releases-Seite des Repositorys herunterlade
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0600.zip
+unzip rustdesk-addressbook-v0.6.1.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -66,7 +66,7 @@ Signierte Update-Dateien nach `updates/` kopieren:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0600.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.1.zip* updates/
 ./scripts/update.sh
 ```
 

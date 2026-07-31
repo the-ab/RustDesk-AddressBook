@@ -1,11 +1,11 @@
-0.6.0-ghcr-compose-version-setup-token-cleanup
+0.6.1-docker-compose-env-docs-login-footer-center
 [de]
-- VERSION-Datei mit Version 0.6.0 ergänzt.
-- Eigenen docker-compose-Ordner für die Installation über das GHCR-Image ohne Projektquellcode ergänzt.
-- README, Administratorhandbuch und WebUI-Anleitung um den Image-Installationsweg erweitert.
-- Einmaliges Setup-Token nach Erstellung des ersten Administrators aus config.json entfernt; bestehende Installationen werden automatisch bereinigt.
+- Englische und deutsche README im Ordner docker-compose ergänzt; alle Variablen der .env.example werden vollständig erklärt.
+- Compose-Dokumentation aus den zentralen README-Dateien verlinkt.
+- Fußzeilenhinweis auf Login-, Setup- und 2FA-Seiten zentriert.
+- Release-Dateinamen, Prüfsummen, Signaturen und Beispiele auf das Format v0.6.1 vereinheitlicht.
 [en]
-- Added the VERSION file with version 0.6.0.
-- Added a dedicated docker-compose directory for source-free installation from the GHCR image.
-- Extended README, Admin Guide and Web UI help with the image installation path.
-- Removed the one-time setup token from config.json after the first administrator is created; existing installations are cleaned automatically.
+- Added English and German README files under docker-compose with complete documentation for every .env.example variable.
+- Linked the Compose documentation from the main README files.
+- Centered the footer notice on login, setup and 2FA pages.
+- Standardized release filenames, checksums, signatures and examples on the v0.6.1 format.

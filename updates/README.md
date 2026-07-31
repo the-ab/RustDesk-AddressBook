@@ -3,9 +3,9 @@
 Copy a flat update ZIP and both matching verification sidecars into this directory:
 
 ```bash
-cp /path/to/rustdesk-addressbook-update-flat-v0600.zip updates/
-cp /path/to/rustdesk-addressbook-update-flat-v0600.zip.sha256 updates/
-cp /path/to/rustdesk-addressbook-update-flat-v0600.zip.sig updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.1.zip updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.1.zip.sha256 updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.1.zip.sig updates/
 ./scripts/update.sh
 ```
 
