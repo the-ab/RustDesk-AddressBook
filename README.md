@@ -129,8 +129,9 @@ These checks are run manually by the maintainer or contributors. The repository 
 
 ## Documentation
 
-- English: [`ADMIN-GUIDE.md`](ADMIN-GUIDE.md), [`RELEASE_NOTES.md`](RELEASE_NOTES.md), [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY-REPORT.md`](SECURITY-REPORT.md)
-- German: [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md), [`RELEASE_NOTES.de.md`](RELEASE_NOTES.de.md), [`SECURITY.de.md`](SECURITY.de.md), [`CONTRIBUTING.de.md`](CONTRIBUTING.de.md), [`SECURITY-REPORT.de.md`](SECURITY-REPORT.de.md)
+- Documentation index: [`docs/README.md`](docs/README.md)
+- English: [`ADMIN-GUIDE.md`](ADMIN-GUIDE.md), [`docs/releases/RELEASE_NOTES.md`](docs/releases/RELEASE_NOTES.md), [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/security/SECURITY-REPORT.md`](docs/security/SECURITY-REPORT.md)
+- German: [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md), [`docs/releases/RELEASE_NOTES.de.md`](docs/releases/RELEASE_NOTES.de.md), [`SECURITY.de.md`](SECURITY.de.md), [`CONTRIBUTING.de.md`](CONTRIBUTING.de.md), [`docs/security/SECURITY-REPORT.de.md`](docs/security/SECURITY-REPORT.de.md)
 - License and attribution: [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
 
 ## License
