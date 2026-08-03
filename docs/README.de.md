@@ -2,6 +2,18 @@
 
 Im Repository-Stamm bleiben nur Dateien, die GitHub, Installationsabläufe, Mitwirkende oder Benutzer dort üblicherweise erwarten. Ausführliche historische Dokumente und Sicherheitsstatusberichte sind nachfolgend geordnet.
 
+> Englisch ist die Standardsprache der öffentlichen Dokumentation. Jede gepflegte Informationsdatei benötigt eine inhaltlich gleichwertige deutsche Fassung am selben Pfad und mit demselben Dateinamen, ergänzt um `.de.md` vor der Endung `.md`. Beispiel: `GUIDE.md` und `GUIDE.de.md`.
+
+## Sprach- und Dateiregel
+
+- `DATEI.md` ist immer Englisch.
+- `DATEI.de.md` ist immer Deutsch.
+- Beide Fassungen werden gemeinsam erstellt, verschoben, umbenannt, aktualisiert und entfernt.
+- Links sollen in jeder Sprachfassung bevorzugt auf die entsprechende Sprachdatei verweisen.
+- Ändert ein Pull Request eine Fassung, muss die andere Fassung im selben Umfang mitgepflegt werden.
+- Quellcode, Lizenzen, maschinenlesbare Konfiguration, generierte Dateien und technische Artefakte sind keine sprachgebundenen Informationsdateipaare.
+- Die Repository-Sicherheitsprüfung kontrolliert die für dieses Projekt verbindlichen Dokumentationspaare.
+
 ## Benutzer- und Administrationsdokumentation
 
 - [`../README.de.md`](../README.de.md) – Projektübersicht und Installation

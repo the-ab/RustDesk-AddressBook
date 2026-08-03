@@ -2,6 +2,18 @@
 
 The repository root contains only files that GitHub, installers, contributors, or users commonly expect there. Detailed historical and security-status documents are organized below.
 
+> English is the default documentation language. Every maintained information document must have a substantively equivalent German edition using the same path and filename with `.de.md` before the `.md` suffix. Example: `GUIDE.md` and `GUIDE.de.md`.
+
+## Language and file policy
+
+- `FILE.md` is always English.
+- `FILE.de.md` is always German.
+- Both editions must be created, moved, renamed, updated, and removed together.
+- Links in each language should prefer the matching language edition.
+- A pull request that changes one edition must update the other edition in the same scope.
+- Technical source files, licenses, machine-readable configuration, generated assets, and code are not information-document language pairs.
+- The repository safety check validates the mandatory documentation pairs used by this project.
+
 ## User and administrator documentation
 
 - [`../README.md`](../README.md) – project overview and installation

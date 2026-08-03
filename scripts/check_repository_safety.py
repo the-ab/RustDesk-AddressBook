@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail CI when repository-only policy files or likely secrets are committed."""
+"""Fail when repository policy files, bilingual docs, or likely secrets are invalid."""
 
 from __future__ import annotations
 
@@ -14,6 +14,19 @@ FORBIDDEN_SUFFIXES = {".db", ".sqlite", ".sqlite3", ".log", ".rabenc", ".rabfull
 PRIVATE_NAME = re.compile(r"(?:^|[-_.])private(?:[-_.]|$)", re.IGNORECASE)
 PRIVATE_KEY_MARKER = re.compile(rb"-----BEGIN (?:OPENSSH |RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----")
 
+# Public information documents that must always exist as English/German pairs.
+MANDATORY_DOCUMENT_PAIRS = (
+    ("README.md", "README.de.md"),
+    ("ADMIN-GUIDE.md", "ADMIN-GUIDE.de.md"),
+    ("CONTRIBUTING.md", "CONTRIBUTING.de.md"),
+    ("SECURITY.md", "SECURITY.de.md"),
+    ("THIRD-PARTY-NOTICES.md", "THIRD-PARTY-NOTICES.de.md"),
+    ("docs/README.md", "docs/README.de.md"),
+    ("docs/releases/RELEASE_NOTES.md", "docs/releases/RELEASE_NOTES.de.md"),
+    ("docs/security/SECURITY-REPORT.md", "docs/security/SECURITY-REPORT.de.md"),
+    ("docker-compose/README.md", "docker-compose/README.de.md"),
+)
+
 
 def iter_files() -> list[Path]:
     files: list[Path] = []
@@ -23,6 +36,18 @@ def iter_files() -> list[Path]:
         if path.is_file():
             files.append(path)
     return files
+
+
+def check_document_pairs(problems: list[str]) -> None:
+    for english_rel, german_rel in MANDATORY_DOCUMENT_PAIRS:
+        english = ROOT / english_rel
+        german = ROOT / german_rel
+        if english.is_file() and german.is_file():
+            continue
+        if not english.is_file():
+            problems.append(f"missing English information document: {english_rel}")
+        if not german.is_file():
+            problems.append(f"missing German information document: {german_rel}")
 
 
 def main() -> int:
@@ -50,6 +75,8 @@ def main() -> int:
     public_key = ROOT / "scripts" / "keys" / "update-signing-public-v1.pem"
     if not public_key.is_file():
         problems.append("public update verification key is missing")
+
+    check_document_pairs(problems)
 
     if problems:
         print("Repository safety check failed:", file=sys.stderr)
