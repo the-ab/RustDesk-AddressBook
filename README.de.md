@@ -129,8 +129,9 @@ Diese Prüfungen werden vom Maintainer oder von Mitwirkenden manuell ausgeführt
 
 ## Dokumentation
 
-- Englisch: [`ADMIN-GUIDE.md`](ADMIN-GUIDE.md), [`RELEASE_NOTES.md`](RELEASE_NOTES.md), [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY-REPORT.md`](SECURITY-REPORT.md)
-- Deutsch: [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md), [`RELEASE_NOTES.de.md`](RELEASE_NOTES.de.md), [`SECURITY.de.md`](SECURITY.de.md), [`CONTRIBUTING.de.md`](CONTRIBUTING.de.md), [`SECURITY-REPORT.de.md`](SECURITY-REPORT.de.md)
+- Dokumentationsübersicht: [`docs/README.de.md`](docs/README.de.md)
+- Englisch: [`ADMIN-GUIDE.md`](ADMIN-GUIDE.md), [`docs/releases/RELEASE_NOTES.md`](docs/releases/RELEASE_NOTES.md), [`SECURITY.md`](SECURITY.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/security/SECURITY-REPORT.md`](docs/security/SECURITY-REPORT.md)
+- Deutsch: [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md), [`docs/releases/RELEASE_NOTES.de.md`](docs/releases/RELEASE_NOTES.de.md), [`SECURITY.de.md`](SECURITY.de.md), [`CONTRIBUTING.de.md`](CONTRIBUTING.de.md), [`docs/security/SECURITY-REPORT.de.md`](docs/security/SECURITY-REPORT.de.md)
 - Lizenz und Hinweise: [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), [`THIRD-PARTY-NOTICES.de.md`](THIRD-PARTY-NOTICES.de.md)
 
 ## Lizenz
