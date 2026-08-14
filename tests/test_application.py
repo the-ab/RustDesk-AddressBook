@@ -12,12 +12,14 @@ from app import (
     _check_online_update_available,
     _csv_safe_cell,
     _online_update_manifest,
+    _pop_transient_secret,
     _safe_extract_full_backup,
     _sign_user_security_state,
+    _store_transient_secret,
 )
 from app.config import Config
 from app.extensions import db
-from app.models import Device, Group, User
+from app.models import Device, Group, TransientSecret, User
 from tests.conftest import set_csrf
 
 
@@ -68,6 +70,25 @@ def test_setup_requires_the_server_token(client, clean_app):
         assert "SETUP_TOKEN" not in runtime_cfg
         assert runtime_cfg["SETUP_COMPLETED"] is True
         assert clean_app.config["SETUP_TOKEN"] == ""
+
+
+def test_transient_recovery_codes_survive_sqlite_datetime_roundtrip(clean_app):
+    recovery_codes = ["ABCD-EFGH-IJKL", "MNOP-QRST-UVWX"]
+    with clean_app.app_context():
+        user = User(username="recovery-admin", role="admin", active=True, auth_provider="local")
+        user.set_password("recovery-admin-password-123")
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+        token = _store_transient_secret(user, "recovery_codes", recovery_codes, ttl_seconds=600)
+        assert TransientSecret.query.filter_by(token=token).count() == 1
+
+        db.session.remove()
+        reloaded_user = db.session.get(User, user_id)
+        assert reloaded_user is not None
+        assert _pop_transient_secret(reloaded_user, token, "recovery_codes") == recovery_codes
+        assert TransientSecret.query.filter_by(token=token).first() is None
 
 
 def test_regular_user_group_visibility_and_admin_denial(client, clean_app):

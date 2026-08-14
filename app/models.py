@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from flask_login import UserMixin
+from sqlalchemy.types import DateTime, TypeDecorator
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .extensions import db
@@ -8,6 +9,27 @@ from .extensions import db
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class UTCDateTime(TypeDecorator):
+    """Store UTC datetimes portably and restore timezone information on read."""
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
 
 
 user_groups = db.Table(
@@ -81,7 +103,7 @@ class TransientSecret(db.Model):
     purpose = db.Column(db.String(64), nullable=False, index=True)
     encrypted_payload = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=utcnow, nullable=False, index=True)
-    expires_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
+    expires_at = db.Column(UTCDateTime(), nullable=False, index=True)
 
 class Group(db.Model):
     __tablename__ = "groups"
