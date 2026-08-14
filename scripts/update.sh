@@ -37,11 +37,11 @@ Without parameters the script:
   3. shows release notes and asks before installation.
 
 Manual local update:
-  cp /path/to/rustdesk-addressbook-update-flat-v0.6.1.zip* updates/
+  cp /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
   ./scripts/update.sh
 
 Direct ZIP paths remain supported:
-  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.1.zip
+  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip
 
 Online source:
   The default is the project GitHub Releases endpoint:
@@ -85,6 +85,20 @@ extract_version_number() {
     return 0
   fi
   echo "000"
+}
+
+extract_version_string() {
+  local input="$1"
+  if [[ "$input" =~ ([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+    printf '%d.%d.%d\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
+    return 0
+  fi
+  # Legacy compact release names such as v0601 remain readable for upgrades.
+  if [[ "$input" =~ v([0-9])([0-9])([0-9]{2})([^0-9]|$) ]]; then
+    printf '%d.%d.%d\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "$((10#${BASH_REMATCH[3]}))"
+    return 0
+  fi
+  echo ""
 }
 
 current_version_string() {
@@ -278,7 +292,7 @@ print_zip_release_notes() {
 }
 
 print_online_release_notes() {
-  local base="$1" file="$2" tmp stem version_tag candidate
+  local base="$1" file="$2" tmp stem version_tag version_value candidate
   [ -n "$base" ] && [ -n "$file" ] || return 0
   tmp="$(mktemp -d)"
 
@@ -294,7 +308,8 @@ print_online_release_notes() {
 
   stem="${file%.zip}"
   version_tag=""
-  if [[ "$file" =~ v([0-9]+) ]]; then version_tag="v${BASH_REMATCH[1]}"; fi
+  version_value="$(extract_version_string "$file")"
+  if [ -n "$version_value" ]; then version_tag="v${version_value}"; fi
   for candidate in \
     "${base%/}/${stem}.${RAB_UPDATE_LANG:-de}.txt" \
     "${base%/}/${stem}.${RAB_UPDATE_LANG:-de}.md" \
@@ -321,10 +336,10 @@ online_latest_file() {
   tmp="$(mktemp -d)"
   txt_file="$tmp/latest.txt"
   if fetch_url "${base%/}/latest.txt" "$txt_file" >/dev/null 2>&1; then
-    result="$(grep -E 'rustdesk-addressbook-update-flat-v[0-9]+\.zip|^v[0-9]+' "$txt_file" | head -n1 | tr -d '\r' | awk '{print $1}')"
+    result="$(grep -E 'rustdesk-addressbook-update-flat-v([0-9]+\.[0-9]+\.[0-9]+|[0-9]+)\.zip|^v([0-9]+\.[0-9]+\.[0-9]+|[0-9]+)$' "$txt_file" | head -n1 | tr -d '\r' | awk '{print $1}')"
   fi
   rm -rf "$tmp"
-  if [[ "$result" =~ ^v([0-9]+)$ ]]; then
+  if [[ "$result" =~ ^v([0-9]+\.[0-9]+\.[0-9]+|[0-9]+)$ ]]; then
     result="rustdesk-addressbook-update-flat-${result}.zip"
   fi
   echo "$result"
@@ -447,6 +462,21 @@ archive_installed_update() {
   echo "Installierte Updatedateien verschoben nach: $installed_dir/"
 }
 
+remove_obsolete_managed_files() {
+  local path
+  for path in \
+    RELEASE_NOTES.md \
+    RELEASE_NOTES.de.md \
+    SECURITY-REPORT.md \
+    SECURITY-REPORT.de.md; do
+    if [ -f "$path" ]; then
+      rm -f -- "$path"
+      echo "Veraltete projektverwaltete Datei entfernt: $path"
+    fi
+  done
+}
+
+
 maybe_update_release_source() {
   local current_source
   current_source="$(read_env_value RAB_UPDATE_BASE_URL '')"
@@ -459,16 +489,20 @@ maybe_update_release_source() {
 }
 
 maybe_update_image_name() {
-  local target_num="$1" current_image
-  current_image="$(read_env_value RAB_IMAGE_NAME '')"
-  if [ -z "$current_image" ]; then
-    set_env_value RAB_IMAGE_NAME "rustdesk-addressbook-v${target_num}"
-    echo "Docker-Image-Name gesetzt: rustdesk-addressbook-v${target_num}"
+  local target_version="$1" current_image
+  if [ -z "$target_version" ]; then
+    echo "WARNUNG: Zielversion für den verwalteten Docker-Image-Namen konnte nicht bestimmt werden." >&2
     return 0
   fi
-  if [[ "$current_image" =~ ^rustdesk-addressbook-v[0-9]+$ ]]; then
-    set_env_value RAB_IMAGE_NAME "rustdesk-addressbook-v${target_num}"
-    echo "Docker-Image-Name aktualisiert: ${current_image} -> rustdesk-addressbook-v${target_num}"
+  current_image="$(read_env_value RAB_IMAGE_NAME '')"
+  if [ -z "$current_image" ]; then
+    set_env_value RAB_IMAGE_NAME "rustdesk-addressbook-v${target_version}"
+    echo "Docker-Image-Name gesetzt: rustdesk-addressbook-v${target_version}"
+    return 0
+  fi
+  if [[ "$current_image" =~ ^rustdesk-addressbook-v([0-9]+|[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+    set_env_value RAB_IMAGE_NAME "rustdesk-addressbook-v${target_version}"
+    echo "Docker-Image-Name aktualisiert: ${current_image} -> rustdesk-addressbook-v${target_version}"
   else
     echo "Benutzerdefinierter Docker-Image-Name bleibt erhalten: ${current_image}"
   fi
@@ -492,7 +526,7 @@ backup_updates_without_installed() {
 }
 
 perform_update() {
-  local zip_file="$1" current_str current_num target_str target_num target_num_from_cfg ts backup_root
+  local zip_file="$1" current_str current_num target_str target_num target_num_from_cfg target_version ts backup_root
   if [ ! -f "$zip_file" ]; then
     echo "FEHLER: ZIP nicht gefunden: $zip_file" >&2
     exit 1
@@ -513,6 +547,15 @@ perform_update() {
     fi
   else
     target_str="$(basename "$zip_file")"
+  fi
+
+  target_version="$(extract_version_string "$target_str")"
+  if [ -z "$target_version" ]; then
+    target_version="$(extract_version_string "$(basename "$zip_file")")"
+  fi
+  if [ -z "$target_version" ]; then
+    echo "FEHLER: Semantische Zielversion konnte nicht bestimmt werden." >&2
+    exit 1
   fi
 
   cat <<INFO
@@ -557,6 +600,10 @@ INFO
 
   unzip -o "$zip_file"
 
+  # Dateien entfernen, die seit v0.6.1 bewusst in die docs/-Struktur verschoben wurden.
+  # Persistente Daten und lokale Konfigurationen werden hier ausdrücklich nicht angefasst.
+  remove_obsolete_managed_files
+
   # Lokale Konfiguration wiederherstellen, falls die ZIP Defaults überschrieben hat.
   copy_if_exists "$backup_root/.env" .env
   copy_if_exists "$backup_root/docker-compose.override.yml" docker-compose.override.yml
@@ -565,7 +612,7 @@ INFO
   maybe_update_release_source
 
   # Automatischen Image-Namen auf Zielversion aktualisieren, aber benutzerdefinierte Namen nicht überschreiben.
-  maybe_update_image_name "$target_num"
+  maybe_update_image_name "$target_version"
 
   remove_known_containers
 

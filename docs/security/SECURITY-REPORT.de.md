@@ -1,7 +1,7 @@
-# Community Address Book for RustDesk – Sicherheitsstatus 0.6.1
+# Community Address Book for RustDesk – Sicherheitsstatus 0.6.2
 
-**Stand:** 23. Juli 2026  
-**Version:** `0.6.1-docker-compose-env-docs-login-footer-center`
+**Stand:** 14. August 2026  
+**Version:** `0.6.2-recovery-codes-update-image-fix`
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`SECURITY-REPORT.md`](SECURITY-REPORT.md).
 
@@ -36,7 +36,7 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater profilierter Ini
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.6.1 ergänzt eine vollständige zweisprachige Beschreibung aller GHCR-Compose-Umgebungsvariablen und zentriert den Fußzeilenhinweis auf nicht angemeldeten Seiten, ohne Authentifizierung oder Berechtigungen zu verändern. Gehärteter Laufzeitbetrieb, signierte Updateprüfung, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung, lokale Testreihe, Werkzeuge zur Abhängigkeitsprüfung und die Richtlinie zur vertraulichen Meldung von Schwachstellen bleiben unverändert.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.6.2 behebt die einmalige Anzeige neu erzeugter Wiederherstellungscodes durch UTC-sichere Behandlung kurzlebiger SQLite-Zeitwerte und korrigiert den verwalteten Docker-Image-Namen im Quellcode-Updatepfad. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
 
 ## Hinweis für öffentliche Repositorys
 

@@ -3,9 +3,9 @@
 Kopiere ein Flat-Update-ZIP und beide passenden Prüfdateien in dieses Verzeichnis:
 
 ```bash
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.1.zip updates/
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.1.zip.sha256 updates/
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.1.zip.sig updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.2.zip updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.2.zip.sha256 updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.2.zip.sig updates/
 ./scripts/update.sh
 ```
 

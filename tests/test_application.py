@@ -29,8 +29,8 @@ def test_health_and_security_headers(client):
     assert response.get_json() == {"status": "ok"}
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
-    assert Config.APP_RELEASE_DATE == "2026-07-31"
-    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.1"
+    assert Config.APP_RELEASE_DATE == "2026-08-14"
+    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.2"
 
 
 def test_setup_requires_the_server_token(client, clean_app):
@@ -162,12 +162,12 @@ def test_latest_manifest_selects_github_release_asset(clean_app, monkeypatch):
     monkeypatch.setattr(
         app_module,
         "_fetch_text_url",
-        lambda url, timeout=5.0: "rustdesk-addressbook-update-flat-v0.6.1.zip\n[en]\n- GitHub update source enabled.\n",
+        lambda url, timeout=5.0: "rustdesk-addressbook-update-flat-v0.6.2.zip\n[en]\n- GitHub update source enabled.\n",
     )
     with clean_app.app_context():
         result = _online_update_manifest()
     assert result["ok"] is True
-    assert result["file"] == "rustdesk-addressbook-update-flat-v0.6.1.zip"
+    assert result["file"] == "rustdesk-addressbook-update-flat-v0.6.2.zip"
     assert result["base_url"] == Config.DEFAULT_UPDATE_BASE_URL
 
 def test_csv_formula_protection_and_disabled_online_updates(clean_app):
@@ -214,8 +214,8 @@ def test_administrator_pages_render(client, clean_app):
         page = client.get(path)
         assert page.status_code == 200, path
         if path == "/":
-            assert b"0.6.1" in page.data
-            assert b"2026-07-31" in page.data
+            assert b"0.6.2" in page.data
+            assert b"2026-08-14" in page.data
 
 
 def test_ghcr_compose_bundle():
@@ -223,7 +223,7 @@ def test_ghcr_compose_bundle():
     env_example = Path("docker-compose/.env.example").read_text(encoding="utf-8")
     assert "ghcr.io/the-ab/rustdesk-addressbook:${RAB_IMAGE_TAG:-latest}" in compose
     assert "RAB_IMAGE_TAG=latest" in env_example
-    assert "0.6.1" in env_example
+    assert "0.6.2" in env_example
 
 
 def test_docker_compose_env_documentation_and_login_footer(client):

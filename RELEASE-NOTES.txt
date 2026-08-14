@@ -1,11 +1,15 @@
-0.6.1-docker-compose-env-docs-login-footer-center
+0.6.2-recovery-codes-update-image-fix
 [de]
-- Englische und deutsche README im Ordner docker-compose ergänzt; alle Variablen der .env.example werden vollständig erklärt.
-- Compose-Dokumentation aus den zentralen README-Dateien verlinkt.
-- Fußzeilenhinweis auf Login-, Setup- und 2FA-Seiten zentriert.
-- Release-Dateinamen, Prüfsummen, Signaturen und Beispiele auf das Format v0.6.1 vereinheitlicht.
+- Neu erzeugte 2FA-Wiederherstellungscodes werden nach der Erfolgsmeldung wieder direkt angezeigt; SQLite-Zeitwerte für kurzlebige Secrets werden UTC-sicher behandelt.
+- Quellcodebasierte Updates führen verwaltete punktierte Docker-Image-Namen wie rustdesk-addressbook-v0.6.1 korrekt auf rustdesk-addressbook-v0.6.2 weiter.
+- Online-Updateprüfung in WebUI und update.sh erkennt das seit v0.6.1 verwendete punktierte latest.txt-Dateiformat wieder korrekt; kompakte Altformate bleiben lesbar.
+- Übergang von 0.6.1 auf 0.6.2 einmal manuell über das signierte lokale Update-Triplett ausführen, da der in 0.6.1 installierte Online-Parser diesen Fehler noch enthält.
+- Die seit v0.6.1 in main übernommene zweisprachige docs/-Struktur und die Prüfung verpflichtender Dokumentationspaare sind im Release enthalten; beim Update werden die vier dorthin verschobenen alten Stammdateien gezielt entfernt.
+- Installer- und Flat-Update-Paketstruktur wurden vollständig gegen den aktuellen main-Stand geprüft.
 [en]
-- Added English and German README files under docker-compose with complete documentation for every .env.example variable.
-- Linked the Compose documentation from the main README files.
-- Centered the footer notice on login, setup and 2FA pages.
-- Standardized release filenames, checksums, signatures and examples on the v0.6.1 format.
+- Newly regenerated 2FA recovery codes are shown again after the success message; SQLite datetime values for transient secrets are handled with explicit UTC semantics.
+- Source-based updates now advance managed dotted Docker image names such as rustdesk-addressbook-v0.6.1 to rustdesk-addressbook-v0.6.2 correctly.
+- Online update checks in the Web UI and update.sh now recognize the dotted latest.txt filename format used since v0.6.1; legacy compact forms remain readable.
+- Perform the 0.6.1 to 0.6.2 transition once through the signed local update triplet because the online parser installed in 0.6.1 still contains this defect.
+- The bilingual docs/ layout and mandatory documentation-pair validation merged since v0.6.1 are included; updates remove the four obsolete root-level documents that were moved there.
+- The complete installer and flat-update package structure was revalidated against the current main branch.

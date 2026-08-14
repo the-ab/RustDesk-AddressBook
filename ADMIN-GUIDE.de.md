@@ -4,13 +4,13 @@
 
 > **Unabhängiges Projekt:** Dieses Community-Projekt ist nicht mit RustDesk oder Purslane Ltd. verbunden und wird von diesen weder unterstützt, gesponsert noch gepflegt. RustDesk ist eine Marke des jeweiligen Rechteinhabers.
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.6.1-docker-compose-env-docs-login-footer-center`. Version 0.6.1 ergänzt die vollständige deutsche und englische Beschreibung der GHCR-Compose-Umgebung, zentriert den Fußzeilenhinweis auf nicht angemeldeten Seiten und verwendet für aktuelle Release-Dateien das Format `v0.6.1`.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.6.2-recovery-codes-update-image-fix`. Version 0.6.2 behebt die Anzeige neu erzeugter Wiederherstellungscodes, korrigiert die Weiterführung verwalteter punktierter Docker-Image-Namen beim Quellcode-Update und übernimmt die aktuelle zweisprachige Dokumentationsstruktur in die Release-Pakete.
 
 ## 1. Installation
 
 ### 1.1 Installation über das GHCR-Image
 
-Das veröffentlichte Image ist als `ghcr.io/the-ab/rustdesk-addressbook:latest` und mit dem festen Tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.1` verfügbar. Die dafür vorgesehenen Dateien liegen im Ordner `docker-compose/`:
+Das veröffentlichte Image ist als `ghcr.io/the-ab/rustdesk-addressbook:latest` und mit dem festen Tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.2` verfügbar. Die dafür vorgesehenen Dateien liegen im Ordner `docker-compose/`:
 
 - `compose.yaml` – Image-basierte Dienstdefinition
 - `.env.example` – Konfigurationsvorlage
@@ -25,13 +25,13 @@ docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
 ```
 
-Mit `RAB_IMAGE_TAG=latest` wird das neueste Image verwendet; mit `RAB_IMAGE_TAG=0.6.1` bleibt die Installation auf diesem Release. Für diesen Weg werden nur `compose.yaml` und `.env` benötigt, nicht die Projektquellcode-Dateien.
+Mit `RAB_IMAGE_TAG=latest` wird das neueste Image verwendet; mit `RAB_IMAGE_TAG=0.6.2` bleibt die Installation auf diesem Release. Für diesen Weg werden nur `compose.yaml` und `.env` benötigt, nicht die Projektquellcode-Dateien.
 
 ### 1.2 Installation aus dem Release-Archiv
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0.6.1.zip
+unzip /pfad/rustdesk-addressbook-v0.6.2.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -62,7 +62,7 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0.6.1.zip
+unzip /pfad/rustdesk-addressbook-v0.6.2.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -76,9 +76,11 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.1.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
 ./scripts/update.sh
 ```
+
+> **0.6.1 → 0.6.2:** Diesen lokalen signierten Updateweg einmal verwenden. Der in 0.6.1 enthaltene Online-Parser erkennt den punktierten Release-Dateinamen in `latest.txt` noch nicht; dieser Fehler ist ab 0.6.2 behoben. Die Signaturprüfung von 0.6.1 akzeptiert das signierte 0.6.2-Paket.
 
 ### 2.2 Online prüfen
 
@@ -98,14 +100,14 @@ Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-comp
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0.6.1.zip
+rustdesk-addressbook-update-flat-v0.6.2.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Beim GitHub-Release müssen `latest.txt`, die darin genannte ZIP sowie die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` gemeinsam als Release Assets hochgeladen werden. Der feste Pfad `/releases/latest/download` wird von GitHub auf das neueste veröffentlichte Release weitergeleitet. Neben der ZIP müssen an jeder benutzerdefinierten Updatequelle ebenfalls die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0.6.1.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
+Beim GitHub-Release müssen `latest.txt`, die darin genannte ZIP sowie die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` gemeinsam als Release Assets hochgeladen werden. Der feste Pfad `/releases/latest/download` wird von GitHub auf das neueste veröffentlichte Release weitergeleitet. Neben der ZIP müssen an jeder benutzerdefinierten Updatequelle ebenfalls die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0.6.2.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
 
 ### 2.4 Manueller Fallback
 
@@ -113,7 +115,7 @@ Der direkte manuelle Entpackweg umgeht die Sicherheitslogik des Updaters und ist
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0.6.1.zip* updates/
+cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
 ./scripts/update.sh
 ```
 

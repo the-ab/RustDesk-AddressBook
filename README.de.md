@@ -6,12 +6,14 @@ Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt
 
 > Die englische Dokumentation ist die Standardfassung. Deutsche Dateien tragen die Endung `*.de.md`.
 
-## Neu in 0.6.1
+## Neu in 0.6.2
 
-- Ergänzt eine vollständige englische und deutsche Beschreibung aller Variablen aus `docker-compose/.env.example`.
-- Verlinkt die GHCR-Compose-Dokumentation direkt aus den zentralen README-Dateien.
-- Zentriert den Projekt-, Versions-, Release-Datums- und Lizenzhinweis unter nicht angemeldeten Seiten wie der Login-Seite.
-- Verwendet das vollständige Format `v0.6.1` einheitlich für Release-Archive, Signaturen, Prüfsummen, Beispiele und `latest.txt`.
+- Behebt, dass neu erzeugte 2FA-Wiederherstellungscodes nach der Erfolgsmeldung nicht angezeigt wurden, indem Ablaufzeiten kurzlebiger Secrets nach SQLite-Roundtrips wieder eindeutig als UTC behandelt werden.
+- Behebt den quellcodebasierten Updatepfad: verwaltete punktierte Docker-Image-Namen wie `rustdesk-addressbook-v0.6.1` werden auf den neuen punktierten Release-Namen weitergeführt und nicht mehr fälschlich als benutzerdefiniert behandelt.
+- Korrigiert die Online-Update-Erkennung in WebUI und `update.sh`, sodass punktierte `latest.txt`-Dateinamen wie `v0.6.2` wieder erkannt werden; kompakte Altformate bleiben lesbar.
+- **Update-Hinweis für 0.6.1:** Da der in 0.6.1 installierte Online-Parser genau den hier behobenen Fehler enthält, 0.6.2 einmal über das signierte lokale Update-Triplett im Ordner `updates/` installieren; danach funktioniert die Online-Erkennung wieder regulär.
+- Enthält die aktuelle zweisprachige `docs/`-Struktur sowie die Repository-Prüfung für vollständige englische/deutsche Informationsdateipaare.
+- Prüft die vollständige Installer- und Flat-Update-Paketstruktur für das Release `v0.6.2` erneut.
 
 ## Installation
 
@@ -21,7 +23,7 @@ Das veröffentlichte Container-Image steht unter folgenden Tags bereit:
 
 ```text
 ghcr.io/the-ab/rustdesk-addressbook:latest
-ghcr.io/the-ab/rustdesk-addressbook:0.6.1
+ghcr.io/the-ab/rustdesk-addressbook:0.6.2
 ```
 
 Der Ordner `docker-compose/` enthält die dafür vorgesehene `compose.yaml` und `.env.example`. Alle Umgebungsvariablen sind in [`docker-compose/README.de.md`](docker-compose/README.de.md) beschrieben; die englische Fassung liegt unter [`docker-compose/README.md`](docker-compose/README.md). Für diese Installationsart werden keine Projektquellcode-Dateien benötigt:
@@ -36,7 +38,7 @@ docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/
 
 Der letzte Befehl zeigt das einmalige Setup-Token an. Nach erfolgreicher Erstellung des ersten Administrators wird es aus `config.json` entfernt.
 
-Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.1` bleibt die Installation auf dieser Version. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
+Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.2` bleibt die Installation auf dieser Version. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
 
 ### Installation aus dem Release-Archiv mit lokalem Build
 
@@ -44,7 +46,7 @@ Ein aktuelles Release-Archiv von der Releases-Seite des Repositorys herunterlade
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0.6.1.zip
+unzip rustdesk-addressbook-v0.6.2.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -66,7 +68,7 @@ Signierte Update-Dateien nach `updates/` kopieren:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.1.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
 ./scripts/update.sh
 ```
 

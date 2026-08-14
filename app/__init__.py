@@ -4403,7 +4403,7 @@ def _normalize_release_notes(value, lang: str | None = None) -> list[str]:
         raw_lines = [line.strip() for line in str(value).replace("\r\n", "\n").split("\n")]
 
     # Supports bilingual latest.txt/release files:
-    #   rustdesk-addressbook-update-flat-v0.6.1.zip
+    #   rustdesk-addressbook-update-flat-v0.6.2.zip
     #   [de]
     #   - Änderung ...
     #   [en]
@@ -4447,7 +4447,7 @@ def _fetch_remote_release_notes(base: str, file_name: str, lang: str | None = No
         return []
     stem = Path(file_name).stem
     selected_lang = (lang or _get_language()).strip().lower()
-    version_match = re.search(r"v(\d+)", file_name)
+    version_match = re.search(r"v(\d+\.\d+\.\d+|\d+)", file_name)
     version_tag = f"v{version_match.group(1)}" if version_match else ""
     candidates = [
         f"{base}/{stem}.{selected_lang}.txt",
@@ -4505,9 +4505,9 @@ def _online_update_manifest() -> dict:
             candidate = line.split()[0] if line else ""
             if not candidate or candidate.startswith("#"):
                 continue
-            if re.match(r"^v\d+$", candidate):
+            if re.fullmatch(r"v(?:\d+\.\d+\.\d+|\d+)", candidate):
                 candidate = f"rustdesk-addressbook-update-flat-{candidate}.zip"
-            if re.match(r"^rustdesk-addressbook-update-flat-v\d+\.zip$", candidate):
+            if re.fullmatch(r"rustdesk-addressbook-update-flat-v(?:\d+\.\d+\.\d+|\d+)\.zip", candidate):
                 inline_notes = _normalize_release_notes(lines[idx + 1:], lang=_get_language())
                 file_name = Path(candidate).name
                 notes = inline_notes or _fetch_remote_release_notes(base, file_name, lang=_get_language())

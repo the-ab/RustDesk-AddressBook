@@ -45,7 +45,7 @@ Für eine normale Installation sollten mindestens folgende Werte in `.env` gepr�
 
 | Variable | Zweck | Typischer Wert |
 |---|---|---|
-| `RAB_IMAGE_TAG` | Auszuführende Image-Version | `latest` oder `0.6.1` |
+| `RAB_IMAGE_TAG` | Auszuführende Image-Version | `latest` oder `0.6.2` |
 | `RAB_DATA_DIR` | Persistente Anwendungsdaten auf dem Host | `/docker_data/rustdesk-addressbook/data` |
 | `RAB_BACKUP_DIR` | Persistente Backups auf dem Host | `/docker_data/rustdesk-addressbook/backups` |
 | `RAB_HTTPS_PUBLISH_PORT` | Auf dem Host veröffentlichter HTTPS-Port | `5443` |
@@ -66,7 +66,7 @@ RAB_IMAGE_TAG=latest
 ```
 
 - `latest`: verwendet jeweils das neueste veröffentlichte Image.
-- `0.6.1`: verwendet dauerhaft genau dieses Release.
+- `0.6.2`: verwendet dauerhaft genau dieses Release.
 
 Für einen vorhersehbaren Produktivbetrieb empfiehlt sich ein fester Release-Tag, der bewusst aktualisiert wird.
 

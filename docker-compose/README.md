@@ -45,7 +45,7 @@ For a normal installation, review at least these values in `.env`:
 
 | Variable | Purpose | Typical value |
 |---|---|---|
-| `RAB_IMAGE_TAG` | Image version to run | `latest` or `0.6.1` |
+| `RAB_IMAGE_TAG` | Image version to run | `latest` or `0.6.2` |
 | `RAB_DATA_DIR` | Persistent application data on the host | `/docker_data/rustdesk-addressbook/data` |
 | `RAB_BACKUP_DIR` | Persistent backups on the host | `/docker_data/rustdesk-addressbook/backups` |
 | `RAB_HTTPS_PUBLISH_PORT` | HTTPS port exposed on the host | `5443` |
@@ -66,7 +66,7 @@ RAB_IMAGE_TAG=latest
 ```
 
 - `latest`: follows the newest published image.
-- `0.6.1`: pins this exact release.
+- `0.6.2`: pins this exact release.
 
 For predictable production operation, use a fixed release tag and update it deliberately.
 

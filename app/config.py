@@ -97,8 +97,8 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
 
 
 class Config:
-    APP_VERSION = "0.6.1-docker-compose-env-docs-login-footer-center"
-    APP_RELEASE_DATE = "2026-07-31"
+    APP_VERSION = "0.6.2-recovery-codes-update-image-fix"
+    APP_RELEASE_DATE = "2026-08-14"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
