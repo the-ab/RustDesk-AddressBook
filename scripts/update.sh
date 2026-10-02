@@ -423,21 +423,16 @@ download_online_update_to_updates() {
 remove_existing_container_if_needed() {
   local cname="$1"
   [ -n "$cname" ] || return 0
-  local ids
-  ids="$(docker ps -aq --filter "name=^/${cname}$" || true)"
-  if [ -n "$ids" ]; then
+  if docker container inspect "$cname" >/dev/null 2>&1; then
     echo "Vorhandener Container mit Namen '${cname}' gefunden. Stoppe und entferne ihn vor dem Neuaufbau."
-    docker rm -f $ids >/dev/null 2>&1 || true
+    docker rm -f "$cname" >/dev/null 2>&1 || true
   fi
 }
 
 remove_known_containers() {
-  local configured default_name
+  local configured
   configured="$(read_env_value RAB_CONTAINER_NAME '')"
-  default_name="rustdesk-addressbook"
-  for name in "$configured" "$default_name"; do
-    remove_existing_container_if_needed "$name"
-  done
+  remove_existing_container_if_needed "${configured:-rustdesk-addressbook}"
 }
 
 cleanup_init_container() {

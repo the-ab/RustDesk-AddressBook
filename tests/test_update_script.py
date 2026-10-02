@@ -86,6 +86,7 @@ if args[:2] == ['compose', 'build'] and new and os.environ['FAILURE'] == 'build'
     assert len(snapshots) == 1, result.stderr
     assert (snapshots[0] / 'data' / 'addressbook.db').read_bytes() == b'old SQLite data'
     commands = log.read_text().splitlines()
+    assert not any('rustdesk-addressbook' == command.rsplit(' ', 1)[-1] for command in commands)
     assert commands.index('compose down --remove-orphans') < commands.index('compose build --no-cache')
     if failure == 'none':
         assert result.returncode == 0, result.stderr
