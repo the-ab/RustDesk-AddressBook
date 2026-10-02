@@ -119,7 +119,12 @@ def test_update_transaction_accepts_every_tracked_package_path():
     spec = importlib.util.spec_from_file_location('update_transaction', 'scripts/update_transaction.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    files = subprocess.check_output(['git', 'ls-files', '-z']).decode().rstrip('\0').split('\0')
+    # Release ZIPs also ship this regression suite and do not contain .git.
+    if Path('.git').exists():
+        files = subprocess.check_output(['git', 'ls-files', '-z']).decode().rstrip('\0').split('\0')
+    else:
+        ignored = {'__pycache__', '.pytest_cache', '.ruff_cache', '.venv', 'venv'}
+        files = [str(path) for path in Path('.').rglob('*') if path.is_file() and not ignored.intersection(path.parts)]
     assert all(module.managed(Path(path)) for path in files)
     directories = {parent for path in files for parent in Path(path).parents if parent.parts}
     assert all(module.managed(path) for path in directories)
