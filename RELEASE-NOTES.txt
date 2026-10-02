@@ -1,4 +1,4 @@
-0.6.4-shell-script-permissions — 2026-10-02 (signed source candidate)
+0.6.4-shell-script-permissions — 2026-10-02 (release)
 
 [de]
 - Alle fünf mitgelieferten Shellskripte in Git und beiden ZIP-Paketen ausführbar speichern; Ausführungsrechte nach dem Entpacken ausdrücklich wiederherstellen.

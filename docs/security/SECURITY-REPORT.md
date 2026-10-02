@@ -1,8 +1,8 @@
-# Community Address Book for RustDesk — security status, candidate 0.6.4
+# Community Address Book for RustDesk — security status, release 0.6.4
 
 **Date:** 2026-10-02
 
-**Version:** `0.6.4-shell-script-permissions` (signed source candidate; not yet published)
+**Version:** `0.6.4-shell-script-permissions` (release 0.6.4)
 
 ## Changes in 0.6.3 and 0.6.4
 

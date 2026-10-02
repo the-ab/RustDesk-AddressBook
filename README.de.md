@@ -8,7 +8,7 @@ Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt
 
 ## Neu in 0.6.4
 
-Quellkandidat vom 02.10.2026; GitHub-Release und GHCR-Image 0.6.4 sind noch nicht veröffentlicht.
+Veröffentlicht am 02.10.2026. Signierte Quellpakete stehen in GitHub Releases bereit; das GHCR-Image ist als 0.6.4 und latest verfügbar.
 
 - Alle fünf mitgelieferten Shellskripte nach dem Entpacken ausführbar halten; Quellinstallationen mit 0.6.3 können regulär auf 0.6.4 wechseln.
 - Vollständige englische/deutsche Einträge für 0.6.3 und 0.6.4 in der WebUI-Releasehistorie sowie aktuelle Installations-/Hilfebeispiele ergänzen.
@@ -30,7 +30,7 @@ Das veröffentlichte Container-Image steht unter folgenden Tags bereit:
 
 ```text
 ghcr.io/the-ab/rustdesk-addressbook:latest
-ghcr.io/the-ab/rustdesk-addressbook:0.6.2
+ghcr.io/the-ab/rustdesk-addressbook:0.6.4
 ```
 
 Der Ordner `docker-compose/` enthält die dafür vorgesehene `compose.yaml` und `.env.example`. Alle Umgebungsvariablen sind in [`docker-compose/README.de.md`](docker-compose/README.de.md) beschrieben; die englische Fassung liegt unter [`docker-compose/README.md`](docker-compose/README.md). Für diese Installationsart werden keine Projektquellcode-Dateien benötigt:
@@ -45,11 +45,11 @@ docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/
 
 Der letzte Befehl zeigt das einmalige Setup-Token an. Nach erfolgreicher Erstellung des ersten Administrators wird es aus `config.json` entfernt.
 
-Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.2` bleibt die Installation beim veröffentlichten Image 0.6.2. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
+Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.4` bleibt die Installation beim veröffentlichten Image 0.6.4. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
 
 ### Installation aus dem Release-Archiv mit lokalem Build
 
-Den signierten Quellkandidaten 0.6.4 verwenden; veröffentlichte Releases stehen auf der Releases-Seite des Repositorys:
+Das signierte Quellpaket 0.6.4 von der Releases-Seite des Repositorys herunterladen:
 
 ```bash
 cd /opt

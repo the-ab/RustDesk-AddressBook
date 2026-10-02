@@ -60,7 +60,7 @@ cp .env.example .env
 docker compose pull
 docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'</code></pre>
-      <p>The dedicated files use <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code> by default. Set <code>RAB_IMAGE_TAG=0.6.2</code> in <code>.env</code> to pin the published 0.6.2 image. Only <code>compose.yaml</code> and <code>.env</code> are required. Every variable is explained in <code>docker-compose/README.md</code> and <code>docker-compose/README.de.md</code>.</p>
+      <p>The dedicated files use <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code> by default. Set <code>RAB_IMAGE_TAG=0.6.4</code> in <code>.env</code> to pin the published 0.6.4 image. Only <code>compose.yaml</code> and <code>.env</code> are required. Every variable is explained in <code>docker-compose/README.md</code> and <code>docker-compose/README.de.md</code>.</p>
       <h3 class="h6 mt-3">Source/release archive installation</h3>
 <pre class="codebox"><code>cd /opt
 unzip /path/to/rustdesk-addressbook-v0.6.4.zip
@@ -75,7 +75,7 @@ chmod +x scripts/install.sh scripts/update.sh
 (cd /path/to &amp;&amp; sha256sum -c rustdesk-addressbook-update-flat-v0.6.4.zip.sha256)
 unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip scripts/update.sh scripts/update_transaction.py -d .
 bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code></pre>
-      <p>Keep the pre-update directory. Updates from an already installed 0.6.3 do not need this preparation again. Build/start/health failures trigger rollback; health timeouts report failure. The source updater uses the data and backup paths configured in .env. The signed 0.6.4 candidate must be transferred locally until it is published on GitHub.</p>
+      <p>Keep the pre-update directory. Updates from an already installed 0.6.3 do not need this preparation again. Build/start/health failures trigger rollback; health timeouts report failure. The source updater uses the data and backup paths configured in .env. Signed 0.6.4 packages are available from the GitHub Releases page; the normal online update source uses latest.txt.</p>
       <p>From an installed 0.6.3, use the normal signed update. If update.sh is not executable, run <code>bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code>. Version 0.6.4 restores execute bits on all five shipped shell scripts.</p>
       <h3 class="h6 mt-3">Manual update with ZIP in <code>updates/</code></h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -381,7 +381,7 @@ cp .env.example .env
 docker compose pull
 docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'</code></pre>
-      <p>Die dafür vorgesehenen Dateien verwenden standardmäßig <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code>. Mit <code>RAB_IMAGE_TAG=0.6.2</code> in <code>.env</code> wird das veröffentlichte Image 0.6.2 fest verwendet. Benötigt werden nur <code>compose.yaml</code> und <code>.env</code>. Alle Variablen sind in <code>docker-compose/README.de.md</code> und <code>docker-compose/README.md</code> beschrieben.</p>
+      <p>Die dafür vorgesehenen Dateien verwenden standardmäßig <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code>. Mit <code>RAB_IMAGE_TAG=0.6.4</code> in <code>.env</code> wird das veröffentlichte Image 0.6.4 fest verwendet. Benötigt werden nur <code>compose.yaml</code> und <code>.env</code>. Alle Variablen sind in <code>docker-compose/README.de.md</code> und <code>docker-compose/README.md</code> beschrieben.</p>
       <h3 class="h6 mt-3">Installation aus dem Release-Archiv</h3>
 <pre class="codebox"><code>cd /opt
 unzip /path/to/rustdesk-addressbook-v0.6.4.zip
@@ -396,7 +396,7 @@ chmod +x scripts/install.sh scripts/update.sh
 (cd /path/to &amp;&amp; sha256sum -c rustdesk-addressbook-update-flat-v0.6.4.zip.sha256)
 unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip scripts/update.sh scripts/update_transaction.py -d .
 bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code></pre>
-      <p>Pre-Update-Verzeichnis behalten. Bei bereits installierter 0.6.3 ist diese Vorbereitung nicht erneut nötig. Build-/Start-/Health-Fehler lösen den Rückweg aus; Health-Timeouts gelten als Fehler. Der Quell-Updater verwendet die in .env konfigurierten Daten-/Backuppfade. Bis zur GitHub-Veröffentlichung den signierten Kandidaten 0.6.4 lokal übertragen.</p>
+      <p>Pre-Update-Verzeichnis behalten. Bei bereits installierter 0.6.3 ist diese Vorbereitung nicht erneut nötig. Build-/Start-/Health-Fehler lösen den Rückweg aus; Health-Timeouts gelten als Fehler. Der Quell-Updater verwendet die in .env konfigurierten Daten-/Backuppfade. Signierte Pakete 0.6.4 stehen auf der GitHub-Releases-Seite bereit; die normale Online-Updatequelle verwendet latest.txt.</p>
       <p>Von einer installierten 0.6.3 den regulären signierten Updateweg verwenden. Fehlt update.sh das Ausführungsrecht, <code>bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code> starten. Version 0.6.4 stellt die Ausführungsrechte aller fünf mitgelieferten Shellskripte wieder her.</p>
       <h3 class="h6 mt-3">Update-ZIP manuell ablegen</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook

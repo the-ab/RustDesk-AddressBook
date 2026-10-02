@@ -2,7 +2,7 @@
 
 ## Version 0.6.4 — 2026-10-02
 
-This signed source candidate is available for testing; the GitHub release and GHCR image for 0.6.4 have not been published. GHCR examples therefore retain the published 0.6.2 tag. The source ZIP examples below use 0.6.4.
+This guide covers release 0.6.4, published on 2026-10-02. Signed source packages are available from GitHub Releases; GHCR images use tags 0.6.4 and latest.
 
 See [release notes](docs/releases/RELEASE_NOTES.md) for the complete changes.
 
@@ -49,7 +49,7 @@ Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force locko
 
 ### GHCR image installation
 
-The published image is available as `ghcr.io/the-ab/rustdesk-addressbook:latest` and as the fixed tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.2`. The dedicated files are stored under `docker-compose/`:
+The published image is available as `ghcr.io/the-ab/rustdesk-addressbook:latest` and as the fixed tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.4`. The dedicated files are stored under `docker-compose/`:
 
 - `compose.yaml` – image-based service definition
 - `.env.example` – configuration template
@@ -64,7 +64,7 @@ docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
 ```
 
-Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.2` to pin the published 0.6.2 image. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
+Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.4` to pin the published 0.6.4 image. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
 
 ### Source/release archive installation
 

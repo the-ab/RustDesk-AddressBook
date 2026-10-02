@@ -2,7 +2,7 @@
 
 ## Community Address Book for RustDesk 0.6.4 – Shell script permissions and documentation
 
-Version date: 2026-10-02. Status: signed source candidate; GitHub release and GHCR image not yet published.
+Release date: 2026-10-02. Signed source packages and GHCR images (0.6.4/latest) are published.
 
 - Store all five shipped shell scripts as executable in Git and both ZIP packages; restore execute bits explicitly after ZIP extraction.
 - Add complete 0.6.3 and 0.6.4 entries to the English/German Web UI release history and align current installation/help/update examples.
@@ -12,7 +12,7 @@ For an installed 0.6.3 with missing execute bits, run `bash scripts/update.sh /p
 
 ## Community Address Book for RustDesk 0.6.3 – Restore, import and update reliability
 
-Version date: 2026-10-02. Status: signed source candidate; GitHub release and GHCR image not yet published.
+Local candidate dated 2026-10-02; its changes are included in release 0.6.4. No separate GitHub release or GHCR image was published for 0.6.3.
 
 - Validate supported SQLite schemas, group references, user signatures and encrypted fields before restoring a database.
 - Protect full restores with an exclusive maintenance lock and a durable rollback journal; recover interrupted restores at application startup and reload keys across web workers.

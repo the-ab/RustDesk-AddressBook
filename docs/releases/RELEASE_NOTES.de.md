@@ -2,7 +2,7 @@
 
 ## Community-Adressbuch für RustDesk 0.6.4 – Skriptrechte und Dokumentation
 
-Versionsdatum: 02.10.2026. Status: signierter Quellkandidat; GitHub-Release und GHCR-Image noch nicht veröffentlicht.
+Release-Datum: 02.10.2026. Signierte Quellpakete und GHCR-Images (0.6.4/latest) sind veröffentlicht.
 
 - Alle fünf mitgelieferten Shellskripte in Git und beiden ZIP-Paketen ausführbar speichern; Ausführungsrechte nach dem Entpacken ausdrücklich wiederherstellen.
 - Vollständige 0.6.3- und 0.6.4-Einträge in der englischen/deutschen WebUI-Releasehistorie ergänzen und aktuelle Installations-/Hilfe-/Updatebeispiele abstimmen.
@@ -12,7 +12,7 @@ Bei installierter 0.6.3 mit fehlenden Ausführungsrechten `bash scripts/update.s
 
 ## Community-Adressbuch für RustDesk 0.6.3 – Zuverlässiger Restore, Import und Updatepfad
 
-Versionsdatum: 02.10.2026. Status: signierter Quellkandidat; GitHub-Release und GHCR-Image noch nicht veröffentlicht.
+Lokaler Kandidat vom 02.10.2026; seine Änderungen sind in Release 0.6.4 enthalten. Für 0.6.3 wurde kein gesondertes GitHub-Release oder GHCR-Image veröffentlicht.
 
 - Unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Datenbank-Restore prüfen.
 - Vollrestores durch exklusive Wartungssperre und dauerhaftes Rückwegjournal schützen; unterbrochene Restores beim Anwendungsstart wiederherstellen und Schlüssel in allen Webprozessen neu laden.

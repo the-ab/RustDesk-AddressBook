@@ -2,7 +2,7 @@
 
 Von einer installierten 0.6.3 den regulären signierten Updateweg verwenden. Ist update.sh nicht ausführbar, vorübergehend mit `bash scripts/update.sh` starten; 0.6.4 stellt die Skriptrechte wieder her.
 
-Vor dem ersten Quellcode-Upgrade von 0.6.2 die [einmalige Updater-Vorbereitung](../ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) durchführen. Bis zur GitHub-Veröffentlichung den Kandidaten 0.6.4 lokal übertragen.
+Vor dem ersten Quellcode-Upgrade von 0.6.2 die [einmalige Updater-Vorbereitung](../ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) durchführen. Signierte Pakete 0.6.4 stehen in GitHub Releases und über die konfigurierte Online-Updatequelle bereit.
 
 Kopiere ein Flat-Update-ZIP und beide passenden Prüfdateien in dieses Verzeichnis:
 

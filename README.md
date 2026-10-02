@@ -8,7 +8,7 @@ A self-hosted web address book for RustDesk environments, packaged as a Docker p
 
 ## New in 0.6.4
 
-Source candidate dated 2026-10-02; GitHub release and GHCR image 0.6.4 are not yet published.
+Released on 2026-10-02. Signed source packages are available from GitHub Releases; the GHCR image is published as 0.6.4 and latest.
 
 - Keep all five shipped shell scripts executable after ZIP extraction; source installations on 0.6.3 can update normally to 0.6.4.
 - Include complete English/German 0.6.3 and 0.6.4 entries in the Web UI release history and current-version installation/help examples.
@@ -30,7 +30,7 @@ The published container image is available as:
 
 ```text
 ghcr.io/the-ab/rustdesk-addressbook:latest
-ghcr.io/the-ab/rustdesk-addressbook:0.6.2
+ghcr.io/the-ab/rustdesk-addressbook:0.6.4
 ```
 
 The `docker-compose/` directory contains the dedicated image-based `compose.yaml` and `.env.example`. All environment variables are documented in [`docker-compose/README.md`](docker-compose/README.md); the German edition is available as [`docker-compose/README.de.md`](docker-compose/README.de.md). No project source files are required for this installation method:
@@ -45,11 +45,11 @@ docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/
 
 The final command prints the one-time setup token. After the first administrator is created successfully, the token is removed from `config.json`.
 
-Use `RAB_IMAGE_TAG=latest` to track the newest published image or `RAB_IMAGE_TAG=0.6.2` to pin the published 0.6.2 image. Persistent data and backups are stored in the host paths configured in `.env`.
+Use `RAB_IMAGE_TAG=latest` to track the newest published image or `RAB_IMAGE_TAG=0.6.4` to pin the published 0.6.4 image. Persistent data and backups are stored in the host paths configured in `.env`.
 
 ### Source/release archive installation
 
-Use the signed 0.6.4 source candidate; published releases are available from the repository’s Releases page:
+Download the signed 0.6.4 source package from the repository’s Releases page:
 
 ```bash
 cd /opt

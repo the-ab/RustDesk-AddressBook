@@ -223,7 +223,7 @@ def test_ghcr_compose_bundle():
     env_example = Path("docker-compose/.env.example").read_text(encoding="utf-8")
     assert "ghcr.io/the-ab/rustdesk-addressbook:${RAB_IMAGE_TAG:-latest}" in compose
     assert "RAB_IMAGE_TAG=latest" in env_example
-    assert "0.6.2" in env_example
+    assert "0.6.4" in env_example
 
 
 def test_docker_compose_env_documentation_and_login_footer(client, clean_app):

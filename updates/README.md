@@ -2,7 +2,7 @@
 
 From an installed 0.6.3, use the normal signed update path. If update.sh is not executable, invoke `bash scripts/update.sh` until 0.6.4 restores the shipped script permissions.
 
-Before the first source upgrade from 0.6.2, follow the [one-time updater preparation](../ADMIN-GUIDE.md#source-upgrade-from-062). The 0.6.4 candidate is transferred locally until it is published on GitHub.
+Before the first source upgrade from 0.6.2, follow the [one-time updater preparation](../ADMIN-GUIDE.md#source-upgrade-from-062). Signed 0.6.4 packages are available from GitHub Releases and the configured online update source.
 
 Copy a flat update ZIP and both matching verification sidecars into this directory:
 
