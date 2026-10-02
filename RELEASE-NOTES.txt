@@ -1,15 +1,13 @@
-0.6.2-recovery-codes-update-image-fix
+0.6.3-restore-import-hardening (unreleased candidate)
+
 [de]
-- Neu erzeugte 2FA-Wiederherstellungscodes werden nach der Erfolgsmeldung wieder direkt angezeigt; SQLite-Zeitwerte für kurzlebige Secrets werden UTC-sicher behandelt.
-- Quellcodebasierte Updates führen verwaltete punktierte Docker-Image-Namen wie rustdesk-addressbook-v0.6.1 korrekt auf rustdesk-addressbook-v0.6.2 weiter.
-- Online-Updateprüfung in WebUI und update.sh erkennt das seit v0.6.1 verwendete punktierte latest.txt-Dateiformat wieder korrekt; kompakte Altformate bleiben lesbar.
-- Übergang von 0.6.1 auf 0.6.2 einmal manuell über das signierte lokale Update-Triplett ausführen, da der in 0.6.1 installierte Online-Parser diesen Fehler noch enthält.
-- Die seit v0.6.1 in main übernommene zweisprachige docs/-Struktur und die Prüfung verpflichtender Dokumentationspaare sind im Release enthalten; beim Update werden die vier dorthin verschobenen alten Stammdateien gezielt entfernt.
-- Installer- und Flat-Update-Paketstruktur wurden vollständig gegen den aktuellen main-Stand geprüft.
+- Wiederherstellbarer exklusiver Restore, Schema-/Schlüsselprüfung, eindeutige Backups.
+- CSV-/ZIP-Import und Livestatus mit doppelten IDs korrigiert; Einstellungen pro Anfrage gebündelt.
+- ZIP-Updater sichert konfigurierte Persistenzpfade nach Stop und führt bei Build-/Health-Fehlern einen Rückweg aus. Vor Upgrade von 0.6.2 beide Updater-Dateien aus der geprüften neuen ZIP übernehmen; siehe ADMIN-GUIDE.de.md.
+- Laufzeit-/Testabhängigkeiten und Python-Containerbasis aktualisiert.
+
 [en]
-- Newly regenerated 2FA recovery codes are shown again after the success message; SQLite datetime values for transient secrets are handled with explicit UTC semantics.
-- Source-based updates now advance managed dotted Docker image names such as rustdesk-addressbook-v0.6.1 to rustdesk-addressbook-v0.6.2 correctly.
-- Online update checks in the Web UI and update.sh now recognize the dotted latest.txt filename format used since v0.6.1; legacy compact forms remain readable.
-- Perform the 0.6.1 to 0.6.2 transition once through the signed local update triplet because the online parser installed in 0.6.1 still contains this defect.
-- The bilingual docs/ layout and mandatory documentation-pair validation merged since v0.6.1 are included; updates remove the four obsolete root-level documents that were moved there.
-- The complete installer and flat-update package structure was revalidated against the current main branch.
+- Recoverable exclusive restore, schema/key validation, unique backups.
+- Corrected CSV/ZIP import and live status with duplicate IDs; per-request settings cache.
+- ZIP updater snapshots configured persistence after stop and rolls back on build/health failure. Before upgrading from 0.6.2, install both updater files from the verified new ZIP; see ADMIN-GUIDE.md.
+- Updated runtime/test dependencies and Python container base.

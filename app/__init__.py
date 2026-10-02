@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import csv
+import fcntl
 import hashlib
 import hmac
 import ipaddress
@@ -54,11 +55,12 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from .config import Config, ensure_setup_token, mark_setup_completed
+from .config import Config, _read_or_create_runtime_config, ensure_setup_token, mark_setup_completed
 from .crypto import decrypt_value, encrypt_value
 from .extensions import db, login_manager, oauth
 from .helpers import csrf_token, normalize_bool, parse_csv_upload, rustdesk_link, validate_csrf
 from .models import AuthEvent, Device, Group, ImportBlocklistEntry, Setting, TransientSecret, User, utcnow
+from .restore import MaintenanceMiddleware, atomic_write, maintenance_lock, recover_pending_restore, replace_files, write_new_file
 from .rustdesk_live import RustDeskLiveStatusError, query_hbbs_online_status
 
 DEFAULT_OS_CHOICES = [
@@ -742,7 +744,9 @@ def create_app() -> Flask:
     if app.config.get("TRUST_PROXY_HEADERS"):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
-    with app.app_context():
+    with maintenance_lock(Path(app.config["DATA_DIR"]), exclusive=True), app.app_context():
+        recover_pending_restore(Path(app.config["DATA_DIR"]))
+        _reload_runtime_keys(app)
         db.create_all()
         _migrate_schema()
         _ensure_user_security_signatures()
@@ -752,7 +756,24 @@ def create_app() -> Flask:
     register_template_helpers(app)
     register_hooks(app)
     register_routes(app)
+    app.wsgi_app = MaintenanceMiddleware(app.wsgi_app, Path(app.config["DATA_DIR"]), lambda: _reload_runtime_keys(app))
     return app
+
+
+def _reload_runtime_keys(app: Flask) -> None:
+    data_dir = Path(app.config["DATA_DIR"])
+    generation_file = data_dir / ".restore-generation"
+    generation = generation_file.read_bytes() if generation_file.exists() else b""
+    if app.extensions.get("rab_restore_generation") == generation:
+        return
+    cfg = _read_or_create_runtime_config(data_dir)
+    with app.app_context():
+        db.session.remove()
+        db.engine.dispose()
+    for key in ("SECRET_KEY", "FERNET_KEY", "SECURITY_SIGNING_KEY"):
+        app.config[key] = cfg[key]
+    app.config["SETUP_TOKEN"] = "" if cfg.get("SETUP_COMPLETED") else os.environ.get("RAB_SETUP_TOKEN", cfg.get("SETUP_TOKEN", ""))
+    app.extensions["rab_restore_generation"] = generation
 
 
 @login_manager.user_loader
@@ -2271,7 +2292,11 @@ def register_routes(app: Flask) -> None:
             if not upload or not upload.filename:
                 flash("Bitte eine CSV-Datei auswählen.", "danger")
                 return redirect(url_for("import_devices"))
-            rows = parse_csv_upload(upload)
+            try:
+                rows = parse_csv_upload(upload)
+            except ValueError as exc:
+                flash(str(exc), "danger")
+                return redirect(url_for("import_devices"))
             count = blocked = skipped = 0
             blocked_ids = _blocked_import_ids()
             for row in rows:
@@ -2643,7 +2668,7 @@ def register_routes(app: Flask) -> None:
                 try:
                     restore_password = request.form.get("restore_password", "")
                     safety_backup = _restore_database_from_file(source, db_file, backup_dir, password=restore_password)
-                except ValueError as exc:
+                except (ValueError, OSError) as exc:
                     flash(str(exc), "danger")
                     return redirect(url_for("backup"))
                 flash(f"Backup wiederhergestellt. Vorheriger Stand wurde als {safety_backup} gesichert.", "success")
@@ -2665,7 +2690,7 @@ def register_routes(app: Flask) -> None:
                 try:
                     restore_password = request.form.get("restore_password", "")
                     safety_backup = _restore_database_from_file(tmp_file, db_file, backup_dir, password=restore_password)
-                except ValueError as exc:
+                except (ValueError, OSError) as exc:
                     flash(str(exc), "danger")
                     return redirect(url_for("backup"))
                 finally:
@@ -3122,17 +3147,24 @@ def _extract_safe_zip_members(zip_path: Path, target_dir: Path) -> list[Path]:
             infos = [info for info in zf.infolist() if not info.is_dir()]
             if len(infos) > max_members:
                 raise ValueError(f"ZIP-Datei enthält zu viele Dateien (maximal {max_members}).")
+            destinations: set[str] = set()
+            selected = []
             for info in infos:
+                filename = secure_filename(Path(info.filename).name)
+                if filename and _is_rustdesk_sqlite_family_file(filename):
+                    normalized = filename.casefold()
+                    if normalized in destinations:
+                        raise ValueError(f"Mehrdeutiger Dateiname im ZIP: {filename}")
+                    destinations.add(normalized)
+                    selected.append((info, filename))
+            for info, filename in selected:
                 if info.file_size < 0 or info.file_size > max_total:
                     raise ValueError("Eine Datei im ZIP überschreitet die zulässige Größe.")
                 total_size += info.file_size
                 if total_size > max_total:
                     raise ValueError("Der entpackte ZIP-Inhalt überschreitet die zulässige Gesamtgröße.")
-                filename = secure_filename(Path(info.filename).name)
-                if not filename or not _is_rustdesk_sqlite_family_file(filename):
-                    continue
                 target = target_dir / filename
-                with zf.open(info) as src, target.open("wb") as dst:
+                with zf.open(info) as src, target.open("xb") as dst:
                     remaining = info.file_size
                     while remaining > 0:
                         chunk = src.read(min(1024 * 1024, remaining))
@@ -3712,18 +3744,121 @@ def _inspect_rustdesk_sqlite(db_path: Path) -> dict:
 
 
 def _validate_addressbook_sqlite(db_path: Path) -> None:
+    # Only columns explicitly supported by _migrate_schema may be absent.
+    legacy_user_columns = {
+        "totp_secret_encrypted", "totp_enabled", "totp_recovery_hashes", "security_signature",
+        "role", "active", "auth_provider", "oidc_issuer", "oidc_subject", "display_name", "email",
+        "preferred_language", "preferred_theme", "session_version",
+    }
     try:
         with _open_sqlite_readonly(db_path) as con:
-            integrity = con.execute("PRAGMA integrity_check").fetchone()
-            if not integrity or str(integrity[0]).lower() != "ok":
+            integrity = con.execute("PRAGMA integrity_check").fetchall()
+            if len(integrity) != 1 or str(integrity[0][0]).lower() != "ok":
                 raise ValueError("SQLite-Integritätsprüfung ist fehlgeschlagen.")
-            tables = {row[0] for row in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
-            required = {"users", "devices", "groups"}
+            tables = {row[0] for row in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            required = {"users", "devices", "groups", "settings"}
             missing = required - tables
             if missing:
-                raise ValueError("Diese Datei ist kein gültiges RustDesk-AddressBook-Backup. Fehlende Tabellen: " + ", ".join(sorted(missing)))
+                raise ValueError("Ungültiges AddressBook-Backup. Fehlende Tabellen: " + ", ".join(sorted(missing)))
+            for name, table in db.metadata.tables.items():
+                if name not in tables:
+                    continue  # create_all supplies tables introduced in later versions.
+                columns = {row[1]: row for row in con.execute(f'PRAGMA table_info("{name}")')}
+                expected = set(table.columns.keys())
+                if name == "users":
+                    expected -= legacy_user_columns
+                missing_columns = expected - columns.keys()
+                if missing_columns:
+                    raise ValueError(f"Nicht unterstütztes Backup-Schema ({name}): fehlende Spalten " + ", ".join(sorted(missing_columns)))
+                expected_pk = {column.name for column in table.primary_key}
+                actual_pk = {key for key, row in columns.items() if row[5]}
+                if actual_pk != expected_pk:
+                    raise ValueError(f"Nicht unterstützter Primärschlüssel im Backup: {name}")
+            for name, column in (("users", "username"), ("groups", "name"), ("settings", "key")):
+                unique_columns = []
+                for index in con.execute(f'PRAGMA index_list("{name}")').fetchall():
+                    if index[2] and not index[4]:
+                        unique_columns.append([row[2] for row in con.execute('PRAGMA index_info("' + index[1].replace('"', '""') + '")')])
+                if [column] not in unique_columns:
+                    raise ValueError(f"Fehlende Eindeutigkeitsregel im Backup: {name}.{column}")
+            if con.execute("SELECT 1 FROM devices WHERE group_id IS NOT NULL AND group_id NOT IN (SELECT id FROM groups) LIMIT 1").fetchone():
+                raise ValueError("Backup enthält Geräte mit unbekannten Gruppen.")
+            if "user_groups" in tables and con.execute("SELECT 1 FROM user_groups WHERE user_id NOT IN (SELECT id FROM users) OR group_id NOT IN (SELECT id FROM groups) LIMIT 1").fetchone():
+                raise ValueError("Backup enthält ungültige Benutzer-/Gruppenzuordnungen.")
+            if con.execute("PRAGMA foreign_key_check").fetchone():
+                raise ValueError("Backup enthält ungültige Fremdschlüsselzuordnungen.")
+            row = con.execute("SELECT value FROM settings WHERE key='security_signature_version'").fetchone()
+            if row and str(row[0]).isdigit() and int(row[0]) > int(current_app.config["SECURITY_SIGNATURE_VERSION"]):
+                raise ValueError("Backup stammt aus einer nicht unterstützten neueren Version.")
     except sqlite3.DatabaseError as exc:
         raise ValueError(f"Die Datei konnte nicht als SQLite-Backup gelesen werden: {exc}") from exc
+
+
+def _prepare_restore_database(candidate: Path, runtime_config: dict) -> None:
+    """Migrate and verify an isolated candidate, never the live database."""
+    from cryptography.fernet import Fernet, InvalidToken
+
+    _validate_addressbook_sqlite(candidate)
+    for key in ("SECRET_KEY", "FERNET_KEY", "SECURITY_SIGNING_KEY"):
+        if not isinstance(runtime_config.get(key), str) or not runtime_config[key]:
+            raise ValueError(f"Backup-Konfiguration enthält keinen gültigen {key}.")
+    try:
+        cipher = Fernet(runtime_config["FERNET_KEY"].encode("utf-8"))
+    except (ValueError, UnicodeError) as exc:
+        raise ValueError("Backup-Konfiguration enthält keinen gültigen Verschlüsselungsschlüssel.") from exc
+    validator = Flask("restore-validation")
+    validator.config.update(current_app.config)
+    validator.config.update({key: runtime_config[key] for key in ("SECRET_KEY", "FERNET_KEY", "SECURITY_SIGNING_KEY")})
+    validator.config.update(SQLALCHEMY_DATABASE_URI=f"sqlite:///{candidate}", AUTH_LOG_FILE=candidate.parent / "validation-auth.log")
+    db.init_app(validator)
+    with validator.app_context():
+        try:
+            db.create_all()
+            _migrate_schema()
+            _ensure_user_security_signatures()
+            for user in User.query.all():
+                if not _verify_user_security_state(user):
+                    raise ValueError("Backup-Benutzersignaturen passen nicht zur Konfiguration oder sind ungültig.")
+            tokens = [device.encrypted_password for device in Device.query.all()]
+            tokens += [user.totp_secret_encrypted for user in User.query.all()]
+            tokens += [secret.encrypted_payload for secret in TransientSecret.query.all()]
+            tokens += [setting.value for setting in Setting.query.filter(Setting.key == "oidc_client_secret").all()]
+            for token in tokens:
+                if token:
+                    cipher.decrypt(token.encode("utf-8"))
+        except (InvalidToken, UnicodeError) as exc:
+            raise ValueError("Verschlüsselte Backup-Inhalte passen nicht zum Konfigurationsschlüssel.") from exc
+        finally:
+            db.session.remove()
+            db.engine.dispose()
+
+
+@contextmanager
+def _exclusive_restore():
+    data_dir = Path(current_app.config["DATA_DIR"])
+    handle = request.environ.get("rab.maintenance_lock") if has_request_context() else None
+    if handle is None:
+        try:
+            with maintenance_lock(data_dir, exclusive=True, blocking=False):
+                yield
+        except BlockingIOError as exc:
+            raise ValueError("Restore ist gesperrt: andere Anfragen oder ein Restore sind noch aktiv. Bitte erneut versuchen.") from exc
+        return
+    generation = current_app.extensions.get("rab_restore_generation")
+    fcntl.flock(handle, fcntl.LOCK_UN)
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError as exc:
+        fcntl.flock(handle, fcntl.LOCK_SH)
+        raise ValueError("Restore ist gesperrt: andere Anfragen sind noch aktiv. Bitte erneut versuchen.") from exc
+    try:
+        generation_file = data_dir / ".restore-generation"
+        live_generation = generation_file.read_bytes() if generation_file.exists() else b""
+        if generation != live_generation:
+            raise ValueError("Datenstand wurde zwischenzeitlich geändert. Bitte neu anmelden und erneut versuchen.")
+        yield
+    finally:
+        fcntl.flock(handle, fcntl.LOCK_SH)
 
 
 
@@ -3733,14 +3868,19 @@ def _sync_hbbs_live_status(*, trigger: str) -> dict:
         raise RustDeskLiveStatusError("hbbs Live-Abfrage ist nicht konfiguriert. Trage unter Einstellungen den hbbs Host ein.")
 
     devices = Device.query.filter(Device.rustdesk_id.isnot(None)).order_by(Device.id.asc()).all()
-    peer_ids = [d.rustdesk_id.strip() for d in devices if d.rustdesk_id and d.rustdesk_id.strip()]
+    id_to_devices: dict[str, list[Device]] = {}
+    for device in devices:
+        peer_id = (device.rustdesk_id or "").strip()
+        if peer_id:
+            id_to_devices.setdefault(peer_id, []).append(device)
+    peer_ids = list(id_to_devices)
     if not peer_ids:
         raise RustDeskLiveStatusError("Keine RustDesk-IDs im Adressbuch vorhanden.")
 
-    id_to_device = {d.rustdesk_id.strip(): d for d in devices if d.rustdesk_id and d.rustdesk_id.strip()}
     batch_size = settings["hbbs_batch_size"]
     updated = online_count = offline_count = 0
     last_states = ""
+    online_states = {}
 
     for start in range(0, len(peer_ids), batch_size):
         batch = peer_ids[start : start + batch_size]
@@ -3752,10 +3892,10 @@ def _sync_hbbs_live_status(*, trigger: str) -> dict:
             timeout=float(settings["hbbs_timeout"]),
         )
         last_states = result.response_states_hex
-        for peer_id, is_online in result.online.items():
-            device = id_to_device.get(peer_id)
-            if device is None:
-                continue
+        online_states.update(result.online)
+
+    for peer_id, is_online in online_states.items():
+        for device in id_to_devices.get(peer_id, []):
             if device.online != is_online:
                 device.online = is_online
                 updated += 1
@@ -3763,7 +3903,6 @@ def _sync_hbbs_live_status(*, trigger: str) -> dict:
                 online_count += 1
             else:
                 offline_count += 1
-
     db.session.commit()
     message = _t("status.last_summary", "{online} online, {offline} offline, {updated} geändert").format(online=online_count, offline=offline_count, updated=updated)
     _record_status_check(True, message, trigger=trigger, online=online_count, offline=offline_count, updated=updated, states=last_states)
@@ -4087,29 +4226,29 @@ def _sqlite_backup_bytes(db_file: Path) -> bytes:
 
 
 def _write_secure_file(path: Path, data: bytes, mode: int = 0o600) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(path.name + f".tmp-{secrets.token_hex(4)}")
-    tmp.write_bytes(data)
-    try:
-        tmp.chmod(mode)
-    except PermissionError:
-        pass
-    tmp.replace(path)
+    atomic_write(path, data, mode)
 
 
 def _create_encrypted_database_backup(db_file: Path, backup_dir: Path, password: str, prefix: str = "addressbook") -> str:
     backup_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{prefix}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.db.rabenc"
     data = _sqlite_backup_bytes(db_file)
-    _write_secure_file(backup_dir / filename, _encrypt_backup_bytes(data, password))
-    return filename
+    return _publish_backup(backup_dir, prefix, ".db.rabenc", _encrypt_backup_bytes(data, password))
 
 
 def _create_database_backup(db_file: Path, backup_dir: Path, prefix: str = "addressbook") -> str:
     backup_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{prefix}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.db"
-    _write_secure_file(backup_dir / filename, _sqlite_backup_bytes(db_file))
-    return filename
+    return _publish_backup(backup_dir, prefix, ".db", _sqlite_backup_bytes(db_file))
+
+
+def _publish_backup(backup_dir: Path, prefix: str, suffix: str, data: bytes) -> str:
+    for _ in range(10):
+        filename = f"{prefix}-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(8)}{suffix}"
+        try:
+            write_new_file(backup_dir / filename, data)
+            return filename
+        except FileExistsError:
+            continue
+    raise ValueError("Kein freier Backupname gefunden; bestehende Backups wurden erhalten.")
 
 
 def _add_file_to_tar(tar: tarfile.TarFile, source: Path, arcname: str) -> None:
@@ -4138,7 +4277,6 @@ def _add_dir_to_tar(tar: tarfile.TarFile, source_dir: Path, arc_prefix: str) -> 
 def _create_encrypted_full_backup(db_file: Path, backup_dir: Path, password: str) -> str:
     data_dir = Path(current_app.config["DATA_DIR"])
     backup_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"addressbook-full-{datetime.now().strftime('%Y%m%d-%H%M%S')}.rabfull"
     manifest = {
         "format": "rustdesk-addressbook-full-backup",
         "version": 1,
@@ -4167,11 +4305,13 @@ def _create_encrypted_full_backup(db_file: Path, backup_dir: Path, password: str
         _add_dir_to_tar(tar, data_dir / "certs", "data/certs")
         _add_dir_to_tar(tar, data_dir / "logs", "data/logs")
 
-    _write_secure_file(backup_dir / filename, _encrypt_backup_bytes(buf.getvalue(), password))
-    return filename
+    return _publish_backup(backup_dir, "addressbook-full", ".rabfull", _encrypt_backup_bytes(buf.getvalue(), password))
 
 
-def _safe_extract_full_backup(tar_bytes: bytes, data_dir: Path) -> list[str]:
+def _safe_extract_full_backup(tar_bytes: bytes, data_dir: Path, *, _locked: bool = False) -> list[str]:
+    if not _locked:
+        with _exclusive_restore():
+            return _safe_extract_full_backup(tar_bytes, data_dir, _locked=True)
     allowed_exact = {"manifest.json", "data/addressbook.db", "data/config.json"}
     allowed_prefixes = ("data/ssh/", "data/certs/", "data/logs/")
     max_members = max(10, int(current_app.config.get("FULL_BACKUP_MAX_MEMBERS", 5000)))
@@ -4231,26 +4371,25 @@ def _safe_extract_full_backup(tar_bytes: bytes, data_dir: Path) -> list[str]:
         if manifest.get("format") != "rustdesk-addressbook-full-backup" or int(manifest.get("version", 0)) != 1:
             raise ValueError("Vollbackup-Manifest hat ein unbekanntes Format oder eine nicht unterstützte Version.")
         candidate_db = tmp_dir / "data" / "addressbook.db"
-        _validate_addressbook_sqlite(candidate_db)
-
-        for rel in ["addressbook.db", "config.json"]:
-            src = tmp_dir / "data" / rel
-            dst = data_dir / rel
-            _write_secure_file(dst, src.read_bytes(), 0o600)
-            restored.append(f"data/{rel}")
-
-        for subdir in ["ssh", "certs", "logs"]:
-            src_root = tmp_dir / "data" / subdir
-            if not src_root.exists():
+        runtime_config = json.loads((tmp_dir / "data" / "config.json").read_text(encoding="utf-8"))
+        if not isinstance(runtime_config, dict):
+            raise ValueError("Vollbackup-Konfiguration ist ungültig.")
+        _prepare_restore_database(candidate_db, runtime_config)
+        replacements = {}
+        for src in sorted((tmp_dir / "data").rglob("*")):
+            if not src.is_file() or src.name == "validation-auth.log":
                 continue
-            for src in src_root.rglob("*"):
-                if not src.is_file():
-                    continue
-                rel = src.relative_to(src_root)
-                dst = data_dir / subdir / rel
-                mode = 0o600 if subdir in {"ssh", "certs"} else 0o640
-                _write_secure_file(dst, src.read_bytes(), mode)
-                restored.append(f"data/{subdir}/{rel.as_posix()}")
+            relative = src.relative_to(tmp_dir / "data").as_posix()
+            mode = 0o640 if relative.startswith("logs/") else 0o600
+            replacements[relative] = (src.read_bytes(), mode)
+            restored.append(f"data/{relative}")
+        db.session.remove()
+        db.engine.dispose()
+        old_database = _sqlite_backup_bytes(data_dir / "addressbook.db")
+        replace_files(data_dir, replacements, database_snapshot=old_database)
+        _reload_runtime_keys(current_app._get_current_object())
+        if has_request_context():
+            session.clear()
 
         return restored
     except (tarfile.TarError, json.JSONDecodeError) as exc:
@@ -4260,38 +4399,32 @@ def _safe_extract_full_backup(tar_bytes: bytes, data_dir: Path) -> list[str]:
 
 
 def _restore_database_from_file(source: Path, db_file: Path, backup_dir: Path, *, password: str = "") -> str:
-    if source.name.lower().endswith(".rabfull"):
-        if not password:
-            raise ValueError("Für ein verschlüsseltes Vollbackup wird das Backup-Passwort benötigt.")
-        # DB-Sicherheitsbackup des aktuellen Stands; config/ssh/certs bitte vorher per Vollbackup sichern.
-        safety_backup = _create_database_backup(db_file, backup_dir, prefix="pre-full-restore-addressbook")
-        tar_bytes = _decrypt_backup_bytes(source.read_bytes(), password)
-        db.session.remove()
-        db.engine.dispose()
-        restored = _safe_extract_full_backup(tar_bytes, Path(current_app.config["DATA_DIR"]))
-        return f"{safety_backup}; Vollbackup-Dateien wiederhergestellt: {len(restored)}. Container-Neustart erforderlich"
-
-    restore_source = source
-    tmp_plain: Path | None = None
-    if source.name.lower().endswith(".rabenc"):
-        upload_root = Path(current_app.config["DATA_DIR"]) / "tmp_uploads"
-        upload_root.mkdir(parents=True, exist_ok=True)
-        tmp_plain = upload_root / f"decrypted-restore-{secrets.token_hex(8)}.db"
-        tmp_plain.write_bytes(_decrypt_backup_bytes(source.read_bytes(), password))
-        restore_source = tmp_plain
-    try:
-        _validate_addressbook_sqlite(restore_source)
-        safety_backup = _create_database_backup(db_file, backup_dir, prefix="pre-restore-addressbook")
-        db.session.remove()
-        db.engine.dispose()
-        shutil.copy2(restore_source, db_file)
-        return safety_backup
-    finally:
-        if tmp_plain is not None:
-            try:
-                tmp_plain.unlink(missing_ok=True)
-            except OSError:
-                pass
+    with _exclusive_restore():
+        data_dir = Path(current_app.config["DATA_DIR"])
+        if source.name.lower().endswith(".rabfull"):
+            if not password:
+                raise ValueError("Für ein verschlüsseltes Vollbackup wird das Backup-Passwort benötigt.")
+            tar_bytes = _decrypt_backup_bytes(source.read_bytes(), password)
+            # The durable transaction additionally saves config/SSH/certs/log files.
+            safety_backup = _create_database_backup(db_file, backup_dir, prefix="pre-full-restore-addressbook")
+            restored = _safe_extract_full_backup(tar_bytes, data_dir, _locked=True)
+            return f"{safety_backup}; Vollbackup-Dateien wiederhergestellt: {len(restored)}. Bitte neu anmelden; Container für TLS-Zertifikate neu starten"
+        with tempfile.TemporaryDirectory(prefix="restore-", dir=data_dir) as temporary:
+            candidate = Path(temporary) / "candidate.db"
+            content = source.read_bytes()
+            if source.name.lower().endswith(".rabenc"):
+                content = _decrypt_backup_bytes(content, password)
+            atomic_write(candidate, content)
+            _prepare_restore_database(candidate, dict(current_app.config))
+            safety_backup = _create_database_backup(db_file, backup_dir, prefix="pre-restore-addressbook")
+            old_database = _sqlite_backup_bytes(db_file)
+            db.session.remove()
+            db.engine.dispose()
+            replace_files(data_dir, {"addressbook.db": (candidate.read_bytes(), 0o600)}, database_snapshot=old_database)
+            _reload_runtime_keys(current_app._get_current_object())
+            if has_request_context():
+                session.clear()
+            return safety_backup
 
 
 def _clean_optional_text(value: str | None) -> str | None:
@@ -4738,6 +4871,8 @@ def _set_settings_bulk(values: dict[str, str]) -> None:
         else:
             db.session.add(Setting(key=key, value=str(value)))
     db.session.commit()
+    if has_request_context():
+        g.pop("rab_settings", None)
 
 
 def _normalize_import_block_id(value) -> str:
@@ -4773,6 +4908,10 @@ def _add_import_blocklist_entry(
 
 
 def _get_setting(key: str, default: str = "") -> str:
+    if has_request_context():
+        if "rab_settings" not in g:
+            g.rab_settings = dict(db.session.query(Setting.key, Setting.value).all())
+        return g.rab_settings.get(key, default)
     setting = Setting.query.filter_by(key=key).first()
     return setting.value if setting else default
 
@@ -4879,6 +5018,8 @@ def _set_setting(key: str, value: str) -> None:
     else:
         db.session.add(Setting(key=key, value=value))
     db.session.commit()
+    if has_request_context():
+        g.pop("rab_settings", None)
 
 
 def _parse_os_choices(raw: str) -> list[str]:

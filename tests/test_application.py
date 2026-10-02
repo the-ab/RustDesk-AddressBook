@@ -29,8 +29,8 @@ def test_health_and_security_headers(client):
     assert response.get_json() == {"status": "ok"}
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
-    assert Config.APP_RELEASE_DATE == "2026-08-14"
-    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.2"
+    assert Config.APP_RELEASE_DATE == "2026-10-02"
+    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.3"
 
 
 def test_setup_requires_the_server_token(client, clean_app):
@@ -214,8 +214,8 @@ def test_administrator_pages_render(client, clean_app):
         page = client.get(path)
         assert page.status_code == 200, path
         if path == "/":
-            assert b"0.6.2" in page.data
-            assert b"2026-08-14" in page.data
+            assert b"0.6.3" in page.data
+            assert b"2026-10-02" in page.data
 
 
 def test_ghcr_compose_bundle():
@@ -226,7 +226,7 @@ def test_ghcr_compose_bundle():
     assert "0.6.2" in env_example
 
 
-def test_docker_compose_env_documentation_and_login_footer(client):
+def test_docker_compose_env_documentation_and_login_footer(client, clean_app):
     english = Path("docker-compose/README.md").read_text(encoding="utf-8")
     german = Path("docker-compose/README.de.md").read_text(encoding="utf-8")
     for variable in (
@@ -239,6 +239,13 @@ def test_docker_compose_env_documentation_and_login_footer(client):
         assert variable in english
         assert variable in german
 
+    # An empty database must retain the initial setup redirect.
+    assert client.get("/login").status_code == 302
+    with clean_app.app_context():
+        user = User(username="footer-admin", role="admin")
+        user.set_password("footer-test-password")
+        db.session.add(user)
+        db.session.commit()
     page = client.get("/login")
     assert page.status_code == 200
     assert b"app-footer-auth" in page.data

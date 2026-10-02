@@ -134,8 +134,14 @@ find_latest_update_zip() {
 
 read_env_value() {
   local key="$1" default="$2" value=""
+  # Compose gives exported variables priority over .env values.
+  if [ -n "${!key:-}" ]; then printf '%s\n' "${!key}"; return 0; fi
   if [ -f .env ]; then
     value="$(grep -E "^${key}=" .env | tail -n1 | cut -d= -f2- || true)"
+    case "$value" in
+      \"*\") value="${value:1:${#value}-2}" ;;
+      \'*\') value="${value:1:${#value}-2}" ;;
+    esac
     if [ -n "${value:-}" ]; then echo "$value"; return 0; fi
   fi
   echo "$default"
@@ -525,6 +531,24 @@ backup_updates_without_installed() {
   shopt -u dotglob nullglob
 }
 
+rollback_failed_update() {
+  local status="$1"
+  trap - EXIT INT TERM
+  [ "${UPDATE_ROLLBACK_ACTIVE:-0}" = 1 ] || return "$status"
+  echo "FEHLER: Update abgebrochen; vorherigen Stand wiederherstellen ..." >&2
+  $COMPOSE down --remove-orphans || { echo "FEHLER: Container konnten nicht gestoppt werden; manueller Rückweg: $UPDATE_ROLLBACK_ROOT" >&2; exit 1; }
+  if python3 "$UPDATE_ROLLBACK_ROOT/update_transaction.py" rollback "$UPDATE_ROLLBACK_ROOT"; then
+    if $COMPOSE build && $COMPOSE run --rm --no-deps rustdesk-addressbook-init && $COMPOSE up -d --force-recreate --remove-orphans; then
+      echo "Vorheriger Quell-/Datenstand wiederhergestellt und gestartet; Health-Status separat prüfen." >&2
+    else
+      echo "FEHLER: Vorheriger Stand wiederhergestellt, Start fehlgeschlagen. Sicherung: $UPDATE_ROLLBACK_ROOT" >&2
+    fi
+  else
+    echo "FEHLER: Rückweg unvollständig. Sicherung erhalten: $UPDATE_ROLLBACK_ROOT" >&2
+  fi
+  exit 1
+}
+
 perform_update() {
   local zip_file="$1" current_str current_num target_str target_num target_num_from_cfg target_version ts backup_root
   if [ ! -f "$zip_file" ]; then
@@ -572,31 +596,41 @@ INFO
   fi
 
   require_compose || exit 1
+  command -v flock >/dev/null || { echo "FEHLER: flock fehlt (util-linux)." >&2; exit 1; }
+  exec 9>"$UPDATES_DIR/.update.lock"
+  flock -n 9 || { echo "FEHLER: Ein anderes Update läuft bereits." >&2; exit 1; }
 
   if ! prompt_yes_no "Update jetzt installieren?" "ja"; then
     echo "Update abgebrochen. ZIP bleibt unverändert liegen: $zip_file"
     exit 0
   fi
 
+  # Stop before copying SQLite and keys; honor the actual Compose mounts.
+  local data_dir backup_dir container_name health
+  data_dir="$(read_env_value RAB_DATA_DIR './data')"
+  backup_dir="$(read_env_value RAB_BACKUP_DIR './backups')"
   ts="$(date +%Y%m%d-%H%M%S)"
-  backup_root="../rustdesk-addressbook-preupdate-${ts}"
-  mkdir -p "$backup_root"
-
-  copy_if_exists data "$backup_root/data"
-  copy_if_exists backups "$backup_root/backups"
-  copy_if_exists .env "$backup_root/.env"
-  copy_if_exists install-config.env "$backup_root/install-config.env"
-  copy_if_exists docker-compose.override.yml "$backup_root/docker-compose.override.yml"
-  copy_if_exists docker-compose.yml "$backup_root/docker-compose.yml"
-  backup_updates_without_installed "$backup_root/updates"
-
+  backup_root="$(mktemp -d "../rustdesk-addressbook-preupdate-${ts}-XXXXXX")"
+  chmod 700 "$backup_root"
+  # Keep the rollback helper outside the tree that the ZIP will replace.
+  cp scripts/update_transaction.py "$backup_root/update_transaction.py"
+  $COMPOSE down --remove-orphans
+  if ! python3 "$backup_root/update_transaction.py" snapshot "$PWD" "$backup_root" "$zip_file" "$data_dir" "$backup_dir"; then
+    echo "FEHLER: Sicherung fehlgeschlagen; bisherigen Dienst wieder starten." >&2
+    $COMPOSE up -d
+    exit 1
+  fi
+  backup_root="$(cd "$backup_root" && pwd)"
   cat <<INFO
-Pre-Update-Sicherung erstellt:
+Pre-Update-Sicherung erstellt (Anwendung gestoppt):
   ${backup_root}
 INFO
 
-  $COMPOSE down --remove-orphans || true
-  remove_known_containers
+  UPDATE_ROLLBACK_ROOT="$backup_root"
+  UPDATE_ROLLBACK_ACTIVE=1
+  trap 'rollback_failed_update $?' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
 
   unzip -o "$zip_file"
 
@@ -605,8 +639,9 @@ INFO
   remove_obsolete_managed_files
 
   # Lokale Konfiguration wiederherstellen, falls die ZIP Defaults überschrieben hat.
-  copy_if_exists "$backup_root/.env" .env
-  copy_if_exists "$backup_root/docker-compose.override.yml" docker-compose.override.yml
+  copy_if_exists "$backup_root/source/.env" .env
+  copy_if_exists "$backup_root/source/install-config.env" install-config.env
+  copy_if_exists "$backup_root/source/docker-compose.override.yml" docker-compose.override.yml
 
   # Leere/fehlende Alt-Konfigurationen auf die GitHub-Release-Standardquelle migrieren.
   maybe_update_release_source
@@ -647,15 +682,13 @@ INFO
   done
   cleanup_init_container
   if [ "$health" != "healthy" ]; then
-    echo "WARNUNG: Healthcheck wurde innerhalb des Prüfzeitraums nicht 'healthy' (Status: ${health:-unbekannt})." >&2
+    echo "FEHLER: Healthcheck nicht bestätigt (Status: ${health:-unbekannt})." >&2
     docker logs --tail 50 "$container_name" >&2 || true
+    exit 1
   fi
-
-  if [ "$health" = "healthy" ]; then
-    archive_installed_update "$zip_file"
-  else
-    echo "Hinweis: Updatedateien bleiben wegen des nicht bestätigten Health-Status in $UPDATES_DIR/."
-  fi
+  UPDATE_ROLLBACK_ACTIVE=0
+  trap - EXIT INT TERM
+  archive_installed_update "$zip_file"
 
   echo
   echo "Update abgeschlossen auf: ${target_str}"

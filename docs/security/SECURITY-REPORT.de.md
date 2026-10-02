@@ -1,4 +1,28 @@
-# Community Address Book for RustDesk – Sicherheitsstatus 0.6.2
+# Community Address Book for RustDesk – Sicherheitsstatus, Kandidat 0.6.3
+
+## Kandidat 0.6.3 — zuverlässiger Restore und Import
+
+Vorbereitet am 02.10.2026; dieser Quellkandidat ist noch nicht veröffentlicht. Die Beispiele für veröffentlichte Images darunter beziehen sich bis zur neuen Image-Veröffentlichung auf 0.6.2.
+
+- Restore prüft unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Austausch. Vollrestores verwenden eine exklusive Wartungssperre und ein dauerhaftes Rückwegjournal. Ein unterbrochener Restore sperrt Anfragen, bis die Wiederherstellung beim Anwendungsstart den vorherigen Stand hergestellt hat. Laufzeitschlüssel werden pro Webprozess neu geladen; nach Restore erneut anmelden. Nach Wiederherstellung von TLS-Zertifikaten den Container neu starten.
+- Backupnamen sind eindeutig; vorhandene Backups werden nie ersetzt. Doppelte RustDesk-IDs teilen eine hbbs-Abfrage, deren Ergebnis alle passenden Geräte erhalten. Fehlerhafte CSV und mehrdeutige DB/WAL/SHM-ZIP-Namen werden vor dem Import abgewiesen. Einstellungen werden einmal pro Anfrage geladen und bei Änderungen neu eingelesen.
+- Der korrigierte ZIP-Updater stoppt den Dienst vor der Sicherung der konfigurierten `RAB_DATA_DIR` und `RAB_BACKUP_DIR`, sichert sämtliche verwalteten Quelldateien und lokale Konfigurationen und führt bei Build-/Start-/Health-Fehlern einen Rückweg aus. Ein Health-Timeout gilt als Fehler. `flock` (util-linux) verhindert gleichzeitige Updater-Aufrufe im selben Updateverzeichnis.
+- Laufzeitabhängigkeiten: cryptography 50.0.2, requests 2.34.2; Testabhängigkeit: pytest 9.1.1; Python-Containerbasis: 3.13.15.
+
+### Quellcode-Upgrade von 0.6.2
+
+Der bereits in 0.6.2 installierte Updater besitzt keinen vollständigen Rückweg. Vor dem ersten Upgrade die neue Flat-ZIP samt signierter Prüfsumme mit dem vorhandenen vertrauenswürdigen öffentlichen Schlüssel prüfen und anschließend beide korrigierten Updater-Dateien im bestehenden Verzeichnis `scripts/` installieren:
+
+```bash
+openssl pkeyutl -verify -pubin -inkey scripts/keys/update-signing-public-v1.pem -rawin -in /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip.sha256 -sigfile /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip.sig
+(cd /pfad && sha256sum -c rustdesk-addressbook-update-flat-v0.6.3.zip.sha256)
+unzip -o /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip scripts/update.sh scripts/update_transaction.py -d .
+bash scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip
+```
+
+Das erzeugte Pre-Update-Verzeichnis behalten. Falls Host oder Updater vor dem automatischen Rückweg hart beendet werden, Dienst stoppen und `python3 /pfad/preupdate/update_transaction.py rollback /pfad/preupdate` ausführen; anschließend die wiederhergestellte Compose-Installation bauen/starten und den Health-Status prüfen. Kein zweites Update gegen eine nur teilweise wiederhergestellte Installation starten. Bei GHCR-Installationen das gewünschte veröffentlichte Image über `docker-compose/` holen und neu starten; der Quell-ZIP-Updater ist für Quellinstallationen vorgesehen.
+
+## Veröffentlichte Basis 0.6.2
 
 **Stand:** 14. August 2026  
 **Version:** `0.6.2-recovery-codes-update-image-fix`

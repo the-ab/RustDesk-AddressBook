@@ -236,7 +236,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li>Existing backups can be downloaded, restored or deleted. Restore also accepts uploaded <code>.db</code>, SQLite, <code>.rabenc</code> and <code>.rabfull</code> files.</li>
         <li>Before every restore, the previous database state is saved automatically as a safety backup.</li>
       </ul>
-      <div class="alert alert-warning mb-0">Passwords require at least 12 characters for <code>.rabenc</code> and 16 for <code>.rabfull</code>. Store them outside the server. After restoring a full backup, restart the container so the restored <code>config.json</code> is reloaded.</div>
+      <div class="alert alert-warning mb-0">Passwords require at least 12 characters for <code>.rabenc</code> and 16 for <code>.rabfull</code>. Store them outside the server. Restore checks database/key compatibility and requires exclusive access; retry after other requests finish. Sign in again after restore. Restart the container after restoring TLS certificates. If restore was interrupted, restart the application to recover its previous data.</div>
     </div></section>
 
     <section id="settings" class="card app-card mb-4"><div class="card-body">
@@ -549,7 +549,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
         <li>Vorhandene Backups können heruntergeladen, wiederhergestellt oder gelöscht werden. Restore per Upload akzeptiert DB-/SQLite-, <code>.rabenc</code>- und <code>.rabfull</code>-Dateien.</li>
         <li>Vor jedem Restore wird der bisherige Datenbankstand automatisch als Sicherheitsbackup gespeichert.</li>
       </ul>
-      <div class="alert alert-warning mb-0">Mindestens 12 Zeichen für <code>.rabenc</code> und 16 für <code>.rabfull</code>. Passwörter getrennt speichern. Nach einem Vollbackup-Restore den Container neu starten, damit <code>config.json</code> neu geladen wird. Der Restore akzeptiert nur reguläre Dateien in festgelegten Pfaden und begrenzt Eintragszahl, Einzelgröße und entpackte Gesamtgröße; Links und Gerätedateien werden abgewiesen.</div>
+      <div class="alert alert-warning mb-0">Mindestens 12 Zeichen für <code>.rabenc</code> und 16 für <code>.rabfull</code>. Passwörter getrennt speichern. Restore prüft Datenbank und Schlüssel und benötigt exklusiven Zugriff; nach anderen Anfragen erneut versuchen. Danach erneut anmelden. Für wiederhergestellte TLS-Zertifikate den Container neu starten. Nach unterbrochenem Restore die Anwendung zur Wiederherstellung des vorherigen Stands neu starten. Reguläre Dateien, erlaubte Pfade und begrenzte Größen bleiben vorgeschrieben.</div>
     </div></section>
 
     <section id="settings" class="card app-card mb-4"><div class="card-body">
