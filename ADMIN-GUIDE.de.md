@@ -1,13 +1,10 @@
 # Community-Adressbuch für RustDesk – Administratorhandbuch
 
-## Kandidat 0.6.3 — zuverlässiger Restore und Import
+## Version 0.6.3 — 02.10.2026
 
-Vorbereitet am 02.10.2026; dieser Quellkandidat ist noch nicht veröffentlicht. Die Beispiele für veröffentlichte Images darunter beziehen sich bis zur neuen Image-Veröffentlichung auf 0.6.2.
+Dieser signierte Quellkandidat steht zur Prüfung bereit; GitHub-Release und GHCR-Image für 0.6.3 sind noch nicht veröffentlicht. GHCR-Beispiele behalten deshalb den veröffentlichten Tag 0.6.2. Die Quell-ZIP-Beispiele darunter verwenden 0.6.3.
 
-- Restore prüft unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Austausch. Vollrestores verwenden eine exklusive Wartungssperre und ein dauerhaftes Rückwegjournal. Ein unterbrochener Restore sperrt Anfragen, bis die Wiederherstellung beim Anwendungsstart den vorherigen Stand hergestellt hat. Laufzeitschlüssel werden pro Webprozess neu geladen; nach Restore erneut anmelden. Nach Wiederherstellung von TLS-Zertifikaten den Container neu starten.
-- Backupnamen sind eindeutig; vorhandene Backups werden nie ersetzt. Doppelte RustDesk-IDs teilen eine hbbs-Abfrage, deren Ergebnis alle passenden Geräte erhalten. Fehlerhafte CSV und mehrdeutige DB/WAL/SHM-ZIP-Namen werden vor dem Import abgewiesen. Einstellungen werden einmal pro Anfrage geladen und bei Änderungen neu eingelesen.
-- Der korrigierte ZIP-Updater stoppt den Dienst vor der Sicherung der konfigurierten `RAB_DATA_DIR` und `RAB_BACKUP_DIR`, sichert sämtliche verwalteten Quelldateien und lokale Konfigurationen und führt bei Build-/Start-/Health-Fehlern einen Rückweg aus. Ein Health-Timeout gilt als Fehler. `flock` (util-linux) verhindert gleichzeitige Updater-Aufrufe im selben Updateverzeichnis.
-- Laufzeitabhängigkeiten: cryptography 50.0.2, requests 2.34.2; Testabhängigkeit: pytest 9.1.1; Python-Containerbasis: 3.13.15.
+Alle Änderungen stehen in den [Release Notes](docs/releases/RELEASE_NOTES.de.md).
 
 ### Quellcode-Upgrade von 0.6.2
 
@@ -20,13 +17,15 @@ unzip -o /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip scripts/update.sh scr
 bash scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip
 ```
 
+Diese Vorbereitung betrifft nur den ersten Wechsel mit dem installierten 0.6.2-Updater. Bei bereits installierter 0.6.3 ist sie nicht erneut nötig.
+
 Das erzeugte Pre-Update-Verzeichnis behalten. Falls Host oder Updater vor dem automatischen Rückweg hart beendet werden, Dienst stoppen und `python3 /pfad/preupdate/update_transaction.py rollback /pfad/preupdate` ausführen; anschließend die wiederhergestellte Compose-Installation bauen/starten und den Health-Status prüfen. Kein zweites Update gegen eine nur teilweise wiederhergestellte Installation starten. Bei GHCR-Installationen das gewünschte veröffentlichte Image über `docker-compose/` holen und neu starten; der Quell-ZIP-Updater ist für Quellinstallationen vorgesehen.
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`ADMIN-GUIDE.md`](ADMIN-GUIDE.md).
 
 > **Unabhängiges Projekt:** Dieses Community-Projekt ist nicht mit RustDesk oder Purslane Ltd. verbunden und wird von diesen weder unterstützt, gesponsert noch gepflegt. RustDesk ist eine Marke des jeweiligen Rechteinhabers.
 
-Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.6.2-recovery-codes-update-image-fix`. Version 0.6.2 behebt die Anzeige neu erzeugter Wiederherstellungscodes, korrigiert die Weiterführung verwalteter punktierter Docker-Image-Namen beim Quellcode-Update und übernimmt die aktuelle zweisprachige Dokumentationsstruktur in die Release-Pakete.
+Diese Anleitung beschreibt Installation, Update, Bedienung, Import, Backup, Sicherheit und Fehlerdiagnose für Version `0.6.3-restore-import-hardening`.
 
 ## 1. Installation
 
@@ -47,13 +46,13 @@ docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
 ```
 
-Mit `RAB_IMAGE_TAG=latest` wird das neueste Image verwendet; mit `RAB_IMAGE_TAG=0.6.2` bleibt die Installation auf diesem Release. Für diesen Weg werden nur `compose.yaml` und `.env` benötigt, nicht die Projektquellcode-Dateien.
+Mit `RAB_IMAGE_TAG=latest` wird das neueste Image verwendet; mit `RAB_IMAGE_TAG=0.6.2` bleibt die Installation beim veröffentlichten Image 0.6.2. Für diesen Weg werden nur `compose.yaml` und `.env` benötigt, nicht die Projektquellcode-Dateien.
 
 ### 1.2 Installation aus dem Release-Archiv
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0.6.2.zip
+unzip /pfad/rustdesk-addressbook-v0.6.3.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -84,7 +83,7 @@ HTTP ist standardmäßig aus. Ohne eigenes Zertifikat erstellt der Container ein
 
 ```bash
 cd /opt
-unzip /pfad/rustdesk-addressbook-v0.6.2.zip
+unzip /pfad/rustdesk-addressbook-v0.6.3.zip
 cd rustdesk-addressbook
 cp .env.example .env
 mkdir -p data backups updates
@@ -98,7 +97,7 @@ docker compose up -d --build
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -117,19 +116,19 @@ Das Script prüft zuerst passende ZIP-Dateien in `updates/`. Vor dem Entpacken m
 ../rustdesk-addressbook-preupdate-YYYYmmdd-HHMMSS/
 ```
 
-Gesichert werden `data/`, `backups/`, `.env`, `docker-compose.yml`, `docker-compose.override.yml` und `updates/`. Nach einem bestätigten erfolgreichen Healthcheck werden die installierte ZIP, die SHA-256-Datei und die Signatur nach `updates/installed/` verschoben. Bei Fehlern oder nicht eindeutig bestätigtem Health-Status bleiben sie in `updates/`. Nach dem Update Browser mit `Strg+F5` neu laden.
+Nach dem Stop werden die in `.env` konfigurierten Daten-/Backuppfade, sämtliche verwalteten Quellen sowie lokale ENV-/Compose-Konfigurationen gesichert. Build-, Start- und Health-Fehler lösen den automatischen Rückweg aus; ein Health-Timeout gilt als Fehler. Nach einem bestätigten erfolgreichen Healthcheck werden die installierte ZIP, die SHA-256-Datei und die Signatur nach `updates/installed/` verschoben. Bei Fehlern oder nicht eindeutig bestätigtem Health-Status bleiben sie in `updates/`. Nach dem Update Browser mit `Strg+F5` neu laden.
 
 ### 2.3 latest.txt
 
 ```text
-rustdesk-addressbook-update-flat-v0.6.2.zip
+rustdesk-addressbook-update-flat-v0.6.3.zip
 [de]
 - Deutsche Änderung
 [en]
 - English change
 ```
 
-Beim GitHub-Release müssen `latest.txt`, die darin genannte ZIP sowie die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` gemeinsam als Release Assets hochgeladen werden. Der feste Pfad `/releases/latest/download` wird von GitHub auf das neueste veröffentlichte Release weitergeleitet. Neben der ZIP müssen an jeder benutzerdefinierten Updatequelle ebenfalls die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0.6.2.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
+Beim GitHub-Release müssen `latest.txt`, die darin genannte ZIP sowie die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` gemeinsam als Release Assets hochgeladen werden. Der feste Pfad `/releases/latest/download` wird von GitHub auf das neueste veröffentlichte Release weitergeleitet. Neben der ZIP müssen an jeder benutzerdefinierten Updatequelle ebenfalls die gleichnamigen Dateien `.zip.sha256` und `.zip.sig` liegen. Alternativ unterstützt die App gleichnamige `.txt`-/`.md`-Dateien, `release-notes-v0.6.3.txt` sowie sprachspezifische `.de.txt`-/`.en.txt`-Dateien. Die WebUI meldet Updates nur; installiert wird weiterhin über `./scripts/update.sh`. Der private Signaturschlüssel darf nicht auf dem Downloadserver oder im Projektverzeichnis gespeichert werden.
 
 ### 2.4 Manueller Fallback
 
@@ -137,7 +136,7 @@ Der direkte manuelle Entpackweg umgeht die Sicherheitslogik des Updaters und ist
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
+cp /sicherer/pfad/rustdesk-addressbook-update-flat-v0.6.3.zip* updates/
 ./scripts/update.sh
 ```
 

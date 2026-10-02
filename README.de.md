@@ -1,41 +1,24 @@
 # Community-Adressbuch für RustDesk
 
-## Kandidat 0.6.3 — zuverlässiger Restore und Import
-
-Vorbereitet am 02.10.2026; dieser Quellkandidat ist noch nicht veröffentlicht. Die Beispiele für veröffentlichte Images darunter beziehen sich bis zur neuen Image-Veröffentlichung auf 0.6.2.
-
-- Restore prüft unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Austausch. Vollrestores verwenden eine exklusive Wartungssperre und ein dauerhaftes Rückwegjournal. Ein unterbrochener Restore sperrt Anfragen, bis die Wiederherstellung beim Anwendungsstart den vorherigen Stand hergestellt hat. Laufzeitschlüssel werden pro Webprozess neu geladen; nach Restore erneut anmelden. Nach Wiederherstellung von TLS-Zertifikaten den Container neu starten.
-- Backupnamen sind eindeutig; vorhandene Backups werden nie ersetzt. Doppelte RustDesk-IDs teilen eine hbbs-Abfrage, deren Ergebnis alle passenden Geräte erhalten. Fehlerhafte CSV und mehrdeutige DB/WAL/SHM-ZIP-Namen werden vor dem Import abgewiesen. Einstellungen werden einmal pro Anfrage geladen und bei Änderungen neu eingelesen.
-- Der korrigierte ZIP-Updater stoppt den Dienst vor der Sicherung der konfigurierten `RAB_DATA_DIR` und `RAB_BACKUP_DIR`, sichert sämtliche verwalteten Quelldateien und lokale Konfigurationen und führt bei Build-/Start-/Health-Fehlern einen Rückweg aus. Ein Health-Timeout gilt als Fehler. `flock` (util-linux) verhindert gleichzeitige Updater-Aufrufe im selben Updateverzeichnis.
-- Laufzeitabhängigkeiten: cryptography 50.0.2, requests 2.34.2; Testabhängigkeit: pytest 9.1.1; Python-Containerbasis: 3.13.15.
-
-### Quellcode-Upgrade von 0.6.2
-
-Der bereits in 0.6.2 installierte Updater besitzt keinen vollständigen Rückweg. Vor dem ersten Upgrade die neue Flat-ZIP samt signierter Prüfsumme mit dem vorhandenen vertrauenswürdigen öffentlichen Schlüssel prüfen und anschließend beide korrigierten Updater-Dateien im bestehenden Verzeichnis `scripts/` installieren:
-
-```bash
-openssl pkeyutl -verify -pubin -inkey scripts/keys/update-signing-public-v1.pem -rawin -in /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip.sha256 -sigfile /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip.sig
-(cd /pfad && sha256sum -c rustdesk-addressbook-update-flat-v0.6.3.zip.sha256)
-unzip -o /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip scripts/update.sh scripts/update_transaction.py -d .
-bash scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip
-```
-
-Das erzeugte Pre-Update-Verzeichnis behalten. Falls Host oder Updater vor dem automatischen Rückweg hart beendet werden, Dienst stoppen und `python3 /pfad/preupdate/update_transaction.py rollback /pfad/preupdate` ausführen; anschließend die wiederhergestellte Compose-Installation bauen/starten und den Health-Status prüfen. Kein zweites Update gegen eine nur teilweise wiederhergestellte Installation starten. Bei GHCR-Installationen das gewünschte veröffentlichte Image über `docker-compose/` holen und neu starten; der Quell-ZIP-Updater ist für Quellinstallationen vorgesehen.
-
 Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt mit Flask, SQLite, lokaler und OpenID-Connect-Anmeldung, Benutzer-/Gruppenrechten, Geräteverwaltung, Import/Export, Backup/Restore, HTTPS, hbbs-Live-Status und SSH-Import der RustDesk-Serverdatenbank.
 
 > **Unabhängiges Projekt:** Dies ist ein unabhängiges Community-Projekt. Es ist nicht mit RustDesk oder Purslane Ltd. verbunden und wird von diesen weder unterstützt, gesponsert noch gepflegt. RustDesk ist eine Marke des jeweiligen Rechteinhabers.
 
 > Die englische Dokumentation ist die Standardfassung. Deutsche Dateien tragen die Endung `*.de.md`.
 
-## Neu in 0.6.2
+## Neu in 0.6.3
 
-- Behebt, dass neu erzeugte 2FA-Wiederherstellungscodes nach der Erfolgsmeldung nicht angezeigt wurden, indem Ablaufzeiten kurzlebiger Secrets nach SQLite-Roundtrips wieder eindeutig als UTC behandelt werden.
-- Behebt den quellcodebasierten Updatepfad: verwaltete punktierte Docker-Image-Namen wie `rustdesk-addressbook-v0.6.1` werden auf den neuen punktierten Release-Namen weitergeführt und nicht mehr fälschlich als benutzerdefiniert behandelt.
-- Korrigiert die Online-Update-Erkennung in WebUI und `update.sh`, sodass punktierte `latest.txt`-Dateinamen wie `v0.6.2` wieder erkannt werden; kompakte Altformate bleiben lesbar.
-- **Update-Hinweis für 0.6.1:** Da der in 0.6.1 installierte Online-Parser genau den hier behobenen Fehler enthält, 0.6.2 einmal über das signierte lokale Update-Triplett im Ordner `updates/` installieren; danach funktioniert die Online-Erkennung wieder regulär.
-- Enthält die aktuelle zweisprachige `docs/`-Struktur sowie die Repository-Prüfung für vollständige englische/deutsche Informationsdateipaare.
-- Prüft die vollständige Installer- und Flat-Update-Paketstruktur für das Release `v0.6.2` erneut.
+Quellkandidat vom 02.10.2026; GitHub-Release und GHCR-Image 0.6.3 sind noch nicht veröffentlicht.
+
+- Vollrestores durch exklusive Wartungssperre und dauerhaftes Rückwegjournal schützen; unterbrochene Restores beim Anwendungsstart wiederherstellen und Schlüssel in allen Webprozessen neu laden.
+- Eindeutige Backupnamen erzeugen, ohne vorhandene Backups zu überschreiben.
+- Jede RustDesk-ID pro hbbs-Stapel nur einmal abfragen und alle Geräte mit derselben ID aktualisieren.
+- Fehlerhafte CSV und mehrdeutige Datenbank-/WAL-/SHM-ZIP-Namen vor dem Import abweisen; Stapelabfragen vor der Änderung des Gerätestatus vollständig abschließen.
+- Einstellungen einmal pro Anfrage laden und den Cache bei Änderungen verwerfen.
+- Dienst vor der Sicherung konfigurierter Daten-/Backuppfade und sämtlicher verwalteter Quellen stoppen; ZIP-Updates bei Build-, Start- oder Health-Fehlern zurückrollen und einen Health-Timeout als Fehler melden.
+- cryptography auf 50.0.2, requests auf 2.34.2, pytest auf 9.1.1 und die Python-Containerbasis auf 3.13.15 aktualisieren.
+
+Siehe [vollständige Release Notes](docs/releases/RELEASE_NOTES.de.md). Vor einem Quellcode-Upgrade von 0.6.2 die [einmalige Updater-Vorbereitung](ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) im Administratorhandbuch durchführen.
 
 ## Installation
 
@@ -60,15 +43,15 @@ docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/
 
 Der letzte Befehl zeigt das einmalige Setup-Token an. Nach erfolgreicher Erstellung des ersten Administrators wird es aus `config.json` entfernt.
 
-Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.2` bleibt die Installation auf dieser Version. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
+Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.2` bleibt die Installation beim veröffentlichten Image 0.6.2. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
 
 ### Installation aus dem Release-Archiv mit lokalem Build
 
-Ein aktuelles Release-Archiv von der Releases-Seite des Repositorys herunterladen und anschließend:
+Den signierten Quellkandidaten 0.6.3 verwenden; veröffentlichte Releases stehen auf der Releases-Seite des Repositorys:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0.6.2.zip
+unzip rustdesk-addressbook-v0.6.3.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -90,7 +73,7 @@ Signierte Update-Dateien nach `updates/` kopieren:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip* updates/
 ./scripts/update.sh
 ```
 

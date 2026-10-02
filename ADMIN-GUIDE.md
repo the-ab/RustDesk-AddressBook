@@ -1,13 +1,10 @@
 # Community Address Book for RustDesk – Admin Guide
 
-## 0.6.3 candidate — restore and import reliability
+## Version 0.6.3 — 2026-10-02
 
-Prepared on 2026-10-02; this source candidate has not been released. Published image examples below refer to 0.6.2 until a new image is published.
+This signed source candidate is available for testing; the GitHub release and GHCR image for 0.6.3 have not been published. GHCR examples therefore retain the published 0.6.2 tag. The source ZIP examples below use 0.6.3.
 
-- Restores validate supported SQLite schema, group references, user signatures and encrypted fields before replacing data. Full restores use an exclusive maintenance lock and a durable rollback journal. An interrupted restore blocks requests until startup recovery restores the previous generation. Runtime keys reload across workers; sign in again after restore. Restart the container after restoring TLS certificates.
-- Backup names are unique and existing backups are never replaced. Duplicate RustDesk IDs share one hbbs query and every matching device receives the result. Malformed CSV and ambiguous DB/WAL/SHM ZIP names are rejected before import. Settings are loaded once per request and invalidated on changes.
-- The corrected ZIP updater stops the service before backing up the configured `RAB_DATA_DIR` and `RAB_BACKUP_DIR`, saves the complete managed source set and local configuration, and rolls back on build/start/health failure. A health timeout returns failure. The update directory serializes concurrent updater invocations with `flock` (util-linux).
-- Runtime dependencies: cryptography 50.0.2, requests 2.34.2; test dependency: pytest 9.1.1; Python container base: 3.13.15.
+See [release notes](docs/releases/RELEASE_NOTES.md) for the complete changes.
 
 ### Source upgrade from 0.6.2
 
@@ -20,15 +17,17 @@ unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip scripts/update.sh 
 bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip
 ```
 
+This preparation is only needed for the first upgrade from an installed 0.6.2 updater. An already installed 0.6.3 does not need it again.
+
 Keep the generated pre-update directory. If the host or updater is killed before automatic rollback completes, stop the service and run `python3 /path/to/preupdate/update_transaction.py rollback /path/to/preupdate`, then build/start the restored Compose installation and check its health. Do not start a second update against a partially restored installation. For GHCR installations, pull/recreate the chosen published image through `docker-compose/`; the source ZIP updater is for source installations.
 
-This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.6.2-recovery-codes-update-image-fix`.
+This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.6.3-restore-import-hardening`.
 
 > English is the default documentation language. The German edition is available as [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md).
 
 ## Overview
 
-Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.6.2 fixes the recovery-code display after regeneration, corrects managed dotted Docker image-name migration during source updates, and carries the current bilingual documentation layout into the release packages.
+Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.6.3 adds recoverable restores, stricter imports, unique backups and rollback for source ZIP updates.
 
 **Device management**  
 Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.
@@ -61,13 +60,13 @@ docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
 ```
 
-Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.2` to pin this release. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
+Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.2` to pin the published 0.6.2 image. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
 
 ### Source/release archive installation
 
 ```
 cd /opt
-unzip /path/to/rustdesk-addressbook-v0.6.2.zip
+unzip /path/to/rustdesk-addressbook-v0.6.3.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -81,7 +80,7 @@ The values are written to `.env`. When you run `./scripts/install.sh` again, the
 
 ```
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -305,7 +304,7 @@ The settings page uses a category navigation and a detail area. On small screens
 The Web UI checks `latest.txt` at `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` by default. Custom non-empty sources remain supported. Set `RAB_UPDATE_BASE_URL=disabled` to disable online checks explicitly; local signed updates remain available.
 
 ```
-rustdesk-addressbook-update-flat-v0.6.2.zip
+rustdesk-addressbook-update-flat-v0.6.3.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -344,7 +343,7 @@ Example files are included under `contrib/fail2ban/`. The application rotates `a
 ```
 docker compose ps
 docker compose logs -f
-docker exec -it rustdesk-addressbook grep -n "0.6.2-recovery-codes-update-image-fix" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "APP_VERSION" /app/app/config.py
 docker exec -it rustdesk-addressbook ls -lh /rustdesk-server/db_v2.sqlite3* 2>/dev/null || true
 docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```

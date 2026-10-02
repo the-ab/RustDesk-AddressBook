@@ -1,13 +1,27 @@
-0.6.3-restore-import-hardening (unreleased candidate)
+0.6.3-restore-import-hardening — 2026-10-02 (signed source candidate)
 
 [de]
-- Wiederherstellbarer exklusiver Restore, Schema-/Schlüsselprüfung, eindeutige Backups.
-- CSV-/ZIP-Import und Livestatus mit doppelten IDs korrigiert; Einstellungen pro Anfrage gebündelt.
-- ZIP-Updater sichert konfigurierte Persistenzpfade nach Stop und führt bei Build-/Health-Fehlern einen Rückweg aus. Vor Upgrade von 0.6.2 beide Updater-Dateien aus der geprüften neuen ZIP übernehmen; siehe ADMIN-GUIDE.de.md.
-- Laufzeit-/Testabhängigkeiten und Python-Containerbasis aktualisiert.
+- Unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Datenbank-Restore prüfen.
+- Vollrestores durch exklusive Wartungssperre und dauerhaftes Rückwegjournal schützen; unterbrochene Restores beim Anwendungsstart wiederherstellen und Schlüssel in allen Webprozessen neu laden.
+- Eindeutige Backupnamen erzeugen, ohne vorhandene Backups zu überschreiben.
+- Jede RustDesk-ID pro hbbs-Stapel nur einmal abfragen und alle Geräte mit derselben ID aktualisieren.
+- Fehlerhafte CSV und mehrdeutige Datenbank-/WAL-/SHM-ZIP-Namen vor dem Import abweisen; Stapelabfragen vor der Änderung des Gerätestatus vollständig abschließen.
+- Einstellungen einmal pro Anfrage laden und den Cache bei Änderungen verwerfen.
+- Dienst vor der Sicherung konfigurierter Daten-/Backuppfade und sämtlicher verwalteter Quellen stoppen; ZIP-Updates bei Build-, Start- oder Health-Fehlern zurückrollen und einen Health-Timeout als Fehler melden.
+- Gleichzeitige Updater-Aufrufe mit flock sperren und ausschließlich den konfigurierten Containernamen verwenden.
+- cryptography auf 50.0.2, requests auf 2.34.2, pytest auf 9.1.1 und die Python-Containerbasis auf 3.13.15 aktualisieren.
+- Englische/deutsche Dokumentation, Installationsbeispiele, WebUI-Hilfe und Änderungshistorie auf 0.6.3 abstimmen.
+- Vor Upgrade von 0.6.2 beide Updater-Dateien aus der geprüften ZIP übernehmen; nach Vollrestore erneut anmelden, bei TLS-Restore Container neu starten. Siehe ADMIN-GUIDE.de.md.
 
 [en]
-- Recoverable exclusive restore, schema/key validation, unique backups.
-- Corrected CSV/ZIP import and live status with duplicate IDs; per-request settings cache.
-- ZIP updater snapshots configured persistence after stop and rolls back on build/health failure. Before upgrading from 0.6.2, install both updater files from the verified new ZIP; see ADMIN-GUIDE.md.
-- Updated runtime/test dependencies and Python container base.
+- Validate supported SQLite schemas, group references, user signatures and encrypted fields before restoring a database.
+- Protect full restores with an exclusive maintenance lock and a durable rollback journal; recover interrupted restores at application startup and reload keys across web workers.
+- Create unique backup filenames without overwriting existing backups.
+- Query each RustDesk ID once per hbbs batch and update every device sharing that ID.
+- Reject malformed CSV and ambiguous database/WAL/SHM ZIP filenames before import; complete batch queries before changing device status.
+- Load settings once per request and invalidate the cache when settings change.
+- Stop the service before snapshotting configured data/backup paths and all managed sources; roll back ZIP updates on build, start or health failure and report a health timeout as failure.
+- Serialize updater invocations with flock and target only the configured container name.
+- Update cryptography to 50.0.2, requests to 2.34.2, pytest to 9.1.1 and the Python container base to 3.13.15.
+- Align English/German documentation, installation examples, Web UI help and release history with 0.6.3.
+- Before upgrading from 0.6.2, install both updater files from the verified ZIP; sign in after a full restore and restart after a TLS restore. See ADMIN-GUIDE.md.

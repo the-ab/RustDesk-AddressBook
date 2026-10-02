@@ -1,11 +1,13 @@
 # Signed updates
 
+Before the first source upgrade from 0.6.2, follow the [one-time updater preparation](../ADMIN-GUIDE.md#source-upgrade-from-062). The 0.6.3 candidate is transferred locally until it is published on GitHub.
+
 Copy a flat update ZIP and both matching verification sidecars into this directory:
 
 ```bash
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip updates/
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip.sha256 updates/
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip.sig updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip.sha256 updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip.sig updates/
 ./scripts/update.sh
 ```
 
