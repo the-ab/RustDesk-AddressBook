@@ -33,14 +33,27 @@ def normalize_bool(value: str | None) -> bool:
 
 
 def parse_csv_upload(file_storage) -> list[dict]:
-    raw = file_storage.read().decode("utf-8-sig")
-    sample = raw[:2048]
     try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
+        raw = file_storage.read().decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise ValueError("CSV-Datei muss als UTF-8 gespeichert sein.") from exc
+    try:
+        dialect = csv.Sniffer().sniff(raw[:2048], delimiters=",;\t")
     except csv.Error:
         dialect = csv.excel
-    reader = csv.DictReader(StringIO(raw), dialect=dialect)
-    rows: list[dict] = []
-    for row in reader:
-        rows.append({(k or "").strip().lower(): (v or "").strip() for k, v in row.items()})
-    return rows
+    reader = csv.DictReader(StringIO(raw), dialect=dialect, strict=True)
+    try:
+        headers = [(value or "").strip().lower() for value in (reader.fieldnames or [])]
+        if not headers or any(not value for value in headers) or len(set(headers)) != len(headers):
+            raise ValueError("CSV-Kopfzeile fehlt oder enthält leere/doppelte Spaltennamen.")
+        if not set(headers) & {"name", "gerät", "device"} or not set(headers) & {"rustdesk_id", "rustdesk-id", "id"}:
+            raise ValueError("CSV benötigt eine Name- und eine RustDesk-ID-Spalte.")
+        reader.fieldnames = headers
+        rows = []
+        for row in reader:
+            if None in row or any(value is None for value in row.values()):
+                raise ValueError(f"CSV-Zeile {reader.line_num}: Spaltenzahl stimmt nicht mit der Kopfzeile überein.")
+            rows.append({key: value.strip() for key, value in row.items()})
+        return rows
+    except csv.Error as exc:
+        raise ValueError(f"CSV konnte nicht gelesen werden (Zeile {reader.line_num}).") from exc

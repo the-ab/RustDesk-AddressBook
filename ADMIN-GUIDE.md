@@ -1,12 +1,37 @@
 # Community Address Book for RustDesk – Admin Guide
 
-This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.6.2-recovery-codes-update-image-fix`.
+## Version 0.6.4 — 2026-10-02
+
+This guide covers release 0.6.4, published on 2026-10-02. Signed source packages are available from GitHub Releases; GHCR images use tags 0.6.4 and latest.
+
+See [release notes](docs/releases/RELEASE_NOTES.md) for the complete changes.
+
+### Upgrade from 0.6.3 to 0.6.4
+
+Use the normal signed update path below. If the installed updater has lost its executable bit, start it with `bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip`. Version 0.6.4 stores all five shell scripts as executable in Git and the ZIP, and the updater restores their execute bits after extraction. Existing data and configuration follow the established snapshot/rollback path.
+
+### Source upgrade from 0.6.2
+
+The updater already installed in 0.6.2 has no complete rollback. Before the first upgrade, verify the new flat ZIP and its checksum signature with your existing trusted public key, then install both corrected updater files into the existing `scripts/` directory:
+
+```bash
+openssl pkeyutl -verify -pubin -inkey scripts/keys/update-signing-public-v1.pem -rawin -in /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip.sha256 -sigfile /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip.sig
+(cd /path/to && sha256sum -c rustdesk-addressbook-update-flat-v0.6.4.zip.sha256)
+unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip scripts/update.sh scripts/update_transaction.py -d .
+bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip
+```
+
+This preparation is only needed for the first upgrade from an installed 0.6.2 updater. An already installed 0.6.3 does not need it again.
+
+Keep the generated pre-update directory. If the host or updater is killed before automatic rollback completes, stop the service and run `python3 /path/to/preupdate/update_transaction.py rollback /path/to/preupdate`, then build/start the restored Compose installation and check its health. Do not start a second update against a partially restored installation. For GHCR installations, pull/recreate the chosen published image through `docker-compose/`; the source ZIP updater is for source installations.
+
+This guide describes installation, updates, operation, imports, backups, security, and troubleshooting for version `0.6.4-shell-script-permissions`.
 
 > English is the default documentation language. The German edition is available as [`ADMIN-GUIDE.de.md`](ADMIN-GUIDE.de.md).
 
 ## Overview
 
-Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.6.2 fixes the recovery-code display after regeneration, corrects managed dotted Docker image-name migration during source updates, and carries the current bilingual documentation layout into the release packages.
+Community Address Book for RustDesk is an independent web address book for self-hosted RustDesk environments. It is not affiliated with, endorsed by, sponsored by, or maintained by RustDesk or Purslane Ltd. Version 0.6.4 fixes shell script permissions and documentation, retaining the recoverable restores, stricter imports, unique backups and ZIP-update rollback introduced in 0.6.3.
 
 **Device management**  
 Name, RustDesk ID, password, group, customer, location, OS/device type, tags and notes.
@@ -24,7 +49,7 @@ Admin/user roles, assigned groups, local 2FA, OIDC, audit log, brute-force locko
 
 ### GHCR image installation
 
-The published image is available as `ghcr.io/the-ab/rustdesk-addressbook:latest` and as the fixed tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.2`. The dedicated files are stored under `docker-compose/`:
+The published image is available as `ghcr.io/the-ab/rustdesk-addressbook:latest` and as the fixed tag `ghcr.io/the-ab/rustdesk-addressbook:0.6.4`. The dedicated files are stored under `docker-compose/`:
 
 - `compose.yaml` – image-based service definition
 - `.env.example` – configuration template
@@ -39,13 +64,13 @@ docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'
 ```
 
-Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.2` to pin this release. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
+Set `RAB_IMAGE_TAG=latest` for the newest image or `RAB_IMAGE_TAG=0.6.4` to pin the published 0.6.4 image. This installation path needs only `compose.yaml` and `.env`; project source files are not required.
 
 ### Source/release archive installation
 
 ```
 cd /opt
-unzip /path/to/rustdesk-addressbook-v0.6.2.zip
+unzip /path/to/rustdesk-addressbook-v0.6.4.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -59,7 +84,7 @@ The values are written to `.env`. When you run `./scripts/install.sh` again, the
 
 ```
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip* updates/
 ./scripts/update.sh
 ```
 
@@ -283,7 +308,7 @@ The settings page uses a category navigation and a detail area. On small screens
 The Web UI checks `latest.txt` at `https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download` by default. Custom non-empty sources remain supported. Set `RAB_UPDATE_BASE_URL=disabled` to disable online checks explicitly; local signed updates remain available.
 
 ```
-rustdesk-addressbook-update-flat-v0.6.2.zip
+rustdesk-addressbook-update-flat-v0.6.4.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -322,7 +347,7 @@ Example files are included under `contrib/fail2ban/`. The application rotates `a
 ```
 docker compose ps
 docker compose logs -f
-docker exec -it rustdesk-addressbook grep -n "0.6.2-recovery-codes-update-image-fix" /app/app/config.py
+docker exec -it rustdesk-addressbook grep -n "APP_VERSION" /app/app/config.py
 docker exec -it rustdesk-addressbook ls -lh /rustdesk-server/db_v2.sqlite3* 2>/dev/null || true
 docker exec -it rustdesk-addressbook python /app/scripts/reset_security_lockout.py
 ```

@@ -5,6 +5,8 @@ from pathlib import Path
 
 from cryptography.fernet import Fernet
 
+from .restore import maintenance_lock, recover_pending_restore
+
 
 def _write_runtime_config(config_file: Path, cfg: dict) -> None:
     tmp = config_file.with_suffix(".json.tmp")
@@ -97,13 +99,16 @@ def _read_or_create_runtime_config(data_dir: Path) -> dict:
 
 
 class Config:
-    APP_VERSION = "0.6.2-recovery-codes-update-image-fix"
-    APP_RELEASE_DATE = "2026-08-14"
+    APP_VERSION = "0.6.4-shell-script-permissions"
+    APP_RELEASE_DATE = "2026-10-02"
     DATA_DIR = Path(os.environ.get("APP_DATA_DIR", "/data"))
     BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", "/backups"))
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
-    runtime_config = _read_or_create_runtime_config(DATA_DIR)
+    # Recovery must happen before importing runtime keys or opening SQLite.
+    with maintenance_lock(DATA_DIR, exclusive=True):
+        recover_pending_restore(DATA_DIR)
+        runtime_config = _read_or_create_runtime_config(DATA_DIR)
 
     SECRET_KEY = runtime_config["SECRET_KEY"]
     FERNET_KEY = runtime_config["FERNET_KEY"]

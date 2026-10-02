@@ -1,4 +1,37 @@
-# Community Address Book for RustDesk 0.6.2 – Recovery-code display and update-path reliability
+# Community Address Book for RustDesk — release notes
+
+## Community Address Book for RustDesk 0.6.4 – Shell script permissions and documentation
+
+Release date: 2026-10-02. Signed source packages and GHCR images (0.6.4/latest) are published.
+
+- Store all five shipped shell scripts as executable in Git and both ZIP packages; restore execute bits explicitly after ZIP extraction.
+- Add complete 0.6.3 and 0.6.4 entries to the English/German Web UI release history and align current installation/help/update examples.
+- Allow installed 0.6.3 source installations to apply this signed 0.6.4 maintenance update normally; if the old updater lacks execute permission, start it with bash.
+
+For an installed 0.6.3 with missing execute bits, run `bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip`. The normal signature/SHA checks, persistence snapshot and rollback remain active. For an installed 0.6.2, follow the [one-time updater preparation](../../ADMIN-GUIDE.md#source-upgrade-from-062) first.
+
+## Community Address Book for RustDesk 0.6.3 – Restore, import and update reliability
+
+Local candidate dated 2026-10-02; its changes are included in release 0.6.4. No separate GitHub release or GHCR image was published for 0.6.3.
+
+- Validate supported SQLite schemas, group references, user signatures and encrypted fields before restoring a database.
+- Protect full restores with an exclusive maintenance lock and a durable rollback journal; recover interrupted restores at application startup and reload keys across web workers.
+- Create unique backup filenames without overwriting existing backups.
+- Query each RustDesk ID once per hbbs batch and update every device sharing that ID.
+- Reject malformed CSV and ambiguous database/WAL/SHM ZIP filenames before import; complete batch queries before changing device status.
+- Load settings once per request and invalidate the cache when settings change.
+- Stop the service before snapshotting configured data/backup paths and all managed sources; roll back ZIP updates on build, start or health failure and report a health timeout as failure.
+- Serialize updater invocations with flock and target only the configured container name.
+- Update cryptography to 50.0.2, requests to 2.34.2, pytest to 9.1.1 and the Python container base to 3.13.15.
+- Align English/German documentation, installation examples, Web UI help and release history with 0.6.3.
+
+### Upgrade notes
+
+Before the first source upgrade from 0.6.2, verify the signed new package and install both corrected updater files as described in the [Admin Guide](../../ADMIN-GUIDE.md#source-upgrade-from-062). The updater shipped in 0.6.2 does not provide the new complete rollback. Keep the pre-update backup.
+
+After a full restore, sign in again. Restart the container if TLS certificates were restored. If concurrent requests prevent the exclusive restore lock, retry during a quiet period. GHCR installations use their published image update path.
+
+## Community Address Book for RustDesk 0.6.2 – Recovery-code display and update-path reliability
 
 Release date: 2026-08-14
 

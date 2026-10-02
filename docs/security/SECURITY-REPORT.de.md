@@ -1,7 +1,21 @@
-# Community Address Book for RustDesk – Sicherheitsstatus 0.6.2
+# Community Address Book for RustDesk – Sicherheitsstatus, Release 0.6.4
 
-**Stand:** 14. August 2026  
-**Version:** `0.6.2-recovery-codes-update-image-fix`
+**Stand:** 02.10.2026
+
+**Version:** `0.6.4-shell-script-permissions` (Release 0.6.4)
+
+## Änderungen in 0.6.3 und 0.6.4
+
+- Alle fünf mitgelieferten Shellskripte in Git und beiden ZIP-Paketen ausführbar speichern; Ausführungsrechte nach dem Entpacken ausdrücklich wiederherstellen.
+- Unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Datenbank-Restore prüfen.
+- Vollrestores durch exklusive Wartungssperre und dauerhaftes Rückwegjournal schützen; unterbrochene Restores beim Anwendungsstart wiederherstellen und Schlüssel in allen Webprozessen neu laden.
+- Eindeutige Backupnamen erzeugen, ohne vorhandene Backups zu überschreiben.
+- Fehlerhafte CSV und mehrdeutige Datenbank-/WAL-/SHM-ZIP-Namen vor dem Import abweisen; Stapelabfragen vor der Änderung des Gerätestatus vollständig abschließen.
+- Dienst vor der Sicherung konfigurierter Daten-/Backuppfade und sämtlicher verwalteter Quellen stoppen; ZIP-Updates bei Build-, Start- oder Health-Fehlern zurückrollen und einen Health-Timeout als Fehler melden.
+- Gleichzeitige Updater-Aufrufe mit flock sperren und ausschließlich den konfigurierten Containernamen verwenden.
+- cryptography auf 50.0.2, requests auf 2.34.2, pytest auf 9.1.1 und die Python-Containerbasis auf 3.13.15 aktualisieren.
+
+Der bestehende öffentliche Update-Prüfschlüssel bleibt erhalten. Start-Recovery, Restore-Sperre, Schema-/Schlüsselprüfung und Updater-Rückweg sind durch lokale Regressionen geprüft; ein echter Docker-Wechsel von der signierten 0.6.2 erhält Administrator, verschlüsselte Gerätedaten und Konfiguration. Dies ist eine technische Prüfung, keine vollständige Produktions- oder Sicherheitsabnahme. Vor einem Wechsel mit dem installierten 0.6.2-Updater das [Administratorhandbuch](../../ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) beachten.
 
 > Dies ist die deutsche Fassung. Die englische Standardfassung steht in [`SECURITY-REPORT.md`](SECURITY-REPORT.md).
 
@@ -36,7 +50,7 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater profilierter Ini
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. Version 0.6.2 behebt die einmalige Anzeige neu erzeugter Wiederherstellungscodes durch UTC-sichere Behandlung kurzlebiger SQLite-Zeitwerte und korrigiert den verwalteten Docker-Image-Namen im Quellcode-Updatepfad. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. README, Administratorhandbuch, WebUI-Hilfe und Release Notes beschreiben 0.6.4; historische Release-Einträge und Beispiele veröffentlichter GHCR-Images behalten ihren ursprünglichen Versionsstand. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
 
 ## Hinweis für öffentliche Repositorys
 

@@ -6,14 +6,21 @@ A self-hosted web address book for RustDesk environments, packaged as a Docker p
 
 > English is the default documentation language. The German edition is available as [`README.de.md`](README.de.md).
 
-## New in 0.6.2
+## New in 0.6.4
 
-- Fixes regenerated 2FA recovery codes not being shown after the success message by restoring UTC-aware transient-secret expiry values after SQLite round-trips.
-- Fixes source-based updates so managed dotted Docker image names such as `rustdesk-addressbook-v0.6.1` are advanced to the new dotted release name instead of being treated as custom names.
-- Fixes online update discovery in the Web UI and `update.sh` so dotted `latest.txt` release filenames such as `v0.6.2` are recognized again while legacy compact forms stay readable.
-- **Upgrade note for 0.6.1:** because the online parser installed in 0.6.1 contains the defect fixed here, install 0.6.2 once through the signed local update triplet in `updates/`; online discovery works normally again afterwards.
-- Includes the current bilingual `docs/` layout and repository checks that keep required English/German information documents paired.
-- Revalidates the complete installer and flat-update package structure for the `v0.6.2` release.
+Released on 2026-10-02. Signed source packages are available from GitHub Releases; the GHCR image is published as 0.6.4 and latest.
+
+- Keep all five shipped shell scripts executable after ZIP extraction; source installations on 0.6.3 can update normally to 0.6.4.
+- Include complete English/German 0.6.3 and 0.6.4 entries in the Web UI release history and current-version installation/help examples.
+- Protect full restores with an exclusive maintenance lock and a durable rollback journal; recover interrupted restores at application startup and reload keys across web workers.
+- Create unique backup filenames without overwriting existing backups.
+- Query each RustDesk ID once per hbbs batch and update every device sharing that ID.
+- Reject malformed CSV and ambiguous database/WAL/SHM ZIP filenames before import; complete batch queries before changing device status.
+- Load settings once per request and invalidate the cache when settings change.
+- Stop the service before snapshotting configured data/backup paths and all managed sources; roll back ZIP updates on build, start or health failure and report a health timeout as failure.
+- Update cryptography to 50.0.2, requests to 2.34.2, pytest to 9.1.1 and the Python container base to 3.13.15.
+
+See the [full release notes](docs/releases/RELEASE_NOTES.md). Before a source upgrade from 0.6.2, follow the [one-time updater preparation](ADMIN-GUIDE.md#source-upgrade-from-062) in the Admin Guide.
 
 ## Installation
 
@@ -23,7 +30,7 @@ The published container image is available as:
 
 ```text
 ghcr.io/the-ab/rustdesk-addressbook:latest
-ghcr.io/the-ab/rustdesk-addressbook:0.6.2
+ghcr.io/the-ab/rustdesk-addressbook:0.6.4
 ```
 
 The `docker-compose/` directory contains the dedicated image-based `compose.yaml` and `.env.example`. All environment variables are documented in [`docker-compose/README.md`](docker-compose/README.md); the German edition is available as [`docker-compose/README.de.md`](docker-compose/README.de.md). No project source files are required for this installation method:
@@ -38,15 +45,15 @@ docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/
 
 The final command prints the one-time setup token. After the first administrator is created successfully, the token is removed from `config.json`.
 
-Use `RAB_IMAGE_TAG=latest` to track the newest published image or `RAB_IMAGE_TAG=0.6.2` to pin this release. Persistent data and backups are stored in the host paths configured in `.env`.
+Use `RAB_IMAGE_TAG=latest` to track the newest published image or `RAB_IMAGE_TAG=0.6.4` to pin the published 0.6.4 image. Persistent data and backups are stored in the host paths configured in `.env`.
 
 ### Source/release archive installation
 
-Download a current release archive from the repository's Releases page, then:
+Download the signed 0.6.4 source package from the repository’s Releases page:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0.6.2.zip
+unzip rustdesk-addressbook-v0.6.4.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -68,7 +75,7 @@ Place the signed update assets in `updates/`:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.2.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip* updates/
 ./scripts/update.sh
 ```
 
