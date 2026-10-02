@@ -37,11 +37,11 @@ Without parameters the script:
   3. shows release notes and asks before installation.
 
 Manual local update:
-  cp /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip* updates/
+  cp /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip* updates/
   ./scripts/update.sh
 
 Direct ZIP paths remain supported:
-  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip
+  ./scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip
 
 Online source:
   The default is the project GitHub Releases endpoint:
@@ -628,6 +628,9 @@ INFO
   trap 'exit 143' TERM
 
   unzip -o "$zip_file"
+
+  # Older ZIPs stored these scripts as 0644; keep every shipped shell entrypoint usable.
+  chmod a+x -- entrypoint.sh scripts/install.sh scripts/update.sh scripts/prepare_runtime_dirs.sh scripts/sign-release.sh
 
   # Dateien entfernen, die seit v0.6.1 bewusst in die docs/-Struktur verschoben wurden.
   # Persistente Daten und lokale Konfigurationen werden hier ausdrücklich nicht angefasst.

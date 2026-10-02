@@ -1,13 +1,15 @@
 # Signierte Updates
 
-Vor dem ersten Quellcode-Upgrade von 0.6.2 die [einmalige Updater-Vorbereitung](../ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) durchführen. Bis zur GitHub-Veröffentlichung den Kandidaten 0.6.3 lokal übertragen.
+Von einer installierten 0.6.3 den regulären signierten Updateweg verwenden. Ist update.sh nicht ausführbar, vorübergehend mit `bash scripts/update.sh` starten; 0.6.4 stellt die Skriptrechte wieder her.
+
+Vor dem ersten Quellcode-Upgrade von 0.6.2 die [einmalige Updater-Vorbereitung](../ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) durchführen. Bis zur GitHub-Veröffentlichung den Kandidaten 0.6.4 lokal übertragen.
 
 Kopiere ein Flat-Update-ZIP und beide passenden Prüfdateien in dieses Verzeichnis:
 
 ```bash
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip updates/
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip.sha256 updates/
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip.sig updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.4.zip updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.4.zip.sha256 updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.4.zip.sig updates/
 ./scripts/update.sh
 ```
 

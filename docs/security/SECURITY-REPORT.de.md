@@ -1,11 +1,12 @@
-# Community Address Book for RustDesk – Sicherheitsstatus, Kandidat 0.6.3
+# Community Address Book for RustDesk – Sicherheitsstatus, Kandidat 0.6.4
 
 **Stand:** 02.10.2026
 
-**Version:** `0.6.3-restore-import-hardening` (signierter Quellkandidat; noch nicht veröffentlicht)
+**Version:** `0.6.4-shell-script-permissions` (signierter Quellkandidat; noch nicht veröffentlicht)
 
-## Änderungen in 0.6.3
+## Änderungen in 0.6.3 und 0.6.4
 
+- Alle fünf mitgelieferten Shellskripte in Git und beiden ZIP-Paketen ausführbar speichern; Ausführungsrechte nach dem Entpacken ausdrücklich wiederherstellen.
 - Unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Datenbank-Restore prüfen.
 - Vollrestores durch exklusive Wartungssperre und dauerhaftes Rückwegjournal schützen; unterbrochene Restores beim Anwendungsstart wiederherstellen und Schlüssel in allen Webprozessen neu laden.
 - Eindeutige Backupnamen erzeugen, ohne vorhandene Backups zu überschreiben.
@@ -49,7 +50,7 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater profilierter Ini
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. README, Administratorhandbuch, WebUI-Hilfe und Release Notes beschreiben 0.6.3; historische Release-Einträge und Beispiele veröffentlichter GHCR-Images behalten ihren ursprünglichen Versionsstand. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. README, Administratorhandbuch, WebUI-Hilfe und Release Notes beschreiben 0.6.4; historische Release-Einträge und Beispiele veröffentlichter GHCR-Images behalten ihren ursprünglichen Versionsstand. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
 
 ## Hinweis für öffentliche Repositorys
 

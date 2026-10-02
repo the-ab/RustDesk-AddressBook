@@ -1,5 +1,15 @@
 # Community Address Book for RustDesk — release notes
 
+## Community Address Book for RustDesk 0.6.4 – Shell script permissions and documentation
+
+Version date: 2026-10-02. Status: signed source candidate; GitHub release and GHCR image not yet published.
+
+- Store all five shipped shell scripts as executable in Git and both ZIP packages; restore execute bits explicitly after ZIP extraction.
+- Add complete 0.6.3 and 0.6.4 entries to the English/German Web UI release history and align current installation/help/update examples.
+- Allow installed 0.6.3 source installations to apply this signed 0.6.4 maintenance update normally; if the old updater lacks execute permission, start it with bash.
+
+For an installed 0.6.3 with missing execute bits, run `bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip`. The normal signature/SHA checks, persistence snapshot and rollback remain active. For an installed 0.6.2, follow the [one-time updater preparation](../../ADMIN-GUIDE.md#source-upgrade-from-062) first.
+
 ## Community Address Book for RustDesk 0.6.3 – Restore, import and update reliability
 
 Version date: 2026-10-02. Status: signed source candidate; GitHub release and GHCR image not yet published.

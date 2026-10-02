@@ -1,5 +1,15 @@
 # Community-Adressbuch für RustDesk – Releasehistorie
 
+## Community-Adressbuch für RustDesk 0.6.4 – Skriptrechte und Dokumentation
+
+Versionsdatum: 02.10.2026. Status: signierter Quellkandidat; GitHub-Release und GHCR-Image noch nicht veröffentlicht.
+
+- Alle fünf mitgelieferten Shellskripte in Git und beiden ZIP-Paketen ausführbar speichern; Ausführungsrechte nach dem Entpacken ausdrücklich wiederherstellen.
+- Vollständige 0.6.3- und 0.6.4-Einträge in der englischen/deutschen WebUI-Releasehistorie ergänzen und aktuelle Installations-/Hilfe-/Updatebeispiele abstimmen.
+- Bestehende Quellinstallationen mit 0.6.3 können dieses signierte Wartungsupdate 0.6.4 regulär installieren; fehlt dem alten Updater das Ausführungsrecht, mit bash starten.
+
+Bei installierter 0.6.3 mit fehlenden Ausführungsrechten `bash scripts/update.sh /pfad/rustdesk-addressbook-update-flat-v0.6.4.zip` starten. Reguläre Signatur-/SHA-Prüfung, Persistenzsicherung und Rückweg bleiben aktiv. Bei installierter 0.6.2 zuerst die [einmalige Updater-Vorbereitung](../../ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) durchführen.
+
 ## Community-Adressbuch für RustDesk 0.6.3 – Zuverlässiger Restore, Import und Updatepfad
 
 Versionsdatum: 02.10.2026. Status: signierter Quellkandidat; GitHub-Release und GHCR-Image noch nicht veröffentlicht.

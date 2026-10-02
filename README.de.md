@@ -6,10 +6,12 @@ Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt
 
 > Die englische Dokumentation ist die Standardfassung. Deutsche Dateien tragen die Endung `*.de.md`.
 
-## Neu in 0.6.3
+## Neu in 0.6.4
 
-Quellkandidat vom 02.10.2026; GitHub-Release und GHCR-Image 0.6.3 sind noch nicht veröffentlicht.
+Quellkandidat vom 02.10.2026; GitHub-Release und GHCR-Image 0.6.4 sind noch nicht veröffentlicht.
 
+- Alle fünf mitgelieferten Shellskripte nach dem Entpacken ausführbar halten; Quellinstallationen mit 0.6.3 können regulär auf 0.6.4 wechseln.
+- Vollständige englische/deutsche Einträge für 0.6.3 und 0.6.4 in der WebUI-Releasehistorie sowie aktuelle Installations-/Hilfebeispiele ergänzen.
 - Vollrestores durch exklusive Wartungssperre und dauerhaftes Rückwegjournal schützen; unterbrochene Restores beim Anwendungsstart wiederherstellen und Schlüssel in allen Webprozessen neu laden.
 - Eindeutige Backupnamen erzeugen, ohne vorhandene Backups zu überschreiben.
 - Jede RustDesk-ID pro hbbs-Stapel nur einmal abfragen und alle Geräte mit derselben ID aktualisieren.
@@ -47,11 +49,11 @@ Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwend
 
 ### Installation aus dem Release-Archiv mit lokalem Build
 
-Den signierten Quellkandidaten 0.6.3 verwenden; veröffentlichte Releases stehen auf der Releases-Seite des Repositorys:
+Den signierten Quellkandidaten 0.6.4 verwenden; veröffentlichte Releases stehen auf der Releases-Seite des Repositorys:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0.6.3.zip
+unzip rustdesk-addressbook-v0.6.4.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -73,7 +75,7 @@ Signierte Update-Dateien nach `updates/` kopieren:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.3.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.4.zip* updates/
 ./scripts/update.sh
 ```
 

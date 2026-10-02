@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
+import stat
 import subprocess
 import zipfile
 from pathlib import Path
@@ -20,6 +21,14 @@ def test_signed_zip_update_and_rollback_with_custom_persistence(tmp_path, failur
     (scripts / 'keys').mkdir(parents=True)
     for name in ('update.sh', 'update_transaction.py'):
         shutil.copy2(Path('scripts') / name, scripts / name)
+    shell_paths = ['entrypoint.sh', 'scripts/install.sh', 'scripts/update.sh', 'scripts/prepare_runtime_dirs.sh', 'scripts/sign-release.sh']
+    original_modes = {}
+    for index, relative in enumerate(shell_paths):
+        source = root / relative
+        if not source.exists():
+            source.write_text('#!/bin/sh\nexit 0\n')
+        source.chmod(0o750 if index % 2 else 0o755)
+        original_modes[relative] = stat.S_IMODE(source.stat().st_mode)
     (root / 'app').mkdir()
     config = root / 'app' / 'config.py'
     config.write_text('APP_VERSION = "0.6.2-test"\n')
@@ -41,6 +50,12 @@ def test_signed_zip_update_and_rollback_with_custom_persistence(tmp_path, failur
     updates.mkdir()
     package = updates / 'rustdesk-addressbook-update-flat-v0.6.3.zip'
     with zipfile.ZipFile(package, 'w') as archive:
+        # Reproduce a legacy signed ZIP that removes existing executable bits.
+        for relative in shell_paths:
+            info = zipfile.ZipInfo(relative)
+            info.create_system = 3
+            info.external_attr = (stat.S_IFREG | 0o644) << 16
+            archive.writestr(info, (root / relative).read_bytes())
         archive.writestr('app/config.py', 'APP_VERSION = "0.6.3-test"\n')
         archive.writestr('Dockerfile', 'new image')
         archive.writestr('docs/added.md', 'new file')
@@ -95,6 +110,7 @@ if args[:2] == ['compose', 'build'] and new and os.environ['FAILURE'] == 'build'
         assert '0.6.3' in config.read_text()
         assert (data / 'addressbook.db').read_bytes() == b'new migrated SQLite'
         assert (updates / 'installed' / package.name).exists()
+        assert all(os.access(root / relative, os.X_OK) for relative in shell_paths)
     else:
         assert result.returncode != 0
         assert 'Update abgeschlossen' not in result.stdout
@@ -110,6 +126,7 @@ if args[:2] == ['compose', 'build'] and new and os.environ['FAILURE'] == 'build'
         assert not (backups / 'new.rabfull').exists()
         assert package.exists()
         assert 'compose build' in commands
+        assert all(stat.S_IMODE((root / relative).stat().st_mode) == mode for relative, mode in original_modes.items())
 
 
 

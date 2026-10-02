@@ -1,27 +1,13 @@
-0.6.3-restore-import-hardening — 2026-10-02 (signed source candidate)
+0.6.4-shell-script-permissions — 2026-10-02 (signed source candidate)
 
 [de]
-- Unterstütztes SQLite-Schema, Gruppenzuordnungen, Benutzersignaturen und verschlüsselte Felder vor dem Datenbank-Restore prüfen.
-- Vollrestores durch exklusive Wartungssperre und dauerhaftes Rückwegjournal schützen; unterbrochene Restores beim Anwendungsstart wiederherstellen und Schlüssel in allen Webprozessen neu laden.
-- Eindeutige Backupnamen erzeugen, ohne vorhandene Backups zu überschreiben.
-- Jede RustDesk-ID pro hbbs-Stapel nur einmal abfragen und alle Geräte mit derselben ID aktualisieren.
-- Fehlerhafte CSV und mehrdeutige Datenbank-/WAL-/SHM-ZIP-Namen vor dem Import abweisen; Stapelabfragen vor der Änderung des Gerätestatus vollständig abschließen.
-- Einstellungen einmal pro Anfrage laden und den Cache bei Änderungen verwerfen.
-- Dienst vor der Sicherung konfigurierter Daten-/Backuppfade und sämtlicher verwalteter Quellen stoppen; ZIP-Updates bei Build-, Start- oder Health-Fehlern zurückrollen und einen Health-Timeout als Fehler melden.
-- Gleichzeitige Updater-Aufrufe mit flock sperren und ausschließlich den konfigurierten Containernamen verwenden.
-- cryptography auf 50.0.2, requests auf 2.34.2, pytest auf 9.1.1 und die Python-Containerbasis auf 3.13.15 aktualisieren.
-- Englische/deutsche Dokumentation, Installationsbeispiele, WebUI-Hilfe und Änderungshistorie auf 0.6.3 abstimmen.
-- Vor Upgrade von 0.6.2 beide Updater-Dateien aus der geprüften ZIP übernehmen; nach Vollrestore erneut anmelden, bei TLS-Restore Container neu starten. Siehe ADMIN-GUIDE.de.md.
+- Alle fünf mitgelieferten Shellskripte in Git und beiden ZIP-Paketen ausführbar speichern; Ausführungsrechte nach dem Entpacken ausdrücklich wiederherstellen.
+- Vollständige 0.6.3- und 0.6.4-Einträge in der englischen/deutschen WebUI-Releasehistorie ergänzen und aktuelle Installations-/Hilfe-/Updatebeispiele abstimmen.
+- Bestehende Quellinstallationen mit 0.6.3 können dieses signierte Wartungsupdate 0.6.4 regulär installieren; fehlt dem alten Updater das Ausführungsrecht, mit bash starten.
+- Von 0.6.2 zuerst beide Updater-Dateien aus der geprüften ZIP übernehmen; siehe ADMIN-GUIDE.de.md.
 
 [en]
-- Validate supported SQLite schemas, group references, user signatures and encrypted fields before restoring a database.
-- Protect full restores with an exclusive maintenance lock and a durable rollback journal; recover interrupted restores at application startup and reload keys across web workers.
-- Create unique backup filenames without overwriting existing backups.
-- Query each RustDesk ID once per hbbs batch and update every device sharing that ID.
-- Reject malformed CSV and ambiguous database/WAL/SHM ZIP filenames before import; complete batch queries before changing device status.
-- Load settings once per request and invalidate the cache when settings change.
-- Stop the service before snapshotting configured data/backup paths and all managed sources; roll back ZIP updates on build, start or health failure and report a health timeout as failure.
-- Serialize updater invocations with flock and target only the configured container name.
-- Update cryptography to 50.0.2, requests to 2.34.2, pytest to 9.1.1 and the Python container base to 3.13.15.
-- Align English/German documentation, installation examples, Web UI help and release history with 0.6.3.
-- Before upgrading from 0.6.2, install both updater files from the verified ZIP; sign in after a full restore and restart after a TLS restore. See ADMIN-GUIDE.md.
+- Store all five shipped shell scripts as executable in Git and both ZIP packages; restore execute bits explicitly after ZIP extraction.
+- Add complete 0.6.3 and 0.6.4 entries to the English/German Web UI release history and align current installation/help/update examples.
+- Allow installed 0.6.3 source installations to apply this signed 0.6.4 maintenance update normally; if the old updater lacks execute permission, start it with bash.
+- From 0.6.2, prepare both updater files from the verified ZIP first; see ADMIN-GUIDE.md.

@@ -30,7 +30,7 @@ def test_health_and_security_headers(client):
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
     assert Config.APP_RELEASE_DATE == "2026-10-02"
-    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.3"
+    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.4"
 
 
 def test_setup_requires_the_server_token(client, clean_app):
@@ -214,7 +214,7 @@ def test_administrator_pages_render(client, clean_app):
         page = client.get(path)
         assert page.status_code == 200, path
         if path == "/":
-            assert b"0.6.3" in page.data
+            assert b"0.6.4" in page.data
             assert b"2026-10-02" in page.data
 
 

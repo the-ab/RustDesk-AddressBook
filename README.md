@@ -6,10 +6,12 @@ A self-hosted web address book for RustDesk environments, packaged as a Docker p
 
 > English is the default documentation language. The German edition is available as [`README.de.md`](README.de.md).
 
-## New in 0.6.3
+## New in 0.6.4
 
-Source candidate dated 2026-10-02; GitHub release and GHCR image 0.6.3 are not yet published.
+Source candidate dated 2026-10-02; GitHub release and GHCR image 0.6.4 are not yet published.
 
+- Keep all five shipped shell scripts executable after ZIP extraction; source installations on 0.6.3 can update normally to 0.6.4.
+- Include complete English/German 0.6.3 and 0.6.4 entries in the Web UI release history and current-version installation/help examples.
 - Protect full restores with an exclusive maintenance lock and a durable rollback journal; recover interrupted restores at application startup and reload keys across web workers.
 - Create unique backup filenames without overwriting existing backups.
 - Query each RustDesk ID once per hbbs batch and update every device sharing that ID.
@@ -47,11 +49,11 @@ Use `RAB_IMAGE_TAG=latest` to track the newest published image or `RAB_IMAGE_TAG
 
 ### Source/release archive installation
 
-Use the signed 0.6.3 source candidate; published releases are available from the repository’s Releases page:
+Use the signed 0.6.4 source candidate; published releases are available from the repository’s Releases page:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0.6.3.zip
+unzip rustdesk-addressbook-v0.6.4.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -73,7 +75,7 @@ Place the signed update assets in `updates/`:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.3.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip* updates/
 ./scripts/update.sh
 ```
 

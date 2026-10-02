@@ -1,11 +1,12 @@
-# Community Address Book for RustDesk — security status, candidate 0.6.3
+# Community Address Book for RustDesk — security status, candidate 0.6.4
 
 **Date:** 2026-10-02
 
-**Version:** `0.6.3-restore-import-hardening` (signed source candidate; not yet published)
+**Version:** `0.6.4-shell-script-permissions` (signed source candidate; not yet published)
 
-## Changes in 0.6.3
+## Changes in 0.6.3 and 0.6.4
 
+- Store all five shipped shell scripts as executable in Git and both ZIP packages; restore execute bits explicitly after ZIP extraction.
 - Validate supported SQLite schemas, group references, user signatures and encrypted fields before restoring a database.
 - Protect full restores with an exclusive maintenance lock and a durable rollback journal; recover interrupted restores at application startup and reload keys across web workers.
 - Create unique backup filenames without overwriting existing backups.
@@ -49,7 +50,7 @@ The web process remains unprivileged. A separate profiled init service receives 
 
 ## Documentation language layout
 
-Standard Markdown files are English and German editions use the `*.de.md` suffix. The README, Admin Guide, Web UI help and release notes describe 0.6.3; historical release entries and published GHCR image examples retain their original version. Existing signed-update verification, authorization boundaries, setup-token cleanup, repository safety checks, and the local test suite remain in place.
+Standard Markdown files are English and German editions use the `*.de.md` suffix. The README, Admin Guide, Web UI help and release notes describe 0.6.4; historical release entries and published GHCR image examples retain their original version. Existing signed-update verification, authorization boundaries, setup-token cleanup, repository safety checks, and the local test suite remain in place.
 
 ## Public repository note
 
