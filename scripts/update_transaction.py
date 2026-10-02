@@ -9,11 +9,13 @@ import sys
 import zipfile
 from pathlib import Path
 
-DIRECTORIES = {"app", "static", "templates", "scripts", "docs", "docker-compose", "tests"}
+DIRECTORIES = {"app", "static", "templates", "scripts", "docs", "docker-compose", "tests", "contrib"}
 LOCAL_FILES = {".env", "install-config.env", "docker-compose.override.yml"}
 
 
 def managed(path: Path) -> bool:
+    if path.as_posix() in {"updates", "updates/.gitkeep", "updates/README.md", "updates/README.de.md", "sample-import.csv"}:
+        return True
     return (
         path.parts[0] in DIRECTORIES
         or (len(path.parts) == 1 and (path.suffix in {".md", ".txt", ".py", ".sh", ".yml", ".toml"} or path.name in {"Dockerfile", "VERSION", "LICENSE", "NOTICE", ".env.example", ".dockerignore", ".gitignore"}))

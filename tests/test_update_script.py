@@ -44,6 +44,8 @@ def test_signed_zip_update_and_rollback_with_custom_persistence(tmp_path, failur
         archive.writestr('app/config.py', 'APP_VERSION = "0.6.3-test"\n')
         archive.writestr('Dockerfile', 'new image')
         archive.writestr('docs/added.md', 'new file')
+        archive.writestr('contrib/', b'')
+        archive.writestr('contrib/fail2ban/filter.d/test.conf', 'new integration')
     # Fresh synthetic signing key; no real release credential is used by tests.
     key = Ed25519PrivateKey.generate()
     (scripts / 'keys' / 'update-signing-public-v1.pem').write_bytes(key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
@@ -100,9 +102,24 @@ if args[:2] == ['compose', 'build'] and new and os.environ['FAILURE'] == 'build'
         assert (root / 'Dockerfile').read_text() == 'old image'
         assert (root / '.env').read_text() == original_env
         assert not (root / 'docs' / 'added.md').exists()
+        assert not (root / 'contrib' / 'fail2ban' / 'filter.d' / 'test.conf').exists()
+
         assert (data / 'addressbook.db').read_bytes() == b'old SQLite data'
         assert (data / 'config.json').read_bytes() == b'old key configuration'
         assert (backups / 'keep.rabfull').read_bytes() == b'old backup'
         assert not (backups / 'new.rabfull').exists()
         assert package.exists()
         assert 'compose build' in commands
+
+
+
+def test_update_transaction_accepts_every_tracked_package_path():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location('update_transaction', 'scripts/update_transaction.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    files = subprocess.check_output(['git', 'ls-files', '-z']).decode().rstrip('\0').split('\0')
+    assert all(module.managed(Path(path)) for path in files)
+    directories = {parent for path in files for parent in Path(path).parents if parent.parts}
+    assert all(module.managed(path) for path in directories)
