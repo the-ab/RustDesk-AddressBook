@@ -138,6 +138,8 @@ The selected view is stored in the session and used on Dashboard and Devices. On
 - **Search/filter**: name, ID, customer, location, OS/device type, tags and notes; filters for group, favourite and device type.
 - **Sort**: online first, name, favourites or last changed.
 
+After reauthentication, the selected connection continues on an internal page that opens RustDesk automatically. If the browser requires confirmation or another click, use **Open RustDesk** on that page. RustDesk must be installed and registered for `rustdesk://` links. A requested device password is also resumed automatically after reauthentication. The sensitive-action window is configured with `SENSITIVE_ACTION_REAUTH_SECONDS` (default: 1800 seconds since the last successful authentication).
+
 ## Groups
 
 Groups help structure devices by customer, site, device type or purpose. Each group has a name, color and icon.

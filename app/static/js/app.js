@@ -50,6 +50,13 @@
   activateSettingsTabFromHash();
   window.addEventListener('hashchange', activateSettingsTabFromHash);
 
+  // This runs on a completed internal page, outside the reauth form redirect.
+  // Keep the regular link available if the browser requires another user click.
+  const connectLink = document.getElementById('rustdeskConnectLink');
+  if (connectLink) {
+    try { window.location.assign(connectLink.href); } catch (_) { /* use the visible link */ }
+  }
+
   document.querySelectorAll('.password-toggle').forEach((button) => {
     button.addEventListener('click', async () => {
       const group = button.closest('.input-group');
@@ -98,27 +105,30 @@
   const passwordModalElement = document.getElementById('devicePasswordModal');
   const passwordValue = document.getElementById('devicePasswordValue');
   const passwordTitle = document.getElementById('devicePasswordTitle');
+  const showDevicePassword = async (button) => {
+    const url = button.dataset.passwordUrl;
+    if (!url || !passwordModalElement || !passwordValue) return;
+    button.disabled = true;
+    passwordValue.value = '';
+    try {
+      const response = await fetch(url, {method: 'POST', headers: {'X-CSRF-Token': csrfToken, 'Accept': 'application/json'}});
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401 && data.reauth_url) { window.location.assign(data.reauth_url); return; }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      passwordValue.value = data.password || '';
+      if (passwordTitle) passwordTitle.textContent = button.dataset.deviceName || 'RustDesk';
+      bootstrap.Modal.getOrCreateInstance(passwordModalElement).show();
+    } catch (error) {
+      window.alert(i18n.passwordLoadFailed || 'Passwort konnte nicht geladen werden.');
+    } finally {
+      button.disabled = false;
+    }
+  };
   document.querySelectorAll('.device-password-action').forEach((button) => {
-    button.addEventListener('click', async () => {
-      const url = button.dataset.passwordUrl;
-      if (!url || !passwordModalElement || !passwordValue) return;
-      button.disabled = true;
-      passwordValue.value = '';
-      try {
-        const response = await fetch(url, {method: 'POST', headers: {'X-CSRF-Token': csrfToken, 'Accept': 'application/json'}});
-        const data = await response.json().catch(() => ({}));
-        if (response.status === 401 && data.reauth_url) { window.location.assign(data.reauth_url); return; }
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        passwordValue.value = data.password || '';
-        if (passwordTitle) passwordTitle.textContent = button.dataset.deviceName || 'RustDesk';
-        bootstrap.Modal.getOrCreateInstance(passwordModalElement).show();
-      } catch (error) {
-        window.alert(i18n.passwordLoadFailed || 'Passwort konnte nicht geladen werden.');
-      } finally {
-        button.disabled = false;
-      }
-    });
+    button.addEventListener('click', () => showDevicePassword(button));
   });
+  const resumePasswordButton = document.getElementById('resumeDevicePassword');
+  if (resumePasswordButton) showDevicePassword(resumePasswordButton);
 
   document.getElementById('devicePasswordCopy')?.addEventListener('click', async () => {
     if (!passwordValue) return;

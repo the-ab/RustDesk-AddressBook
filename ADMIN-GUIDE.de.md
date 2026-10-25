@@ -190,6 +190,8 @@ Funktionen:
 - bleibt das Passwortfeld leer, bleibt das Passwort unverändert; über die Checkbox kann es gelöscht werden
 - optionale Werte `None`/`null` werden beim Speichern als leer bereinigt
 
+Nach der erneuten Anmeldung wird die gewählte Verbindung auf einer internen Seite fortgesetzt, die RustDesk automatisch öffnet. Verlangt der Browser eine Bestätigung oder einen weiteren Klick, dort **RustDesk öffnen** verwenden. RustDesk muss installiert und für `rustdesk://`-Links registriert sein. Ein angeforderter Gerätepasswortabruf wird nach der erneuten Anmeldung ebenfalls automatisch fortgesetzt. Das Sicherheitsfenster wird mit `SENSITIVE_ACTION_REAUTH_SECONDS` eingestellt (Standard: 1800 Sekunden seit der letzten erfolgreichen Authentifizierung).
+
 ## 6. Gruppen
 
 Gruppen besitzen Name, Farbe und Bootstrap-Icon. Sie können angelegt und direkt in der Liste bearbeitet werden. Beim Löschen einer Gruppe werden zugeordnete Geräte **nicht** gelöscht; nur deren Gruppenzuordnung wird entfernt. Die Gruppe wird dabei ebenfalls aus allen Benutzerzuweisungen entfernt.
