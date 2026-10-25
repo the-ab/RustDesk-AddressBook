@@ -6,7 +6,7 @@
     <div class="card app-card">
       <div class="card-body p-4">
         <h1 class="h4 mb-3"><i class="bi bi-shield-lock me-2"></i>{{ t('reauth.title', 'Erneute Anmeldung') }}</h1>
-        <p class="text-secondary">{{ t('reauth.help', 'Für den Abruf von Gerätepasswörtern und den Start einer Verbindung ist nach längerer Inaktivität eine erneute Anmeldung erforderlich.') }}</p>
+        <p class="text-secondary">{{ t('reauth.help', 'Nach Ablauf des Sicherheitsfensters ist für den Abruf von Gerätepasswörtern und den Start einer Verbindung eine erneute Anmeldung erforderlich.') }}</p>
         <form method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="next" value="{{ next_url }}">

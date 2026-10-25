@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('connect.title', 'Verbindung starten') }} - RustDesk AddressBook{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="card app-card">
+      <div class="card-body p-4">
+        <h1 class="h4">{{ t('connect.title', 'Verbindung starten') }}: {{ device.name }}</h1>
+        <p role="status">{{ t('connect.opening', 'RustDesk wird für dieses Gerät geöffnet. Erlaube deinem Browser das Öffnen von RustDesk, falls er danach fragt.') }}</p>
+        <p class="text-secondary">{{ t('connect.fallback', 'Falls RustDesk nicht automatisch startet, verwende den folgenden Knopf. RustDesk muss installiert und für rustdesk://-Links registriert sein.') }}</p>
+        <div class="d-flex flex-wrap gap-2">
+          <a id="rustdeskConnectLink" class="btn btn-primary" href="{{ connect_url }}" rel="noreferrer"><i class="bi bi-plug me-1"></i>{{ t('connect.retry', 'RustDesk öffnen') }}</a>
+          <a class="btn btn-outline-secondary" href="{{ url_for('devices') }}">{{ t('connect.back', 'Zurück zu den Geräten') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

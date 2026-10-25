@@ -523,6 +523,12 @@ TRANSLATIONS["en"].update({
     "reauth.oidc": "Sign in again with OpenID Connect",
     "reauth.totp": "2FA code",
     "reauth.confirm": "Confirm",
+    "connect.title": "Start connection",
+    "connect.opening": "RustDesk is opening for this device. If your browser asks, allow it to open RustDesk.",
+    "connect.retry": "Open RustDesk",
+    "connect.fallback": "If RustDesk does not open automatically, use the button below. RustDesk must be installed and registered for rustdesk:// links.",
+    "connect.back": "Back to devices",
+    "device.password.resume": "Your authentication was confirmed. The requested device password will open automatically.",
     "setup.title": "Initial setup",
     "setup.subtitle": "Create the first admin user.",
     "setup.token": "Setup token",
@@ -1545,6 +1551,8 @@ def register_routes(app: Flask) -> None:
     @login_required
     def reauth():
         next_url = _safe_next_url(request.values.get("next")) or url_for("dashboard")
+        if request.method == "GET" and _has_recent_auth():
+            return redirect(next_url)
         if request.method == "POST":
             if current_user.auth_provider == "oidc":
                 username = current_user.username
@@ -1570,7 +1578,8 @@ def register_routes(app: Flask) -> None:
                 session["auth_time"] = int(time.time())
                 _record_auth_event("reauth_success", username=current_user.username, success=True, message="Erneute Authentifizierung erfolgreich")
                 return redirect(next_url)
-        response = render_template("reauth.html", next_url=next_url)
+        response = current_app.make_response(render_template("reauth.html", next_url=next_url))
+        response.headers["Cache-Control"] = "no-store"
         return response
 
     @app.route("/login/oidc")
@@ -2195,7 +2204,25 @@ def register_routes(app: Flask) -> None:
         if not _has_recent_auth():
             return redirect(url_for("reauth", next=request.path))
         _record_auth_event("device_connect", username=current_user.username, success=True, message=f"RustDesk-Verbindung für Gerät {device.name} ({device.rustdesk_id}) gestartet")
-        response = redirect(rustdesk_link(device.rustdesk_id, decrypt_value(device.encrypted_password)))
+        # Finish the reauthentication form navigation on an internal document.
+        # Browsers may apply form-action 'self' to the entire redirect chain,
+        # including an external rustdesk:// Location after a successful POST.
+        response = current_app.make_response(render_template(
+            "device_connect.html",
+            device=device,
+            connect_url=rustdesk_link(device.rustdesk_id, decrypt_value(device.encrypted_password)),
+        ))
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        return response
+
+    @app.route("/devices/<int:device_id>/password/view")
+    @login_required
+    def device_password_view(device_id: int):
+        device = _accessible_device_or_404(device_id)
+        if not _has_recent_auth():
+            return redirect(url_for("reauth", next=request.path))
+        response = current_app.make_response(render_template("device_password.html", device=device))
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -2204,7 +2231,7 @@ def register_routes(app: Flask) -> None:
     def device_password(device_id: int):
         device = _accessible_device_or_404(device_id)
         if not _has_recent_auth():
-            response = jsonify({"error": "reauth_required", "reauth_url": url_for("reauth", next=url_for("devices"))})
+            response = jsonify({"error": "reauth_required", "reauth_url": url_for("reauth", next=url_for("device_password_view", device_id=device.id))})
             response.status_code = 401
             response.headers["Cache-Control"] = "no-store"
             return response

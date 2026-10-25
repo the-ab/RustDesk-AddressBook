@@ -1,8 +1,14 @@
-# Community Address Book for RustDesk – Sicherheitsstatus, Release 0.6.4
+# Community Address Book for RustDesk – Sicherheitsstatus, Release 0.6.5
 
-**Stand:** 02.10.2026
+**Stand:** 25.10.2026
 
-**Version:** `0.6.4-shell-script-permissions` (Release 0.6.4)
+**Version:** `0.6.5-reauth-continuation` (Release 0.6.5)
+
+## Änderungen in 0.6.5
+
+- Nach erfolgreicher erneuter Anmeldung automatisch die ursprünglich gewählte RustDesk-Verbindung fortsetzen (Issue #7), über eine interne Verbindungsseite mit regulärem Link bei erforderlicher Browserinteraktion.
+- Unterbrochene Gerätepasswort-Abfragen für dasselbe Gerät über den bestehenden CSRF-geschützten POST und das Passwortfenster fortsetzen.
+- Authentifizierungsfenster, lokale 2FA, OIDC-Kontobindung, Geräteberechtigungen, Sitzungswiderruf und bestehende Content Security Policy erhalten.
 
 ## Änderungen in 0.6.3 und 0.6.4
 
@@ -50,7 +56,7 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater profilierter Ini
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. README, Administratorhandbuch, WebUI-Hilfe und Release Notes beschreiben 0.6.4; historische Release-Einträge und Beispiele veröffentlichter GHCR-Images behalten ihren ursprünglichen Versionsstand. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. README, Administratorhandbuch, WebUI-Hilfe und Release Notes beschreiben 0.6.5; historische Release-Einträge und Beispiele veröffentlichter GHCR-Images behalten ihren ursprünglichen Versionsstand. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
 
 ## Hinweis für öffentliche Repositorys
 
