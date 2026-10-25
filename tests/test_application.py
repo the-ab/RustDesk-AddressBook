@@ -29,8 +29,8 @@ def test_health_and_security_headers(client):
     assert response.get_json() == {"status": "ok"}
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert "default-src 'self'" in response.headers["Content-Security-Policy"]
-    assert Config.APP_RELEASE_DATE == "2026-10-02"
-    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.4"
+    assert Config.APP_RELEASE_DATE == "2026-10-25"
+    assert Path("VERSION").read_text(encoding="utf-8").strip() == "0.6.5"
 
 
 def test_setup_requires_the_server_token(client, clean_app):
@@ -214,8 +214,8 @@ def test_administrator_pages_render(client, clean_app):
         page = client.get(path)
         assert page.status_code == 200, path
         if path == "/":
-            assert b"0.6.4" in page.data
-            assert b"2026-10-02" in page.data
+            assert b"0.6.5" in page.data
+            assert b"2026-10-25" in page.data
 
 
 def test_ghcr_compose_bundle():
@@ -223,7 +223,7 @@ def test_ghcr_compose_bundle():
     env_example = Path("docker-compose/.env.example").read_text(encoding="utf-8")
     assert "ghcr.io/the-ab/rustdesk-addressbook:${RAB_IMAGE_TAG:-latest}" in compose
     assert "RAB_IMAGE_TAG=latest" in env_example
-    assert "0.6.4" in env_example
+    assert "0.6.5" in env_example
 
 
 def test_docker_compose_env_documentation_and_login_footer(client, clean_app):

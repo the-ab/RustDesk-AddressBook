@@ -1,8 +1,14 @@
-# Community Address Book for RustDesk — security status, release 0.6.4
+# Community Address Book for RustDesk — security status, release 0.6.5
 
-**Date:** 2026-10-02
+**Date:** 2026-10-25
 
-**Version:** `0.6.4-shell-script-permissions` (release 0.6.4)
+**Version:** `0.6.5-reauth-continuation` (release 0.6.5)
+
+## Changes in 0.6.5
+
+- Automatically resume the originally selected RustDesk connection after successful reauthentication (issue #7), using an internal connection page and a regular link if the browser requires interaction.
+- Resume interrupted device-password requests for the same device through the existing CSRF-protected POST and password modal.
+- Preserve authentication freshness, local 2FA, OIDC identity binding, device permissions, session revocation and the existing Content Security Policy.
 
 ## Changes in 0.6.3 and 0.6.4
 
@@ -50,7 +56,7 @@ The web process remains unprivileged. A separate profiled init service receives 
 
 ## Documentation language layout
 
-Standard Markdown files are English and German editions use the `*.de.md` suffix. The README, Admin Guide, Web UI help and release notes describe 0.6.4; historical release entries and published GHCR image examples retain their original version. Existing signed-update verification, authorization boundaries, setup-token cleanup, repository safety checks, and the local test suite remain in place.
+Standard Markdown files are English and German editions use the `*.de.md` suffix. The README, Admin Guide, Web UI help and release notes describe 0.6.5; historical release entries and published GHCR image examples retain their original version. Existing signed-update verification, authorization boundaries, setup-token cleanup, repository safety checks, and the local test suite remain in place.
 
 ## Public repository note
 

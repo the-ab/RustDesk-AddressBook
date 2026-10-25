@@ -60,10 +60,10 @@ cp .env.example .env
 docker compose pull
 docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'</code></pre>
-      <p>The dedicated files use <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code> by default. Set <code>RAB_IMAGE_TAG=0.6.4</code> in <code>.env</code> to pin the published 0.6.4 image. Only <code>compose.yaml</code> and <code>.env</code> are required. Every variable is explained in <code>docker-compose/README.md</code> and <code>docker-compose/README.de.md</code>.</p>
+      <p>The dedicated files use <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code> by default. Set <code>RAB_IMAGE_TAG=0.6.5</code> in <code>.env</code> to pin the published 0.6.5 image. Only <code>compose.yaml</code> and <code>.env</code> are required. Every variable is explained in <code>docker-compose/README.md</code> and <code>docker-compose/README.de.md</code>.</p>
       <h3 class="h6 mt-3">Source/release archive installation</h3>
 <pre class="codebox"><code>cd /opt
-unzip /path/to/rustdesk-addressbook-v0.6.4.zip
+unzip /path/to/rustdesk-addressbook-v0.6.5.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -71,15 +71,15 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>The values are written to <code>.env</code>. When you run <code>./scripts/install.sh</code> again, the existing <code>.env</code> values are used as defaults.</p>
       <h3 class="h6 mt-3" id="source-upgrade">One-time source upgrade from 0.6.2</h3>
       <p>The updater shipped in 0.6.2 has no complete rollback. From the existing installation directory, verify the signed new flat ZIP with the existing trusted public key, then replace both updater files before running the upgrade:</p>
-<pre class="codebox"><code>openssl pkeyutl -verify -pubin -inkey scripts/keys/update-signing-public-v1.pem -rawin -in /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip.sha256 -sigfile /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip.sig
-(cd /path/to &amp;&amp; sha256sum -c rustdesk-addressbook-update-flat-v0.6.4.zip.sha256)
-unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip scripts/update.sh scripts/update_transaction.py -d .
-bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code></pre>
-      <p>Keep the pre-update directory. Updates from an already installed 0.6.3 do not need this preparation again. Build/start/health failures trigger rollback; health timeouts report failure. The source updater uses the data and backup paths configured in .env. Signed 0.6.4 packages are available from the GitHub Releases page; the normal online update source uses latest.txt.</p>
-      <p>From an installed 0.6.3, use the normal signed update. If update.sh is not executable, run <code>bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code>. Version 0.6.4 restores execute bits on all five shipped shell scripts.</p>
+<pre class="codebox"><code>openssl pkeyutl -verify -pubin -inkey scripts/keys/update-signing-public-v1.pem -rawin -in /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip.sha256 -sigfile /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip.sig
+(cd /path/to &amp;&amp; sha256sum -c rustdesk-addressbook-update-flat-v0.6.5.zip.sha256)
+unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip scripts/update.sh scripts/update_transaction.py -d .
+bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip</code></pre>
+      <p>Keep the pre-update directory. Updates from an already installed 0.6.3 do not need this preparation again. Build/start/health failures trigger rollback; health timeouts report failure. The source updater uses the data and backup paths configured in .env. Signed 0.6.5 packages are available from the GitHub Releases page; the normal online update source uses latest.txt.</p>
+      <p>From an installed 0.6.3, use the normal signed update. If update.sh is not executable, run <code>bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip</code>. Since 0.6.4, the updater restores execute bits on all five shipped shell scripts.</p>
       <h3 class="h6 mt-3">Manual update with ZIP in <code>updates/</code></h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip* updates/
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatic online update check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -265,7 +265,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update check and release notes</h2>
       <p>The Web UI checks <code>latest.txt</code> at <code>https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download</code> by default. Custom non-empty release sources remain supported. Set <code>RAB_UPDATE_BASE_URL=disabled</code> to disable online checks explicitly; local signed updates remain available.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0.6.4.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0.6.5.zip
 [de]
 - Deutsche Änderung 1
 [en]
@@ -381,10 +381,10 @@ cp .env.example .env
 docker compose pull
 docker compose up -d
 docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/data/config.json"))["SETUP_TOKEN"])'</code></pre>
-      <p>Die dafür vorgesehenen Dateien verwenden standardmäßig <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code>. Mit <code>RAB_IMAGE_TAG=0.6.4</code> in <code>.env</code> wird das veröffentlichte Image 0.6.4 fest verwendet. Benötigt werden nur <code>compose.yaml</code> und <code>.env</code>. Alle Variablen sind in <code>docker-compose/README.de.md</code> und <code>docker-compose/README.md</code> beschrieben.</p>
+      <p>Die dafür vorgesehenen Dateien verwenden standardmäßig <code>ghcr.io/the-ab/rustdesk-addressbook:latest</code>. Mit <code>RAB_IMAGE_TAG=0.6.5</code> in <code>.env</code> wird das veröffentlichte Image 0.6.5 fest verwendet. Benötigt werden nur <code>compose.yaml</code> und <code>.env</code>. Alle Variablen sind in <code>docker-compose/README.de.md</code> und <code>docker-compose/README.md</code> beschrieben.</p>
       <h3 class="h6 mt-3">Installation aus dem Release-Archiv</h3>
 <pre class="codebox"><code>cd /opt
-unzip /path/to/rustdesk-addressbook-v0.6.4.zip
+unzip /path/to/rustdesk-addressbook-v0.6.5.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh</code></pre>
@@ -392,15 +392,15 @@ chmod +x scripts/install.sh scripts/update.sh
       <p>Die gesetzten Werte werden in <code>.env</code> gespeichert. Beim erneuten Aufruf werden diese Werte als Default vorgeschlagen.</p>
       <h3 class="h6 mt-3" id="source-upgrade">Einmaliges Quellcode-Upgrade von 0.6.2</h3>
       <p>Der Updater aus 0.6.2 hat keinen vollständigen Rückweg. Im bestehenden Installationsverzeichnis die neue signierte Flat-ZIP mit dem vorhandenen vertrauenswürdigen öffentlichen Schlüssel prüfen; danach beide Updater-Dateien vor dem Wechsel ersetzen:</p>
-<pre class="codebox"><code>openssl pkeyutl -verify -pubin -inkey scripts/keys/update-signing-public-v1.pem -rawin -in /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip.sha256 -sigfile /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip.sig
-(cd /path/to &amp;&amp; sha256sum -c rustdesk-addressbook-update-flat-v0.6.4.zip.sha256)
-unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip scripts/update.sh scripts/update_transaction.py -d .
-bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code></pre>
-      <p>Pre-Update-Verzeichnis behalten. Bei bereits installierter 0.6.3 ist diese Vorbereitung nicht erneut nötig. Build-/Start-/Health-Fehler lösen den Rückweg aus; Health-Timeouts gelten als Fehler. Der Quell-Updater verwendet die in .env konfigurierten Daten-/Backuppfade. Signierte Pakete 0.6.4 stehen auf der GitHub-Releases-Seite bereit; die normale Online-Updatequelle verwendet latest.txt.</p>
-      <p>Von einer installierten 0.6.3 den regulären signierten Updateweg verwenden. Fehlt update.sh das Ausführungsrecht, <code>bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip</code> starten. Version 0.6.4 stellt die Ausführungsrechte aller fünf mitgelieferten Shellskripte wieder her.</p>
+<pre class="codebox"><code>openssl pkeyutl -verify -pubin -inkey scripts/keys/update-signing-public-v1.pem -rawin -in /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip.sha256 -sigfile /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip.sig
+(cd /path/to &amp;&amp; sha256sum -c rustdesk-addressbook-update-flat-v0.6.5.zip.sha256)
+unzip -o /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip scripts/update.sh scripts/update_transaction.py -d .
+bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip</code></pre>
+      <p>Pre-Update-Verzeichnis behalten. Bei bereits installierter 0.6.3 ist diese Vorbereitung nicht erneut nötig. Build-/Start-/Health-Fehler lösen den Rückweg aus; Health-Timeouts gelten als Fehler. Der Quell-Updater verwendet die in .env konfigurierten Daten-/Backuppfade. Signierte Pakete 0.6.5 stehen auf der GitHub-Releases-Seite bereit; die normale Online-Updatequelle verwendet latest.txt.</p>
+      <p>Von einer installierten 0.6.3 den regulären signierten Updateweg verwenden. Fehlt update.sh das Ausführungsrecht, <code>bash scripts/update.sh /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip</code> starten. Seit 0.6.4 stellt der Updater die Ausführungsrechte aller fünf mitgelieferten Shellskripte wieder her.</p>
       <h3 class="h6 mt-3">Update-ZIP manuell ablegen</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
-cp /path/to/rustdesk-addressbook-update-flat-v0.6.4.zip* updates/
+cp /path/to/rustdesk-addressbook-update-flat-v0.6.5.zip* updates/
 ./scripts/update.sh</code></pre>
       <h3 class="h6 mt-3">Automatischer Online-Check</h3>
 <pre class="codebox"><code>cd /opt/rustdesk-addressbook
@@ -586,7 +586,7 @@ chmod 600 data/ssh/rustdesk_import_ed25519</code></pre>
     <section id="updates" class="card app-card mb-4"><div class="card-body">
       <h2 class="h4">Update-Check und Release-Notizen</h2>
       <p>Die WebUI prüft standardmäßig <code>latest.txt</code> unter <code>https://github.com/the-ab/RustDesk-AddressBook/releases/latest/download</code>. Eigene, nicht leere Release-Quellen bleiben unterstützt. Mit <code>RAB_UPDATE_BASE_URL=disabled</code> werden Online-Prüfungen ausdrücklich abgeschaltet; lokale signierte Updates bleiben nutzbar.</p>
-<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0.6.4.zip
+<pre class="codebox"><code>rustdesk-addressbook-update-flat-v0.6.5.zip
 [de]
 - Deutsche Änderung 1
 [en]

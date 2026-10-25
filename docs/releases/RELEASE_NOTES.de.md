@@ -1,5 +1,15 @@
 # Community-Adressbuch für RustDesk – Releasehistorie
 
+## Community-Adressbuch für RustDesk 0.6.5 – Fortsetzung nach erneuter Anmeldung
+
+Release-Datum: 25.10.2026. Signierte Quellpakete und GHCR-Images (0.6.5/latest) sind veröffentlicht.
+
+- Nach erfolgreicher erneuter Anmeldung automatisch die ursprünglich gewählte RustDesk-Verbindung fortsetzen (Issue #7), über eine interne Verbindungsseite mit regulärem Link bei erforderlicher Browserinteraktion.
+- Unterbrochene Gerätepasswort-Abfragen für dasselbe Gerät über den bestehenden CSRF-geschützten POST und das Passwortfenster fortsetzen.
+- Authentifizierungsfenster, lokale 2FA, OIDC-Kontobindung, Geräteberechtigungen, Sitzungswiderruf und bestehende Content Security Policy erhalten.
+
+Von 0.6.3/0.6.4 den regulären signierten Updateweg verwenden; von 0.6.2 zuerst beide Updater-Dateien gemäß Administratorhandbuch vorbereiten. GHCR-Installationen holen das gewählte Image und erstellen den Container neu.
+
 ## Community-Adressbuch für RustDesk 0.6.4 – Skriptrechte und Dokumentation
 
 Release-Datum: 02.10.2026. Signierte Quellpakete und GHCR-Images (0.6.4/latest) sind veröffentlicht.

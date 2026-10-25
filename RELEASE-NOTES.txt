@@ -1,13 +1,11 @@
-0.6.4-shell-script-permissions — 2026-10-02 (release)
+0.6.5-reauth-continuation — 2026-10-25 (release)
 
 [de]
-- Alle fünf mitgelieferten Shellskripte in Git und beiden ZIP-Paketen ausführbar speichern; Ausführungsrechte nach dem Entpacken ausdrücklich wiederherstellen.
-- Vollständige 0.6.3- und 0.6.4-Einträge in der englischen/deutschen WebUI-Releasehistorie ergänzen und aktuelle Installations-/Hilfe-/Updatebeispiele abstimmen.
-- Bestehende Quellinstallationen mit 0.6.3 können dieses signierte Wartungsupdate 0.6.4 regulär installieren; fehlt dem alten Updater das Ausführungsrecht, mit bash starten.
-- Von 0.6.2 zuerst beide Updater-Dateien aus der geprüften ZIP übernehmen; siehe ADMIN-GUIDE.de.md.
+- Nach erfolgreicher erneuter Anmeldung automatisch die ursprünglich gewählte RustDesk-Verbindung fortsetzen (Issue #7), über eine interne Verbindungsseite mit regulärem Link bei erforderlicher Browserinteraktion.
+- Unterbrochene Gerätepasswort-Abfragen für dasselbe Gerät über den bestehenden CSRF-geschützten POST und das Passwortfenster fortsetzen.
+- Authentifizierungsfenster, lokale 2FA, OIDC-Kontobindung, Geräteberechtigungen, Sitzungswiderruf und bestehende Content Security Policy erhalten.
 
 [en]
-- Store all five shipped shell scripts as executable in Git and both ZIP packages; restore execute bits explicitly after ZIP extraction.
-- Add complete 0.6.3 and 0.6.4 entries to the English/German Web UI release history and align current installation/help/update examples.
-- Allow installed 0.6.3 source installations to apply this signed 0.6.4 maintenance update normally; if the old updater lacks execute permission, start it with bash.
-- From 0.6.2, prepare both updater files from the verified ZIP first; see ADMIN-GUIDE.md.
+- Automatically resume the originally selected RustDesk connection after successful reauthentication (issue #7), using an internal connection page and a regular link if the browser requires interaction.
+- Resume interrupted device-password requests for the same device through the existing CSRF-protected POST and password modal.
+- Preserve authentication freshness, local 2FA, OIDC identity binding, device permissions, session revocation and the existing Content Security Policy.

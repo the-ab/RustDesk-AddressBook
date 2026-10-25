@@ -1,5 +1,15 @@
 # Community Address Book for RustDesk — release notes
 
+## Community Address Book for RustDesk 0.6.5 – Reauthentication continuation
+
+Release date: 2026-10-25. Signed source packages and GHCR images (0.6.5/latest) are published.
+
+- Automatically resume the originally selected RustDesk connection after successful reauthentication (issue #7), using an internal connection page and a regular link if the browser requires interaction.
+- Resume interrupted device-password requests for the same device through the existing CSRF-protected POST and password modal.
+- Preserve authentication freshness, local 2FA, OIDC identity binding, device permissions, session revocation and the existing Content Security Policy.
+
+Use the normal signed update path from 0.6.3/0.6.4; from 0.6.2, prepare both updater files as described in the Admin Guide first. GHCR installations pull and recreate the selected image.
+
 ## Community Address Book for RustDesk 0.6.4 – Shell script permissions and documentation
 
 Release date: 2026-10-02. Signed source packages and GHCR images (0.6.4/latest) are published.
