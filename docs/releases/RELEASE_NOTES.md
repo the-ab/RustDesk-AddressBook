@@ -1,5 +1,13 @@
 # Community Address Book for RustDesk — release notes
 
+## Community Address Book for RustDesk 0.6.6 – Security maintenance
+
+Release date: 2026-11-27.
+
+- Update the container to Python 3.13.18, apply the available Debian security updates, update Authlib to 1.9.10, and move to Gunicorn 27.0.1.
+- Use the trusted client address consistently for rate limiting and authentication logs. Limit failed local reauthentication and account security checks.
+- Require a fresh password confirmation for local 2FA and tie it to the current account security state. Protect existing 2FA enrollment when editing account security.
+
 ## Community Address Book for RustDesk 0.6.5 – Reauthentication continuation
 
 Release date: 2026-10-25. Signed source packages and GHCR images (0.6.5/latest) are published.

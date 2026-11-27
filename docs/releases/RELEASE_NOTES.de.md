@@ -1,5 +1,13 @@
 # Community-Adressbuch für RustDesk – Releasehistorie
 
+## Community-Adressbuch für RustDesk 0.6.6 – Sicherheitsupdate
+
+Release-Datum: 27.11.2026.
+
+- Container auf Python 3.13.18 aktualisieren, verfügbare Debian-Sicherheitsupdates übernehmen, Authlib auf 1.9.10 und Gunicorn auf 27.0.1 aktualisieren.
+- Für Anmeldesperre und Authentifizierungsprotokoll dieselbe vertrauenswürdige Client-IP verwenden. Fehlversuche bei lokalen Nachanmeldungen und Sicherheitsprüfungen am Konto begrenzen.
+- Für lokale 2FA eine frische Passwortbestätigung verlangen und an den aktuellen Sicherheitsstand des Kontos binden. Bestehende 2FA bei Änderungen am Konto schützen.
+
 ## Community-Adressbuch für RustDesk 0.6.5 – Fortsetzung nach erneuter Anmeldung
 
 Release-Datum: 25.10.2026. Signierte Quellpakete und GHCR-Images (0.6.5/latest) sind veröffentlicht.

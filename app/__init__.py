@@ -23,7 +23,7 @@ import urllib.request
 import zipfile
 from collections import Counter
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -251,7 +251,7 @@ TRANSLATIONS = {
         "settings.status.last_check": "Last status check",
         "settings.status.no_check": "No hbbs live check has been performed yet.",
         "settings.bruteforce.title": "Brute-force protection",
-        "settings.bruteforce.help": "Applies to failed password and 2FA attempts per IP address or username. The fail2ban/CrowdSec log remains active as an additional layer.",
+        "settings.bruteforce.help": "Login attempts are limited per IP address. Reauthentication and account changes share a separate limit per account and IP address.",
         "settings.bruteforce.failures": "Failed attempts",
         "settings.bruteforce.window": "Window minutes",
         "settings.bruteforce.save": "Save lockout settings",
@@ -523,6 +523,9 @@ TRANSLATIONS["en"].update({
     "reauth.oidc": "Sign in again with OpenID Connect",
     "reauth.totp": "2FA code",
     "reauth.confirm": "Confirm",
+    "auth.rate_limited": "Too many failed authentication attempts. Try again later.",
+    "account.2fa_already_enabled": "Two-factor authentication is already enabled.",
+    "security.report.bruteforce_detail": "Limit of {limit} failures within {window} seconds, per IP for login and per account and IP for reauthentication and account changes.",
     "connect.title": "Start connection",
     "connect.opening": "RustDesk is opening for this device. If your browser asks, allow it to open RustDesk.",
     "connect.retry": "Open RustDesk",
@@ -948,10 +951,9 @@ def _groups_from_form(field_name: str = "group_ids") -> list[Group]:
 
 def _safe_next_url(value: str | None, default_endpoint: str = "dashboard") -> str:
     candidate = str(value or "").strip()
-    if not candidate:
+    if not candidate.startswith("/") or candidate.startswith("//") or "\\" in candidate:
         return url_for(default_endpoint)
-    parsed = urllib.parse.urlparse(candidate)
-    if parsed.scheme or parsed.netloc or not candidate.startswith("/") or candidate.startswith("//"):
+    if any(ord(char) < 32 or ord(char) == 127 for char in candidate):
         return url_for(default_endpoint)
     return candidate
 
@@ -1104,7 +1106,6 @@ def _commit_user_security_change(user: User, *, keep_current_session: bool = Fal
     db.session.commit()
     if keep_current_session and current_user.is_authenticated and current_user.id == user.id:
         session["auth_session_version"] = int(user.session_version)
-        session["auth_time"] = int(time.time())
 
 
 def _store_transient_secret(user: User, purpose: str, payload, *, ttl_seconds: int = 600) -> str:
@@ -1154,14 +1155,14 @@ def _consume_recovery_codes(user: User):
 
 
 def _client_ip() -> str:
-    if current_app.config.get("TRUST_PROXY_HEADERS"):
-        forwarded = request.headers.get("X-Forwarded-For", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()[:64]
-        real_ip = request.headers.get("X-Real-IP", "")
-        if real_ip:
-            return real_ip.strip()[:64]
-    return (request.remote_addr or "unknown")[:64]
+    # ProxyFix already applies the configured one-hop trust boundary.
+    try:
+        address = ipaddress.ip_address(request.remote_addr or "")
+    except ValueError:
+        return "unknown"
+    if isinstance(address, ipaddress.IPv6Address):
+        return str(address.ipv4_mapped or ipaddress.IPv6Address(int(address)))
+    return str(address)
 
 
 def _prune_auth_events_if_needed() -> None:
@@ -1292,27 +1293,44 @@ def _write_auth_log_line(event_type: str, *, username: str, ip: str, success: bo
         pass
 
 
-def _is_login_blocked(username: str) -> tuple[bool, int]:
+def _is_auth_blocked(*, reauth_user: str | None = None) -> tuple[bool, int]:
     brute = _get_bruteforce_settings()
     limit = brute["limit"]
     window = brute["window_seconds"]
     since = utcnow() - timedelta(seconds=window)
     ip = _client_ip()
-    fail_types = ["password_fail", "2fa_fail"]
+    fail_types = ["reauth_fail"] if reauth_user is not None else ["password_fail", "2fa_fail"]
     base = AuthEvent.query.filter(AuthEvent.success.is_(False), AuthEvent.created_at >= since, AuthEvent.event_type.in_(fail_types))
-    ip_count = base.filter(AuthEvent.ip_address == ip).count() if ip else 0
+    base = base.filter(AuthEvent.ip_address == ip)
+    if reauth_user is not None:
+        base = base.filter(AuthEvent.username == reauth_user)
     # A username-wide hard lock lets an unauthenticated attacker deny access to
     # a known account. Enforce the blocking threshold per source IP instead.
-    if ip_count >= limit:
-        oldest = base.filter(AuthEvent.ip_address == ip).order_by(AuthEvent.created_at.asc()).first()
+    if base.count() >= limit:
+        oldest = base.order_by(AuthEvent.created_at.asc()).first()
         if oldest and oldest.created_at:
-            try:
-                elapsed = int((utcnow() - oldest.created_at).total_seconds())
-            except TypeError:
-                elapsed = int((datetime.utcnow() - oldest.created_at.replace(tzinfo=None)).total_seconds())
+            created_at = oldest.created_at
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            elapsed = int((utcnow() - created_at).total_seconds())
             return True, max(window - elapsed, 1)
         return True, window
     return False, 0
+
+
+def _confirm_account_password() -> bool:
+    if _is_auth_blocked(reauth_user=current_user.username)[0]:
+        flash(_t("auth.rate_limited", "Zu viele fehlgeschlagene Anmeldeversuche. Bitte später erneut versuchen."), "danger")
+        return False
+    if current_user.auth_provider == "local" and current_user.check_password(request.form.get("current_password", "")):
+        return True
+    _record_auth_event("reauth_fail", username=current_user.username, message="Passwort für Kontoänderung falsch")
+    flash("Aktuelles Passwort ist falsch.", "danger")
+    return False
+
+
+def _record_account_factor_failure() -> None:
+    _record_auth_event("reauth_fail", username=current_user.username, message="Zweiter Faktor für Kontoänderung falsch")
 
 
 def _create_default_groups() -> None:
@@ -1507,10 +1525,10 @@ def register_routes(app: Flask) -> None:
         if request.method == "POST":
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "")
-            blocked, wait_seconds = _is_login_blocked(username)
+            blocked, wait_seconds = _is_auth_blocked()
             if blocked:
                 _record_auth_event("rate_limited", username=username, success=False, message=f"Zu viele Fehlversuche; gesperrt für ca. {wait_seconds} Sekunden")
-                flash("Zu viele fehlgeschlagene Anmeldeversuche. Bitte später erneut versuchen.", "danger")
+                flash(_t("auth.rate_limited", "Zu viele fehlgeschlagene Anmeldeversuche. Bitte später erneut versuchen."), "danger")
                 return render_template("login.html")
 
             user = User.query.filter_by(username=username).first()
@@ -1530,8 +1548,12 @@ def register_routes(app: Flask) -> None:
 
                 if getattr(user, "totp_enabled", False):
                     _record_auth_event("password_ok_2fa_required", username=username, success=True, message="Passwort korrekt; 2FA erforderlich")
-                    session["pending_2fa_user_id"] = user.id
-                    session["pending_2fa_next"] = next_url or url_for("dashboard")
+                    session["pending_2fa"] = {
+                        "user_id": user.id,
+                        "session_version": user.session_version,
+                        "issued_at": int(time.time()),
+                        "next": next_url,
+                    }
                     return redirect(url_for("login_2fa"))
 
                 user.last_login_at = utcnow()
@@ -1563,6 +1585,14 @@ def register_routes(app: Flask) -> None:
                 session["oidc_force_reauth"] = True
                 _record_auth_event("reauth_oidc_start", username=username, success=True, message="Erneute OIDC-Authentifizierung gestartet")
                 return redirect(url_for("oidc_login", next=next_url, reauth="1"))
+
+            blocked, wait_seconds = _is_auth_blocked(reauth_user=current_user.username)
+            if blocked:
+                flash(_t("auth.rate_limited", "Zu viele fehlgeschlagene Anmeldeversuche. Bitte später erneut versuchen."), "danger")
+                response = current_app.make_response((render_template("reauth.html", next_url=next_url), 429))
+                response.headers["Cache-Control"] = "no-store"
+                response.headers["Retry-After"] = str(wait_seconds)
+                return response
 
             password = request.form.get("current_password", "")
             second_factor = request.form.get("totp_code", "")
@@ -1671,25 +1701,26 @@ def register_routes(app: Flask) -> None:
     def login_2fa():
         if current_user.is_authenticated:
             return redirect(url_for("dashboard"))
-        user_id = session.get("pending_2fa_user_id")
-        user = db.session.get(User, int(user_id)) if str(user_id).isdigit() else None
-        if not user or not getattr(user, "active", True) or not getattr(user, "totp_enabled", False):
-            session.pop("pending_2fa_user_id", None)
-            session.pop("pending_2fa_next", None)
+        pending = session.get("pending_2fa") or {}
+        issued_at = pending.get("issued_at")
+        user = None
+        if isinstance(issued_at, int) and 0 <= int(time.time()) - issued_at <= 300:
+            user = db.session.get(User, pending["user_id"])
+        if not user or not user.active or not user.totp_enabled or pending.get("session_version") != user.session_version:
+            session.pop("pending_2fa", None)
             flash("Bitte erneut anmelden.", "warning")
             return redirect(url_for("login"))
         signature_ok = _verify_user_security_state(user)
         if not signature_ok:
             _record_auth_event("security_signature_invalid", username=getattr(user, "username", ""), success=False, message="2FA-Anmeldung blockiert: Benutzer-Sicherheitsdatenbank-Signatur ungültig")
-            session.pop("pending_2fa_user_id", None)
-            session.pop("pending_2fa_next", None)
+            session.pop("pending_2fa", None)
             flash("Anmeldung aus Sicherheitsgründen blockiert. Bitte melde dich erneut an.", "danger")
             return redirect(url_for("login"))
         if request.method == "POST":
-            blocked, wait_seconds = _is_login_blocked(user.username)
+            blocked, wait_seconds = _is_auth_blocked()
             if blocked:
                 _record_auth_event("rate_limited", username=user.username, success=False, message=f"2FA blockiert nach Fehlversuchen; gesperrt für ca. {wait_seconds} Sekunden")
-                flash("Zu viele fehlgeschlagene Anmeldeversuche. Bitte später erneut versuchen.", "danger")
+                flash(_t("auth.rate_limited", "Zu viele fehlgeschlagene Anmeldeversuche. Bitte später erneut versuchen."), "danger")
                 return redirect(url_for("login"))
             code = request.form.get("totp_code", "")
             ok, method = _verify_second_factor_for_user(user, code, consume_recovery=True)
@@ -1699,8 +1730,8 @@ def register_routes(app: Flask) -> None:
                 db.session.commit()
                 _record_auth_event("login_success_2fa", username=user.username, success=True, message=("Login mit Wiederherstellungscode" if method == "recovery" else "Login mit TOTP"))
                 _start_user_session(user)
-                next_url = session.pop("pending_2fa_next", None) or url_for("dashboard")
-                session.pop("pending_2fa_user_id", None)
+                next_url = pending.get("next") or url_for("dashboard")
+                session.pop("pending_2fa", None)
                 if method == "recovery":
                     remaining = _recovery_code_count(user)
                     flash(f"Angemeldet. Ein Wiederherstellungscode wurde verbraucht. Verbleibend: {remaining}.", "warning")
@@ -1967,14 +1998,14 @@ def register_routes(app: Flask) -> None:
             if current_user.auth_provider != "local":
                 flash("Passwort und Mehrfaktor-Authentifizierung werden für dieses Konto vom OIDC-Provider verwaltet.", "info")
                 return redirect(url_for("account"))
-            current_password = request.form.get("current_password", "")
+
+            if action in {"password", "totp_prepare", "totp_enable", "totp_disable", "totp_recovery_regenerate"} and not _confirm_account_password():
+                return redirect(url_for("account"))
 
             if action == "password":
                 new_password = request.form.get("new_password", "")
                 new_password2 = request.form.get("new_password2", "")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
-                elif len(new_password) < 8:
+                if len(new_password) < 8:
                     flash("Das neue Passwort muss mindestens 8 Zeichen haben.", "danger")
                 elif new_password != new_password2:
                     flash("Die neuen Passwörter stimmen nicht überein.", "danger")
@@ -1986,8 +2017,8 @@ def register_routes(app: Flask) -> None:
                 return redirect(url_for("account"))
 
             if action == "totp_prepare":
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
+                if current_user.totp_enabled:
+                    flash(_t("account.2fa_already_enabled", "2FA ist bereits aktiviert."), "warning")
                 else:
                     current_user.totp_secret_encrypted = encrypt_value(pyotp.random_base32())
                     current_user.totp_enabled = False
@@ -1998,9 +2029,10 @@ def register_routes(app: Flask) -> None:
 
             if action == "totp_enable":
                 code = request.form.get("totp_code", "")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
+                if current_user.totp_enabled:
+                    flash(_t("account.2fa_already_enabled", "2FA ist bereits aktiviert."), "warning")
                 elif not _verify_totp_for_user(current_user, code):
+                    _record_account_factor_failure()
                     flash("2FA-Code ist ungültig oder abgelaufen.", "danger")
                 else:
                     recovery_codes = _generate_recovery_codes()
@@ -2014,30 +2046,27 @@ def register_routes(app: Flask) -> None:
 
             if action == "totp_disable":
                 code = request.form.get("totp_code", "")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
+                ok, _method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
+                if not ok:
+                    _record_account_factor_failure()
+                    flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
                 else:
-                    ok, _method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
-                    if not ok:
-                        flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
-                    else:
-                        current_user.totp_enabled = False
-                        current_user.totp_secret_encrypted = None
-                        current_user.totp_recovery_hashes = None
-                        _commit_user_security_change(current_user, keep_current_session=True)
-                        _record_auth_event("2fa_disabled", username=current_user.username, success=True, message="2FA im Benutzerkonto deaktiviert")
-                        flash("2FA wurde deaktiviert.", "info")
+                    current_user.totp_enabled = False
+                    current_user.totp_secret_encrypted = None
+                    current_user.totp_recovery_hashes = None
+                    _commit_user_security_change(current_user, keep_current_session=True)
+                    _record_auth_event("2fa_disabled", username=current_user.username, success=True, message="2FA im Benutzerkonto deaktiviert")
+                    flash("2FA wurde deaktiviert.", "info")
                 return redirect(url_for("account"))
 
             if action == "totp_recovery_regenerate":
                 code = request.form.get("totp_code", "")
                 if not current_user.totp_enabled:
                     flash("2FA ist nicht aktiviert.", "danger")
-                elif not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
                 else:
                     ok, _method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
                     if not ok:
+                        _record_account_factor_failure()
                         flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
                     else:
                         recovery_codes = _generate_recovery_codes()
@@ -2807,13 +2836,13 @@ def register_routes(app: Flask) -> None:
         if request.method == "POST":
             action = request.form.get("action", "password")
 
+            if action in {"password", "totp_prepare", "totp_enable", "totp_disable", "totp_recovery_regenerate", "username", "bruteforce"} and not _confirm_account_password():
+                return redirect(url_for("settings"))
+
             if action == "password":
-                current_password = request.form.get("current_password", "")
                 new_password = request.form.get("new_password", "")
                 new_password2 = request.form.get("new_password2", "")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
-                elif len(new_password) < 8:
+                if len(new_password) < 8:
                     flash("Das neue Passwort muss mindestens 8 Zeichen haben.", "danger")
                 elif new_password != new_password2:
                     flash("Die neuen Passwörter stimmen nicht überein.", "danger")
@@ -2825,12 +2854,9 @@ def register_routes(app: Flask) -> None:
                 return redirect(url_for("settings"))
 
             if action == "username":
-                current_password = request.form.get("current_password", "")
                 new_username = request.form.get("new_username", "").strip()
                 allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.@-")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
-                elif not (3 <= len(new_username) <= 80):
+                if not (3 <= len(new_username) <= 80):
                     flash("Der Benutzername muss zwischen 3 und 80 Zeichen lang sein.", "danger")
                 elif any(ch not in allowed_chars for ch in new_username):
                     flash("Der Benutzername darf nur Buchstaben, Zahlen, Punkt, Unterstrich, Bindestrich und @ enthalten.", "danger")
@@ -2925,7 +2951,6 @@ def register_routes(app: Flask) -> None:
                 return redirect(url_for("settings") + "#update-check-card")
 
             if action == "bruteforce":
-                current_password = request.form.get("current_password", "")
                 try:
                     limit = int(request.form.get("login_fail_limit", "5") or "5")
                 except ValueError:
@@ -2936,19 +2961,15 @@ def register_routes(app: Flask) -> None:
                     window_minutes = 15
                 limit = min(max(limit, 2), 50)
                 window_minutes = min(max(window_minutes, 1), 1440)
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
-                else:
-                    _set_setting("login_fail_limit", str(limit))
-                    _set_setting("login_fail_window_seconds", str(window_minutes * 60))
-                    _record_auth_event("bruteforce_settings_changed", username=current_user.username, success=True, message=f"Brute-Force-Sperre: {limit} Fehlversuche / {window_minutes} Minuten")
-                    flash("Brute-Force-Sperre wurde gespeichert.", "success")
+                _set_setting("login_fail_limit", str(limit))
+                _set_setting("login_fail_window_seconds", str(window_minutes * 60))
+                _record_auth_event("bruteforce_settings_changed", username=current_user.username, success=True, message=f"Brute-Force-Sperre: {limit} Fehlversuche / {window_minutes} Minuten")
+                flash("Brute-Force-Sperre wurde gespeichert.", "success")
                 return redirect(url_for("settings"))
 
             if action == "totp_prepare":
-                current_password = request.form.get("current_password", "")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
+                if current_user.totp_enabled:
+                    flash(_t("account.2fa_already_enabled", "2FA ist bereits aktiviert."), "warning")
                 else:
                     current_user.totp_secret_encrypted = encrypt_value(pyotp.random_base32())
                     current_user.totp_enabled = False
@@ -2959,11 +2980,11 @@ def register_routes(app: Flask) -> None:
                 return redirect(url_for("settings"))
 
             if action == "totp_enable":
-                current_password = request.form.get("current_password", "")
                 code = request.form.get("totp_code", "")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
+                if current_user.totp_enabled:
+                    flash(_t("account.2fa_already_enabled", "2FA ist bereits aktiviert."), "warning")
                 elif not _verify_totp_for_user(current_user, code):
+                    _record_account_factor_failure()
                     flash("2FA-Code ist ungültig oder abgelaufen.", "danger")
                 else:
                     recovery_codes = _generate_recovery_codes()
@@ -2976,36 +2997,31 @@ def register_routes(app: Flask) -> None:
                 return redirect(url_for("settings"))
 
             if action == "totp_disable":
-                current_password = request.form.get("current_password", "")
                 code = request.form.get("totp_code", "")
-                if not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
+                ok, method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
+                if not ok:
+                    _record_account_factor_failure()
+                    flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
                 else:
-                    ok, method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
-                    if not ok:
-                        flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
+                    current_user.totp_enabled = False
+                    current_user.totp_secret_encrypted = None
+                    current_user.totp_recovery_hashes = None
+                    _commit_user_security_change(current_user, keep_current_session=True)
+                    _record_auth_event("2fa_disabled", username=current_user.username, success=True, message=("2FA mit Recovery-Code deaktiviert" if method == "recovery" else "2FA deaktiviert"))
+                    if method == "recovery":
+                        flash("2FA wurde mit einem Wiederherstellungscode deaktiviert.", "warning")
                     else:
-                        current_user.totp_enabled = False
-                        current_user.totp_secret_encrypted = None
-                        current_user.totp_recovery_hashes = None
-                        _commit_user_security_change(current_user, keep_current_session=True)
-                        _record_auth_event("2fa_disabled", username=current_user.username, success=True, message=("2FA mit Recovery-Code deaktiviert" if method == "recovery" else "2FA deaktiviert"))
-                        if method == "recovery":
-                            flash("2FA wurde mit einem Wiederherstellungscode deaktiviert.", "warning")
-                        else:
-                            flash("2FA wurde deaktiviert.", "info")
+                        flash("2FA wurde deaktiviert.", "info")
                 return redirect(url_for("settings"))
 
             if action == "totp_recovery_regenerate":
-                current_password = request.form.get("current_password", "")
                 code = request.form.get("totp_code", "")
                 if not getattr(current_user, "totp_enabled", False):
                     flash("2FA ist nicht aktiviert.", "danger")
-                elif not current_user.check_password(current_password):
-                    flash("Aktuelles Passwort ist falsch.", "danger")
                 else:
                     ok, method = _verify_second_factor_for_user(current_user, code, consume_recovery=True)
                     if not ok:
+                        _record_account_factor_failure()
                         flash("2FA-Code oder Wiederherstellungscode ist ungültig.", "danger")
                     else:
                         recovery_codes = _generate_recovery_codes()
@@ -4160,7 +4176,10 @@ def _security_audit_report() -> list[dict]:
 
     add(_t("security.report.sqlite_enc", "SQLite-Dateiverschlüsselung"), "info", _t("security.report.sqlite_enc_detail", "Die produktive SQLite-Datei ist nicht vollständig SQLCipher-verschlüsselt. Sensible Gerätepasswörter sind feldweise verschlüsselt; Benutzer-Sicherheitsfelder sind zusätzlich HMAC-signiert."))
     settings = _get_bruteforce_settings()
-    add(_t("security.report.bruteforce", "Brute-Force-Sperre"), "ok", _t("security.report.bruteforce_detail", "Limit {limit} Fehlversuche je IP/Benutzer innerhalb {window} Sekunden.").format(limit=settings["limit"], window=settings["window_seconds"]))
+    add(_t("security.report.bruteforce", "Brute-Force-Sperre"), "ok", _t(
+        "security.report.bruteforce_detail",
+        "Limit {limit} Fehlversuche innerhalb {window} Sekunden, nach IP bei der Anmeldung und nach Konto und IP bei Nachanmeldung und Kontoänderungen.",
+    ).format(limit=settings["limit"], window=settings["window_seconds"]))
 
     try:
         rotate_days = int(current_app.config.get("AUTH_LOG_ROTATE_DAYS", 7))

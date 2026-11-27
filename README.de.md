@@ -6,13 +6,13 @@ Ein selbst gehostetes Web-Adressbuch für RustDesk-Umgebungen als Docker-Projekt
 
 > Die englische Dokumentation ist die Standardfassung. Deutsche Dateien tragen die Endung `*.de.md`.
 
-## Neu in 0.6.5
+## Neu in 0.6.6
 
-Veröffentlicht am 25.10.2026. Signierte Quellpakete stehen in GitHub Releases bereit; das GHCR-Image ist als 0.6.5 und latest verfügbar.
+Veröffentlicht am 27.11.2026. Signierte Quellpakete stehen in GitHub Releases bereit; das GHCR-Image ist als 0.6.6 und latest verfügbar.
 
-- Nach erfolgreicher erneuter Anmeldung automatisch die ursprünglich gewählte RustDesk-Verbindung fortsetzen (Issue #7), über eine interne Verbindungsseite mit regulärem Link bei erforderlicher Browserinteraktion.
-- Unterbrochene Gerätepasswort-Abfragen für dasselbe Gerät über den bestehenden CSRF-geschützten POST und das Passwortfenster fortsetzen.
-- Authentifizierungsfenster, lokale 2FA, OIDC-Kontobindung, Geräteberechtigungen, Sitzungswiderruf und bestehende Content Security Policy erhalten.
+- Container auf Python 3.13.18 aktualisieren, verfügbare Debian-Sicherheitsupdates übernehmen, Authlib auf 1.9.10 und Gunicorn auf 27.0.1 aktualisieren.
+- Für Anmeldesperre und Authentifizierungsprotokoll dieselbe vertrauenswürdige Client-IP verwenden. Fehlversuche bei lokalen Nachanmeldungen und Sicherheitsprüfungen am Konto begrenzen.
+- Für lokale 2FA eine frische Passwortbestätigung verlangen und an den aktuellen Sicherheitsstand des Kontos binden. Bestehende 2FA bei Änderungen am Konto schützen.
 
 Siehe [vollständige Release Notes](docs/releases/RELEASE_NOTES.de.md). Vor einem Quellcode-Upgrade von 0.6.2 die [einmalige Updater-Vorbereitung](ADMIN-GUIDE.de.md#quellcode-upgrade-von-062) im Administratorhandbuch durchführen.
 
@@ -24,7 +24,7 @@ Das veröffentlichte Container-Image steht unter folgenden Tags bereit:
 
 ```text
 ghcr.io/the-ab/rustdesk-addressbook:latest
-ghcr.io/the-ab/rustdesk-addressbook:0.6.5
+ghcr.io/the-ab/rustdesk-addressbook:0.6.6
 ```
 
 Der Ordner `docker-compose/` enthält die dafür vorgesehene `compose.yaml` und `.env.example`. Alle Umgebungsvariablen sind in [`docker-compose/README.de.md`](docker-compose/README.de.md) beschrieben; die englische Fassung liegt unter [`docker-compose/README.md`](docker-compose/README.md). Für diese Installationsart werden keine Projektquellcode-Dateien benötigt:
@@ -39,15 +39,15 @@ docker exec rustdesk-addressbook python -c 'import json; print(json.load(open("/
 
 Der letzte Befehl zeigt das einmalige Setup-Token an. Nach erfolgreicher Erstellung des ersten Administrators wird es aus `config.json` entfernt.
 
-Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.5` bleibt die Installation beim veröffentlichten Image 0.6.5. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
+Mit `RAB_IMAGE_TAG=latest` wird immer das neueste veröffentlichte Image verwendet. Mit `RAB_IMAGE_TAG=0.6.6` bleibt die Installation beim veröffentlichten Image 0.6.6. Persistente Daten und Backups liegen in den in `.env` eingestellten Hostpfaden.
 
 ### Installation aus dem Release-Archiv mit lokalem Build
 
-Das signierte Quellpaket 0.6.5 von der Releases-Seite des Repositorys herunterladen:
+Das signierte Quellpaket 0.6.6 von der Releases-Seite des Repositorys herunterladen:
 
 ```bash
 cd /opt
-unzip rustdesk-addressbook-v0.6.5.zip
+unzip rustdesk-addressbook-v0.6.6.zip
 cd rustdesk-addressbook
 chmod +x scripts/install.sh scripts/update.sh
 ./scripts/install.sh
@@ -69,7 +69,7 @@ Signierte Update-Dateien nach `updates/` kopieren:
 
 ```bash
 cd /opt/rustdesk-addressbook
-cp /pfad/rustdesk-addressbook-update-flat-v0.6.5.zip* updates/
+cp /pfad/rustdesk-addressbook-update-flat-v0.6.6.zip* updates/
 ./scripts/update.sh
 ```
 

@@ -1,8 +1,14 @@
-# Community Address Book for RustDesk — security status, release 0.6.5
+# Community Address Book for RustDesk — security status, release 0.6.6
 
-**Date:** 2026-10-25
+**Date:** 2026-11-27
 
-**Version:** `0.6.5-reauth-continuation` (release 0.6.5)
+**Version:** `0.6.6-security-maintenance` (release 0.6.6)
+
+## Changes in 0.6.6
+
+- Update the container to Python 3.13.18, apply the available Debian security updates, update Authlib to 1.9.10, and move to Gunicorn 27.0.1.
+- Use the trusted client address consistently for rate limiting and authentication logs. Limit failed local reauthentication and account security checks.
+- Require a fresh password confirmation for local 2FA and tie it to the current account security state. Protect existing 2FA enrollment when editing account security.
 
 ## Changes in 0.6.5
 
@@ -56,7 +62,7 @@ The web process remains unprivileged. A separate profiled init service receives 
 
 ## Documentation language layout
 
-Standard Markdown files are English and German editions use the `*.de.md` suffix. The README, Admin Guide, Web UI help and release notes describe 0.6.5; historical release entries and published GHCR image examples retain their original version. Existing signed-update verification, authorization boundaries, setup-token cleanup, repository safety checks, and the local test suite remain in place.
+Standard Markdown files are English and German editions use the `*.de.md` suffix. The README, Admin Guide, Web UI help and release notes describe 0.6.6; historical release entries and published GHCR image examples retain their original version. Existing signed-update verification, authorization boundaries, setup-token cleanup, repository safety checks, and the local test suite remain in place.
 
 ## Public repository note
 

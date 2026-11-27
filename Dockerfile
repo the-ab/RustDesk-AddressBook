@@ -1,4 +1,4 @@
-FROM python:3.13.15-slim-trixie
+FROM python:3.13.18-slim-trixie
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -8,6 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends tzdata openssh-client ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 rab \
