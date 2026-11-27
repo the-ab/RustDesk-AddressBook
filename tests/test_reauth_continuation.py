@@ -11,11 +11,12 @@ from urllib.parse import parse_qs, urlsplit
 import pyotp
 import pytest
 from flask import redirect
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import app as application
 from app.crypto import encrypt_value
 from app.extensions import db
-from app.models import Device, User
+from app.models import AuthEvent, Device, User
 from tests.conftest import set_csrf
 
 
@@ -134,6 +135,100 @@ def test_totp_is_required_before_connection_continues(signed_in):
     response = confirm(state, "/devices/12/connect", totp_code=pyotp.TOTP(secret).now())
     assert response.location == "/devices/12/connect"
     assert state.client.get(response.location).status_code == 200
+
+
+def test_reauth_respects_attempt_limit_without_using_initial_login_budget(signed_in, monkeypatch):
+    state = signed_in
+    monkeypatch.setattr(application, "_get_bruteforce_settings", lambda: {"limit": 1, "window_seconds": 900})
+    expire(state)
+    target = "/devices/12/connect"
+    assert state.client.post("/reauth", data={
+        "csrf_token": state.csrf, "current_password": "incorrect", "next": target,
+    }).status_code == 200
+    response = confirm(state, target)
+    assert response.status_code == 429
+    assert int(response.headers["Retry-After"]) > 0
+    assert response.headers["Cache-Control"] == "no-store"
+    assert state.client.get(target).status_code == 302
+    other = state.app.test_client()
+    login = other.post("/login", data={
+        "csrf_token": set_csrf(other), "username": "continuation-admin", "password": "continuation-test-password",
+    })
+    assert login.status_code == 302
+
+
+@pytest.mark.parametrize("path", ["/account", "/settings"])
+def test_security_forms_share_the_reauthentication_attempt_limit(signed_in, monkeypatch, path):
+    state = signed_in
+    monkeypatch.setattr(application, "_get_bruteforce_settings", lambda: {"limit": 1, "window_seconds": 900})
+    form = {"csrf_token": state.csrf, "action": "password", "new_password": "replacement-password",
+            "new_password2": "replacement-password"}
+    assert state.client.post(path, data={**form, "current_password": "incorrect"}).status_code == 302
+    assert confirm(state, "/devices/12/connect").status_code == 429
+    assert state.client.post(path, data={**form, "current_password": "continuation-test-password"}).status_code == 302
+    with state.app.app_context():
+        user = db.session.get(User, state.user_id)
+        assert user.check_password("continuation-test-password")
+
+
+@pytest.mark.parametrize("path", ["/account", "/settings"])
+def test_enrolled_second_factor_requires_verification_before_removal(signed_in, path):
+    state = signed_in
+    secret = pyotp.random_base32()
+    with state.app.app_context():
+        user = db.session.get(User, state.user_id)
+        user.totp_enabled = True
+        user.totp_secret_encrypted = encrypt_value(secret)
+        application._sign_user_security_state(user)
+        db.session.commit()
+    form = {"csrf_token": state.csrf, "current_password": "continuation-test-password"}
+    assert state.client.post(path, data={**form, "action": "totp_prepare"}).status_code == 302
+    with state.app.app_context():
+        assert db.session.get(User, state.user_id).totp_enabled
+    assert state.client.post(path, data={
+        **form, "action": "totp_disable", "totp_code": pyotp.TOTP(secret).now(),
+    }).status_code == 302
+    with state.app.app_context():
+        assert not db.session.get(User, state.user_id).totp_enabled
+
+
+def test_auth_audit_uses_the_address_selected_by_the_trusted_proxy(signed_in, monkeypatch):
+    state = signed_in
+    monkeypatch.setattr(state.app, "wsgi_app", ProxyFix(state.app.wsgi_app, x_for=1))
+    assert state.client.post(
+        "/logout", data={"csrf_token": state.csrf}, headers={"X-Forwarded-For": "192.0.2.100, 192.0.2.20"},
+    ).status_code == 302
+    with state.app.app_context():
+        event = AuthEvent.query.filter_by(event_type="logout").one()
+        assert event.ip_address == "192.0.2.20"
+
+
+@pytest.mark.parametrize("change", ["none", "expired", "revoked"])
+def test_second_factor_requires_current_password_confirmation(signed_in, change):
+    state = signed_in
+    secret = pyotp.random_base32()
+    with state.app.app_context():
+        user = db.session.get(User, state.user_id)
+        user.totp_enabled = True
+        user.totp_secret_encrypted = encrypt_value(secret)
+        application._sign_user_security_state(user)
+        db.session.commit()
+    client = state.app.test_client()
+    csrf = set_csrf(client)
+    assert client.post("/login", data={
+        "csrf_token": csrf, "username": "continuation-admin", "password": "continuation-test-password",
+    }).location == "/login/2fa"
+    if change == "expired":
+        with client.session_transaction() as session:
+            session["pending_2fa"] = dict(session["pending_2fa"], issued_at=int(time.time()) - 301)
+    elif change == "revoked":
+        with state.app.app_context():
+            user = db.session.get(User, state.user_id)
+            user.session_version += 1
+            application._sign_user_security_state(user)
+            db.session.commit()
+    response = client.post("/login/2fa", data={"csrf_token": csrf, "totp_code": pyotp.TOTP(secret).now()})
+    assert response.location == ("/" if change == "none" else "/login")
 
 
 @pytest.mark.parametrize("subject,expected", [("existing-subject", "/devices/12/connect"), ("other-subject", "/login")])

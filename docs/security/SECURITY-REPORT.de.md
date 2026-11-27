@@ -1,8 +1,14 @@
-# Community Address Book for RustDesk – Sicherheitsstatus, Release 0.6.5
+# Community Address Book for RustDesk – Sicherheitsstatus, Release 0.6.6
 
-**Stand:** 25.10.2026
+**Stand:** 27.11.2026
 
-**Version:** `0.6.5-reauth-continuation` (Release 0.6.5)
+**Version:** `0.6.6-security-maintenance` (Release 0.6.6)
+
+## Änderungen in 0.6.6
+
+- Container auf Python 3.13.18 aktualisieren, verfügbare Debian-Sicherheitsupdates übernehmen, Authlib auf 1.9.10 und Gunicorn auf 27.0.1 aktualisieren.
+- Für Anmeldesperre und Authentifizierungsprotokoll dieselbe vertrauenswürdige Client-IP verwenden. Fehlversuche bei lokalen Nachanmeldungen und Sicherheitsprüfungen am Konto begrenzen.
+- Für lokale 2FA eine frische Passwortbestätigung verlangen und an den aktuellen Sicherheitsstand des Kontos binden. Bestehende 2FA bei Änderungen am Konto schützen.
 
 ## Änderungen in 0.6.5
 
@@ -56,7 +62,7 @@ Der eigentliche Webprozess bleibt unprivilegiert. Ein separater profilierter Ini
 
 ## Dokumentationssprachen
 
-Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. README, Administratorhandbuch, WebUI-Hilfe und Release Notes beschreiben 0.6.5; historische Release-Einträge und Beispiele veröffentlichter GHCR-Images behalten ihren ursprünglichen Versionsstand. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
+Reguläre Markdown-Dateien sind standardmäßig englisch; deutsche Fassungen tragen die Endung `*.de.md`. README, Administratorhandbuch, WebUI-Hilfe und Release Notes beschreiben 0.6.6; historische Release-Einträge und Beispiele veröffentlichter GHCR-Images behalten ihren ursprünglichen Versionsstand. Die bestehende signierte Updateprüfung, Rollen- und Berechtigungsgrenzen, Setup-Token-Bereinigung, Repository-Sicherheitsprüfung und lokale Testreihe bleiben erhalten.
 
 ## Hinweis für öffentliche Repositorys
 

@@ -1,11 +1,11 @@
-0.6.5-reauth-continuation — 2026-10-25 (release)
+0.6.6-security-maintenance — 2026-11-27 (release)
 
 [de]
-- Nach erfolgreicher erneuter Anmeldung automatisch die ursprünglich gewählte RustDesk-Verbindung fortsetzen (Issue #7), über eine interne Verbindungsseite mit regulärem Link bei erforderlicher Browserinteraktion.
-- Unterbrochene Gerätepasswort-Abfragen für dasselbe Gerät über den bestehenden CSRF-geschützten POST und das Passwortfenster fortsetzen.
-- Authentifizierungsfenster, lokale 2FA, OIDC-Kontobindung, Geräteberechtigungen, Sitzungswiderruf und bestehende Content Security Policy erhalten.
+- Container auf Python 3.13.18 aktualisieren, verfügbare Debian-Sicherheitsupdates übernehmen, Authlib auf 1.9.10 und Gunicorn auf 27.0.1 aktualisieren.
+- Für Anmeldesperre und Authentifizierungsprotokoll dieselbe vertrauenswürdige Client-IP verwenden. Fehlversuche bei lokalen Nachanmeldungen und Sicherheitsprüfungen am Konto begrenzen.
+- Für lokale 2FA eine frische Passwortbestätigung verlangen und an den aktuellen Sicherheitsstand des Kontos binden. Bestehende 2FA bei Änderungen am Konto schützen.
 
 [en]
-- Automatically resume the originally selected RustDesk connection after successful reauthentication (issue #7), using an internal connection page and a regular link if the browser requires interaction.
-- Resume interrupted device-password requests for the same device through the existing CSRF-protected POST and password modal.
-- Preserve authentication freshness, local 2FA, OIDC identity binding, device permissions, session revocation and the existing Content Security Policy.
+- Update the container to Python 3.13.18, apply the available Debian security updates, update Authlib to 1.9.10, and move to Gunicorn 27.0.1.
+- Use the trusted client address consistently for rate limiting and authentication logs. Limit failed local reauthentication and account security checks.
+- Require a fresh password confirmation for local 2FA and tie it to the current account security state. Protect existing 2FA enrollment when editing account security.
